@@ -7,155 +7,77 @@ body {
     font-family: Arial, sans-serif;
 }
 
-/* Bildirim Alanı ve Tab'ları */
-#notification-area {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-    padding: 5px;
-    background-color: #f1f1f1;
-    border-top: 1px solid #ccc;
-    z-index: 3000;
-    overflow-x: auto;
-    max-width: 100%;
-
-}
-
-.notification-tab {
-    width: 300px; /* Genişliği sohbet penceresiyle aynı */
-    height: 40px;
-    margin-left: 10px;
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-
-.notification-tab:hover {
-    background-color: #e9e9e9;
-}
-
+/* Sohbet Penceresi */
 .chat-window {
     position: fixed;
     bottom: 0;
-    width: 300px; /* Genişliği sabitliyoruz */
+    height: 40px; /* Başlangıçta minimize edilmiş yükseklik */
     background-color: #f1f1f1;
     border: 1px solid #ccc;
     display: flex;
     flex-direction: column;
-    margin-right: 10px;
-    /* Yükseklik başlangıçta minimize edilmiş halde */
-    height: 40px;
-    transition: height 0.3s; /* Yükseklik geçişi için animasyon ekleyebiliriz */
+    transition: height 0.3s; /* Yükseklik geçiş animasyonu */
+    overflow: hidden;
 }
 
-.chat-window.minimized {
-    width: 200px;
-    height: 40px;
-}
-/* Maximize edilmiş pencere */
 .chat-window.maximized {
-    height: 400px; /* Maximize edilmiş yüksekliği */
-}
-
-.chat-window .chat-header {
-    background-color: #007bff;
-    color: white;
-    padding: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-}
-
-.chat-window .chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: #ffffff;
-}
-
-.chat-window .chat-input {
-    padding: 10px;
-    display: flex;
-}
-
-.chat-window .chat-input textarea {
-    flex-grow: 1;
-    resize: none;
-}
-
-.chat-window .chat-input button {
-    margin-left: 10px;
-    padding: 5px 10px;
+    height: 400px; /* Maximize edilmiş yükseklik */
 }
 
 .chat-window.unread {
-    background-color: #e0f7fa; /* Okunmamış mesaj varsa arka plan rengi */
-}
-.chat-window.maximized .chat-messages,
-.chat-window.maximized .chat-input {
-    display: block;
+    border-top: 3px solid #007bff; /* Okunmamış mesaj varsa görsel bildirim */
 }
 
-/* Sohbet mesajları */
-.chat-window .chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: #ffffff;
-}
-
-/* Sohbet giriş alanı */
-.chat-window .chat-input {
-    padding: 10px;
-    display: flex;
-}
-
-.chat-window .chat-input textarea {
-    flex-grow: 1;
-    resize: none;
-}
-
-.chat-window .chat-input button {
-    margin-left: 10px;
-    padding: 5px 10px;
-}
-
+/* Sohbet penceresi başlığı */
 .chat-header {
     background-color: #007bff;
     color: white;
     padding: 5px;
+    cursor: pointer;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 }
 
-.chat-header button {
+.chat-header span {
+    flex-grow: 1;
+    font-weight: bold;
+}
+
+.chat-header .close-button {
     background-color: transparent;
     border: none;
     color: white;
     font-size: 16px;
     cursor: pointer;
+    margin-left: 5px;
 }
 
+.chat-header .close-button:hover {
+    color: #ffcccc;
+}
+
+/* Sohbet mesajları */
 .chat-messages {
     flex-grow: 1;
     overflow-y: auto;
     padding: 10px;
     background-color: #ffffff;
+    display: none; /* Başlangıçta gizli */
 }
 
+.chat-window.maximized .chat-messages {
+    display: block; /* Maximize edildiğinde görünür */
+}
+
+/* Sohbet giriş alanı */
 .chat-input {
     padding: 10px;
-    display: flex;
+    display: none; /* Başlangıçta gizli */
+}
+
+.chat-window.maximized .chat-input {
+    display: flex; /* Maximize edildiğinde görünür */
 }
 
 .chat-input textarea {
@@ -183,4 +105,15 @@ body {
 .message.recipient {
     background-color: #ffffff;
     text-align: left;
+}
+
+/* Responsive Ayarlar */
+@media (max-width: 600px) {
+    .chat-window {
+        height: 40px;
+    }
+
+    .chat-window.maximized {
+        height: 300px;
+    }
 }

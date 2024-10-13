@@ -43,12 +43,8 @@ function proceedToOpenChat(username, userId) {
     openChats[username] = {
         userId: userId,
         window: chatWindow,
-        isMinimized: false
+        isMinimized: true // Başlangıçta minimize edilmiş halde
     };
-
-    // Z-index değerini ayarla
-    var zIndex = 1000 + Object.keys(openChats).length;
-    chatWindow.css('z-index', zIndex);
 
     positionChatWindows();
     loadMessages(username);
@@ -59,37 +55,22 @@ function proceedToOpenChat(username, userId) {
     localStorage.setItem('openChatUsers', JSON.stringify(openChatUsers));
 }
 
-
 // Sohbet penceresi oluşturma fonksiyonu
-function createChatWindow(username, userId) {
+function createChatWindow(username) {
     // Sohbet penceresi HTML yapısını oluşturun
     var chatWindow = $('<div>').addClass('chat-window').attr('data-username', username);
 
     var chatHeader = $('<div>').addClass('chat-header');
-    var title = $('<span>').text('Konuşma: ' + username);
-    var minimizeButton = $('<button>').text('_').click(function() {
-        if (openChats[username].isMinimized) {
-            restoreChat(username);
-        } else {
-            minimizeChat(username);
-        }
-    });
-    var closeButton = $('<button>').text('X').click(function() {
+    var title = $('<span>').text(username);
+    var closeButton = $('<button>').addClass('close-button').text('X').click(function(event) {
+        event.stopPropagation(); // Başlık tıklama olayını tetiklemesini engelle
         closeChat(username);
     });
-    chatHeader.append(title).append(minimizeButton).append(closeButton);
+    chatHeader.append(title).append(closeButton);
 
     var chatMessages = $('<div>').addClass('chat-messages');
     var chatInput = $('<div>').addClass('chat-input');
     var chatMessage = $('<textarea>').attr('rows', 2);
-    // Sohbet başlığına tıklama olayını ekleyin
-    chatHeader.click(function() {
-        if (chat.isMinimized) {
-            restoreChat(username);
-        } else {
-            minimizeChat(username);
-        }
-    });
     var chatSend = $('<button>').text('Gönder').click(function() {
         sendMessage(username);
     });
@@ -105,8 +86,17 @@ function createChatWindow(username, userId) {
 
     chatWindow.append(chatHeader).append(chatMessages).append(chatInput);
 
-    // Stil ve konum ayarları (styles.css dosyasında yapılacak)
-    // Burada CSS sınıflarını kullanıyoruz
+    // Başlığa tıklama olayı ile minimize/maximize
+    chatHeader.click(function(event) {
+        // Eğer tıklanan eleman kapatma butonu değilse
+        if (!$(event.target).hasClass('close-button')) {
+            if (openChats[username].isMinimized) {
+                restoreChat(username);
+            } else {
+                minimizeChat(username);
+            }
+        }
+    });
 
     return chatWindow;
 }
@@ -124,64 +114,60 @@ function closeChat(username) {
     }
 }
 
+// Sohbet penceresini minimize etme fonksiyonu
 function minimizeChat(username) {
     var chat = openChats[username];
     var chatWindow = chat.window;
-    chatWindow.removeClass('maximized'); // Maximize sınıfını kaldırıyoruz
+    chatWindow.removeClass('maximized'); // Maximize sınıfını kaldır
     chat.isMinimized = true;
     positionChatWindows();
 }
 
+// Sohbet penceresini maximize etme fonksiyonu
 function restoreChat(username) {
     var chat = openChats[username];
     var chatWindow = chat.window;
-    chatWindow.addClass('maximized'); // Maximize sınıfını ekliyoruz
+    chatWindow.addClass('maximized'); // Maximize sınıfını ekle
     chat.isMinimized = false;
     positionChatWindows();
     chatWindow.find('.chat-messages').scrollTop(chatWindow.find('.chat-messages')[0].scrollHeight);
 }
 
+// Sohbet pencerelerinin konumunu ve genişliğini ayarlama fonksiyonu
 function positionChatWindows() {
-    var chats = Object.values(openChats);
-    chats.forEach(function(chat, index) {
+    var chatCount = Object.keys(openChats).length;
+    if (chatCount === 0) return;
+
+    var windowWidth = $(window).width();
+    var chatWidth = Math.min(300, Math.floor((windowWidth - 20) / chatCount)); // Minimum 300px, aralarında 10px boşluk
+    var index = 0;
+
+    for (var username in openChats) {
+        var chat = openChats[username];
         var chatWindow = chat.window;
-        var rightPosition = (index * (chatWindow.outerWidth() + 10)) + 'px';
+
         chatWindow.css({
-            right: rightPosition,
-            bottom: '0px'
+            bottom: '0px',
+            left: (index * (chatWidth + 10)) + 'px',
+            width: chatWidth + 'px'
         });
+
         // Z-index ayarı
         chatWindow.css('z-index', 1000 + index);
-    });
+
+        index++;
+    }
 }
-
-
 
 // Sohbet penceresini öne getirme fonksiyonu
 function bringChatToFront(username) {
     var chat = openChats[username];
     var chatWindow = chat.window;
 
-    // Maximize edilmiş pencerelerin z-index değerlerini güncelle
-    var maximizedChats = [];
-    for (var user in openChats) {
-        if (!openChats[user].isMinimized) {
-            maximizedChats.push(openChats[user]);
-        }
-    }
-
-    maximizedChats.sort(function(a, b) {
-        return a.window.css('z-index') - b.window.css('z-index');
-    });
-
-    maximizedChats.forEach(function(chat, index) {
-        chat.window.css('z-index', 2000 + index);
-    });
-
-    // Tıklanan pencereyi en öne getir
-    chatWindow.css('z-index', 2000 + maximizedChats.length);
+    // Z-index değerini en yüksek yap
+    var maxZIndex = 1000 + Object.keys(openChats).length;
+    chatWindow.css('z-index', maxZIndex);
 }
-
 
 // Mesajları yükleme fonksiyonu
 function loadMessages(username) {
@@ -250,9 +236,9 @@ function checkForNewMessages() {
                     newMessageCounts[sender] = 1;
                 }
 
-                // Eğer sohbet penceresi açık değilse, bildirim göster
+                // Eğer sohbet penceresi açık değilse, açalım
                 if (!openChats[sender]) {
-                    showNotification(sender, message.sender_id);
+                    openChat(sender, message.sender_id);
                 } else {
                     // Sohbet penceresi açık ise, mesajları güncelle ve arka plan rengini değiştir
                     loadMessages(sender);
@@ -265,35 +251,14 @@ function checkForNewMessages() {
     });
 }
 
-// Bildirim gösterme fonksiyonu
-function showNotification(username, userId) {
-    // Bildirim alanında bir tab oluşturun
-    var notificationTab = $('#notification-' + username);
-    if (notificationTab.length === 0) {
-        notificationTab = $('<div>')
-            .attr('id', 'notification-' + username)
-            .addClass('notification-tab');
-        notificationTab.text(username + ' (' + newMessageCounts[username] + ')');
-        notificationTab.click(function() {
-            openChat(username, userId);
-            notificationTab.remove();
-            delete newMessageCounts[username];
-            updateUnreadCount();
-        });
-        $('#notification-area').append(notificationTab);
-    } else {
-        notificationTab.text(username + ' (' + newMessageCounts[username] + ')');
-    }
-}
-
 // Sohbet penceresinin stilini güncelleme fonksiyonu
 function updateChatWindowStyle(username) {
     var chatWindow = openChats[username].window;
     if (newMessageCounts[username] && newMessageCounts[username] > 0) {
-        // Okunmamış mesaj varsa arka plan rengini mavi yap
+        // Okunmamış mesaj varsa arka plan rengini değiştir
         chatWindow.addClass('unread');
     } else {
-        // Okunmamış mesaj yoksa arka plan rengini gri yap
+        // Okunmamış mesaj yoksa arka plan rengini kaldır
         chatWindow.removeClass('unread');
     }
 }
@@ -310,10 +275,6 @@ function updateUnreadCount() {
 }
 
 $(document).ready(function() {
-    // Bildirim alanını oluşturun
-    var notificationArea = $('<div>').attr('id', 'notification-area');
-    $('body').append(notificationArea);
-
     // "Mesaj Gönder" butonuna tıklama event'ı
     $(document).on('click', '.message-button', function() {
         var username = $(this).data('username');
@@ -343,4 +304,9 @@ $(document).ready(function() {
             });
         });
     }
+
+    // Pencere boyutu değiştiğinde sohbet pencerelerinin konumunu güncelle
+    $(window).resize(function() {
+        positionChatWindows();
+    });
 });
