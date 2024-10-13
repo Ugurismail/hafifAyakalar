@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h2>{{ query }} için sonuç bulunamadı</h2>
+<p>Yeni bir başlık oluşturabilirsiniz.</p>
+
+<form action="{% url 'add_question_from_search' %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="question_text" value="{{ query }}">
+    <label for="answer_text">Yanıtınız:</label>
+    <textarea name="answer_text" id="answer_text" rows="4"></textarea>
+    <button type="submit">Gönder</button>
+</form>
+{% endblock %}

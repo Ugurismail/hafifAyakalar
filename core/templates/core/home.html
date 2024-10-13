@@ -1,0 +1,52 @@
+<!-- templates/core/home.html -->
+
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h2>Sorular</h2>
+
+<!-- Filtreleme Seçenekleri -->
+{% if user.is_authenticated %}
+    <form method="get">
+        <label>
+            <input type="radio" name="filter" value="all" {% if not request.GET.filter or request.GET.filter == 'all' %}checked{% endif %}>
+            Tüm Sorular
+        </label>
+        <label>
+            <input type="radio" name="filter" value="following" {% if request.GET.filter == 'following' %}checked{% endif %}>
+            Takip Ettiklerim
+        </label>
+        <button type="submit">Filtrele</button>
+    </form>
+{% endif %}
+
+<!-- Soruları Listeleyelim -->
+<ul>
+    {% if user.is_authenticated and request.GET.filter == 'following' %}
+        {% for question in following_questions %}
+            <li>
+                <a href="{% url 'question_detail' question_id=question.id %}">{{ question.question_text }}</a>
+                <br>
+                Soran: <a href="{% url 'user_profile' username=question.user.username %}">{{ question.user.username }}</a>
+                <br>
+                Tarih: {{ question.created_at }}
+            </li>
+        {% empty %}
+            <p>Takip ettiğiniz kullanıcıların henüz sorusu yok.</p>
+        {% endfor %}
+    {% else %}
+        {% for question in all_questions %}
+            <li>
+                <a href="{% url 'question_detail' question_id=question.id %}">{{ question.question_text }}</a>
+                <br>
+                Soran: <a href="{% url 'user_profile' username=question.user.username %}">{{ question.user.username }}</a>
+                <br>
+                Tarih: {{ question.created_at }}
+            </li>
+        {% empty %}
+            <p>Henüz soru yok.</p>
+        {% endfor %}
+    {% endif %}
+</ul>
+
+{% endblock %}

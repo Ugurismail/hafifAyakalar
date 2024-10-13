@@ -1,0 +1,33 @@
+<!-- templates/core/user_profile.html -->
+
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h2>{{ profile_user.username }}'nin Profili</h2>
+
+<p>Takipçi Sayısı: {{ followers_count }}</p>
+<p>Takip Edilen Sayısı: {{ following_count }}</p>
+
+{% if user != profile_user %}
+    <!-- Takip Et/Takipten Çık Butonu -->
+    {% if profile_user.userprofile in user.userprofile.following.all %}
+        <form action="{% url 'unfollow_user' username=profile_user.username %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Takipten Çık</button>
+        </form>
+    {% else %}
+        <form action="{% url 'follow_user' username=profile_user.username %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Takip Et</button>
+        </form>
+    {% endif %}
+
+    <!-- Mesaj Gönder Butonu -->
+    <button class="message-button" data-username="{{ profile_user.username }}" data-userid="{{ profile_user.id }}">
+        Mesaj Gönder
+    </button>
+{% endif %}
+
+<!-- Kullanıcının soruları ve diğer içerikler -->
+
+{% endblock %}

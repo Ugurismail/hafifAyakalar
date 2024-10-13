@@ -1,0 +1,41 @@
+<!-- base.html -->
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>{% block title %}HafifAyaklar{% endblock %}</title>
+    <!-- CSS ve diğer head içerikleri -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script src="{% static 'js/chat.js' %}"></script>
+</head>
+<body>
+    <!-- Navigasyon menüsü -->
+    <nav>
+        <ul>
+            <li><a href="{% url 'home' %}">Ana Sayfa</a></li>
+            {% if user.is_authenticated %}
+                <form id="search-form" action="{% url 'search' %}" method="get">
+                    <input type="text" id="search-input" name="q" placeholder="Ara..." autocomplete="off">
+                </form>
+                <li><a href="{% url 'add_question' %}">Soru Sor</a></li>
+                <li><a href="{% url 'profile' %}">Profilim</a></li>
+                <li><a href="{% url 'conversations' %}">Mesajlar <span id="unread-count"></span></a></li>
+                <li><a href="{% url 'user_list' %}">Kullanıcılar</a></li>
+                <li><a href="{% url 'logout' %}">Çıkış Yap</a></li>
+            {% else %}
+                <li><a href="{% url 'login' %}">Giriş Yap</a></li>
+                <li><a href="{% url 'signup' %}">Kayıt Ol</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    {% block content %}{% endblock %}
+    <div id="notification-area"></div>
+    <script src="{% static 'js/chat.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+</body>
+</html>

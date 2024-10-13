@@ -1,0 +1,24 @@
+<!-- templates/core/send_invitation.html -->
+{% extends 'core/base.html' %}
+
+{% block content %}
+<h2>Davet Et</h2>
+<p>Mevcut Davet Hakkı: {{ invitation_quota }}</p>
+
+{% if invitation_code %}
+    <p><strong>Davet kodunuz:</strong> {{ invitation_code }}</p>
+    <p>Bu kodu kullanarak yeni bir kullanıcı {{ quota_granted }} davet hakkı alacak.</p>
+    <a href="{% url 'send_invitation' %}">Yeni Davet Oluştur</a>
+{% else %}
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Davet Kodu Oluştur</button>
+    </form>
+{% endif %}
+{% endblock %}

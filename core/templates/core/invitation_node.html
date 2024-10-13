@@ -1,0 +1,15 @@
+<!-- templates/core/invitation_node.html -->
+<li>
+    {% if node.user %}
+        {{ node.user.username }}
+    {% else %}
+        Davet Kodu: {{ node.code }}
+    {% endif %}
+    {% if node.children %}
+        <ul>
+            {% for child in node.children %}
+                {% include 'core/invitation_node.html' with node=child %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</li>
