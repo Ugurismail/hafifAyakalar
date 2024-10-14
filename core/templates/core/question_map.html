@@ -1,0 +1,50 @@
+={% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+        <div class="col-md-12">
+            <!-- Kontrol Paneli -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <button class="btn btn-primary btn-block mb-2" id="btn-me">Ben</button>
+                    <button class="btn btn-primary btn-block mb-2" id="btn-all">Tümü</button>
+                    <div style="position: relative;">
+                        <input type="text" class="form-control mb-0" id="user-search-input" placeholder="Kullanıcı Ara">
+                        <div id="user-search-results"></div>
+                    </div>
+                    <!-- Seçili Kullanıcılar Listesi -->
+                    <div id="selected-users" class="mt-2">
+                        <h5>Seçili Kullanıcılar:</h5>
+                        <ul id="selected-users-list" class="list-group"></ul>
+                        <button class="btn btn-primary mt-2" id="btn-filter-users">Filtrele</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Harita Alanı -->
+            <div id="chart" style="width: 100%; height: 800px; border: 1px solid #ccc;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- D3.js kütüphanesi -->
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<!-- Harita verilerini JavaScript'e aktarmak için -->
+<!-- Harita verilerini JavaScript'e aktarmak için -->
+<script id="question-nodes-data" type="application/json">
+    {{ question_nodes|safe }}
+</script>
+<script>
+    var focusQuestionId = "{{ focus_question_id|default:'' }}";
+</script>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/question_map.js' %}"></script>
+{% endblock %}

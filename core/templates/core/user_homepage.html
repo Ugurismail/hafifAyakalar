@@ -1,0 +1,271 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}Ana Sayfa{% endblock %}
+{% block content %}
+<div class="container" id="naber">
+    <div class="row">
+        <!-- Left Column: All Questions -->
+        <div class="col-md-3" style="border-right: 1px solid #ccc;">
+            <h4>Tüm Sorular</h4>
+            <ul class="list-unstyled">
+                {% for question in all_questions %}
+                <li class="d-flex justify-content-between align-items-center mt-2">
+                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none">
+                        {{ question.question_text }}
+                    </a>
+                    <small class="">{{ question.answers_count }}</small>
+                </li>
+                {% endfor %}
+            </ul>
+            {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
+        </div>
+        <!-- Middle Column: Random Questions and Answers -->
+        <div class="col-md-6">
+            <h4>Rastgele Sorular ve Yanıtlar</h4>
+            {% for answer in random_items %}
+            <div class="card mb-3">
+                <!-- Question Title -->
+                <div class="card-header">
+                    <a href="{% url 'question_detail' answer.question.id %}" class="text-dark text-decoration-none">
+                        {{ answer.question.question_text }}
+                    </a>
+                </div>
+                <!-- Answer Content -->
+                <div class="card-body">
+                    {% if answer.answer_text|length > 500 %}
+                        <!-- Shortened Answer -->
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500" }}...</p>
+                        <!-- Full Answer (Initially Hidden) -->
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|safe }}</p>
+                        <!-- "Tamamını oku" Link -->
+                        <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
+                    {% else %}
+                        <!-- Short Answer -->
+                        <p class="answer-text">{{ answer.answer_text|safe }}</p>
+                    {% endif %}
+                    <!-- Actions and User Info -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <!-- Left: Voting and Save -->
+                        <div>
+                            <!-- Upvote Button and Count -->
+                            <a href="#" class="vote-btn me-1" data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
+                                <i class="bi-chevron-up"></i>
+                            </a>
+                            <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
+                            <!-- Downvote Button and Count -->
+                            <a href="#" class="vote-btn ms-1 me-1" data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
+                                <i class="bi-chevron-down"></i>
+                            </a>
+                            <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
+                            <!-- Save Button -->
+                            <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
+                                <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
+                            </a>
+                            <span>{{ answer_save_dict|get_item:answer.id }}</span>
+                            <!-- Edit and Delete Buttons (Only for Content Owner) -->
+                            {% if answer.user == request.user %}
+                                <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
+                                    <i class="bi bi-pencil-square icon-black-white"></i>
+                                </a>
+                                <!-- Delete Button -->
+                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                    <i class="bi bi-trash icon-black-white"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                        <!-- Right: User Info and Date -->
+                        <div class="text-end">
+                            <small class="text-muted me-2">
+                                <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                                | {{ answer.created_at|date:"Y-m-d H:i" }}
+                                {% if answer.updated_at and answer.updated_at != answer.created_at %}
+                                    {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
+                                        <!-- If same day, show only time -->
+                                        ~ {{ answer.updated_at|date:"H:i" }}
+                                    {% else %}
+                                        <!-- If different day, show date and time -->
+                                        ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
+                                    {% endif %}
+                                {% endif %}
+                            </small>
+                            <!-- Three Dots Menu -->
+                            <div class="dropdown d-inline">
+                                <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    &#8226;&#8226;&#8226;
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
+                                    <li>
+                                        <a class="dropdown-item copy-link" href="#" data-question-id="{{ answer.question.id }}" data-answer-id="{{ answer.id }}">
+                                            <i class="bi bi-link-45deg"></i> Linki Kopyala
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item share-link" href="#" data-question-id="{{ answer.question.id }}" data-answer-id="{{ answer.id }}">
+                                            <i class="bi bi-share"></i> Paylaş
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Right Column: Your Starting Questions -->
+        <div class="col-md-3" style="border-left: 1px solid #ccc;">
+            <h5>Başlangıç Sorularınız</h5>
+            {% if starting_questions %}
+                <ul class="list-unstyled">
+                    {% for item in starting_questions %}
+                    <li class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'question_detail' item.question.id %}" class="text-dark text-decoration-none">
+                            {{ item.question.question_text }}
+                        </a>
+                        <span>{{ item.total_subquestions }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Henüz başlangıç sorunuz yok.</p>
+            {% endif %}
+            <!-- "Başlangıç Sorusu Ekle" Butonu -->
+            <a href="{% url 'add_starting_question' %}" class="btn btn-primary mt-2 col-12">Başlangıç Sorusu Ekle</a>
+            {% include 'core/pagination.html' with page_obj=starting_questions page_param='starting_page' %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/vote_save.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // "Tamamını oku" Function
+        const readMoreLinks = document.querySelectorAll('.read-more');
+        readMoreLinks.forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const answerId = this.getAttribute('data-answer-id');
+                const summary = document.getElementById('answer-summary-' + answerId);
+                const fullText = document.getElementById('answer-full-' + answerId);
+                if (summary.style.display === 'none') {
+                    summary.style.display = 'block';
+                    fullText.style.display = 'none';
+                    this.textContent = 'Tamamını oku';
+                } else {
+                    summary.style.display = 'none';
+                    fullText.style.display = 'block';
+                    this.textContent = 'Daha az göster';
+                }
+            });
+        });
+
+        // "Linki Kopyala" Function
+        document.querySelectorAll('.copy-link').forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                var questionId = this.getAttribute('data-question-id');
+                var answerId = this.getAttribute('data-answer-id');
+                var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
+                var absoluteLink = window.location.origin + linkUrl;
+                // Copy to clipboard
+                var tempInput = document.createElement('input');
+                document.body.appendChild(tempInput);
+                tempInput.value = absoluteLink;
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                alert('Link kopyalandı!');
+            });
+        });
+
+        // "Paylaş" Function
+        document.querySelectorAll('.share-link').forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                var questionId = this.getAttribute('data-question-id');
+                var answerId = this.getAttribute('data-answer-id');
+                var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
+                var absoluteLink = window.location.origin + linkUrl;
+                // Update the share links
+                var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
+                var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
+                document.getElementById('shareTwitter').setAttribute('href', twitterUrl);
+                document.getElementById('shareFacebook').setAttribute('href', facebookUrl);
+                // Show the modal
+                var shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+                shareModal.show();
+            });
+        });
+
+        // Delete Answer Function
+        var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
+        var deleteAnswerForm = document.getElementById('delete-answer-form');
+
+        deleteAnswerBtns.forEach(function(btn) {
+            btn.addEventListener('click', function(event) {
+                var answerId = this.getAttribute('data-answer-id');
+                // Update the form action
+                deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+<!-- Include Modals -->
+<!-- Delete Answer Modal (placed outside the loop to prevent multiple modals) -->
+<div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="delete-answer-form">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAnswerModalLabel">Yanıtı Sil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bu yanıtı silmek istediğinizden emin misiniz?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">Evet, Sil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header and Body -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Paylaş</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group">
+          <li class="list-group-item">
+            <a href="#" id="shareTwitter" target="_blank">
+              <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
+            </a>
+          </li>
+          <li class="list-group-item">
+            <a href="#" id="shareFacebook" target="_blank">
+              <i class="bi bi-facebook"></i> Facebook ile Paylaş
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'core/link_modal.html' %}
+{% include 'core/reference_modal.html' %}

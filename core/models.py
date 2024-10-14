@@ -43,14 +43,45 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance, invitation_quota=invitation_quota)
 
 
+
 class Question(models.Model):
     question_text = models.CharField(max_length=255)
+    subquestions = models.ManyToManyField('self', symmetrical=False, related_name='parent_questions', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    # parent_questions alanını kaldırdık
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    users = models.ManyToManyField(
+        User, related_name='associated_questions', blank=True
+    )
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
 
     def __str__(self):
         return self.question_text
-    
+
+    def has_subquestions(self):
+        return self.subquestions.exists()
+
+    def get_subquestions(self):
+        return self.subquestions.all()
+
+    def get_total_subquestions_count(self, visited=None):
+        if visited is None:
+            visited = set()
+        if self.id in visited:
+            return 0
+        visited.add(self.id)
+        count = 0
+        for subquestion in self.subquestions.all():
+            count += 1  # Doğrudan alt soruyu say
+            count += subquestion.get_total_subquestions_count(visited)  # Alt soruların alt sorularını say
+        return count
+
+    class Meta:
+        ordering = ['created_at']
+
+
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     answer_text = models.TextField()
@@ -75,3 +106,45 @@ class Message(models.Model):
     def __str__(self):
         return f"{self.sender.username} -> {self.recipient.username}: {self.body[:20]}"
 
+class StartingQuestion(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='starting_questions')
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, related_name='starter_users'
+    )
+
+    def __str__(self):
+        return f"{self.user.username} - {self.question.question_text}"
+
+class SavedItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, null=True, blank=True
+    )
+    answer = models.ForeignKey(
+        Answer, on_delete=models.CASCADE, null=True, blank=True
+    )
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'question', 'answer')
+
+
+class Vote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, null=True, blank=True
+    )
+    answer = models.ForeignKey(
+        Answer, on_delete=models.CASCADE, null=True, blank=True
+    )
+    value = models.IntegerField()  # +1 veya -1
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'question'], name='unique_user_question_vote'
+            ),
+            models.UniqueConstraint(
+                fields=['user', 'answer'], name='unique_user_answer_vote'
+            ),
+        ]

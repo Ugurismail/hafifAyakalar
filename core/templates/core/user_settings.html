@@ -1,0 +1,146 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Ayarlar</h2>
+    <!-- Sekme Navigasyonu -->
+    <ul class="nav nav-tabs" id="settingsTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="colors-tab" data-bs-toggle="tab" data-bs-target="#colors" type="button" role="tab" aria-controls="colors" aria-selected="true">Renk Ayarları</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="other-tab" data-bs-toggle="tab" data-bs-target="#other" type="button" role="tab" aria-controls="other" aria-selected="false">Diğer Ayarlar</button>
+        </li>
+    </ul>
+
+    <!-- Sekme İçerikleri -->
+    <div class="tab-content" id="settingsTabContent">
+        <!-- Renk Ayarları Sekmesi -->
+        <div class="tab-pane fade show active" id="colors" role="tabpanel" aria-labelledby="colors-tab">
+            <form method="post">
+                {% csrf_token %}
+                <!-- Genel Renkler -->
+                <div class="card p-3 mb-3">
+                    <h4>Genel Renkler</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="background_color" class="form-label">Arka Plan Rengi:</label>
+                            <input type="color" id="background_color" name="background_color" class="form-control form-control-color" value="{{ user_profile.background_color }}" oninput="updateColor('--background-color', this.value)">
+                            <small class="form-text text-muted">Tüm sayfanın arka plan rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="text_color" class="form-label">Yazı Rengi:</label>
+                            <input type="color" id="text_color" name="text_color" class="form-control form-control-color" value="{{ user_profile.text_color }}" oninput="updateColor('--text-color', this.value)">
+                            <small class="form-text text-muted">Genel metinlerin rengini değiştirir.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navbar Renkleri -->
+                <div class="card p-3 mb-3">
+                    <h4>Navbar Renkleri</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="header_background_color" class="form-label">Navbar Arka Plan Rengi:</label>
+                            <input type="color" id="header_background_color" name="header_background_color" class="form-control form-control-color" value="{{ user_profile.header_background_color }}" oninput="updateColor('--header-background-color', this.value)">
+                            <small class="form-text text-muted">Navbar'ın arka plan rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="header_text_color" class="form-label">Navbar Yazı Rengi:</label>
+                            <input type="color" id="header_text_color" name="header_text_color" class="form-control form-control-color" value="{{ user_profile.header_text_color }}" oninput="updateColor('--header-text-color', this.value)">
+                            <small class="form-text text-muted">Navbar'daki metinlerin rengini değiştirir.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Link ve Buton Renkleri -->
+                <div class="card p-3 mb-3">
+                    <h4>Link ve Buton Renkleri</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="link_color" class="form-label">Link Rengi:</label>
+                            <input type="color" id="link_color" name="link_color" class="form-control form-control-color" value="{{ user_profile.link_color }}" oninput="updateColor('--link-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim linklerin rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="button_background_color" class="form-label">Buton Arka Plan Rengi:</label>
+                            <input type="color" id="button_background_color" name="button_background_color" class="form-control form-control-color" value="{{ user_profile.button_background_color }}" oninput="updateColor('--button-background-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim butonların arka plan rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="button_text_color" class="form-label">Buton Yazı Rengi:</label>
+                            <input type="color" id="button_text_color" name="button_text_color" class="form-control form-control-color" value="{{ user_profile.button_text_color }}" oninput="updateColor('--button-text-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim butonların yazı rengini değiştirir.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- İçerik Renkleri -->
+                <div class="card p-3 mb-3">
+                    <h4>İçerik Renkleri</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="content_background_color" class="form-label">İçerik Arka Plan Rengi:</label>
+                            <input type="color" id="content_background_color" name="content_background_color" class="form-control form-control-color" value="{{ user_profile.content_background_color }}" oninput="updateColor('--content-background-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim soru ve yanıtların arka plan rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="answer_background_color" class="form-label">Cevap Arka Plan Rengi:</label>
+                            <input type="color" id="answer_background_color" name="answer_background_color" class="form-control form-control-color" value="{{ user_profile.answer_background_color }}" oninput="updateColor('--answer-background-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim cevapların arka plan rengini değiştirir.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sekme Renkleri -->
+                <div class="card p-3 mb-3">
+                    <h4>Sekme Renkleri</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="tab_background_color" class="form-label">Sekme Arka Plan Rengi:</label>
+                            <input type="color" id="tab_background_color" name="tab_background_color" class="form-control form-control-color" value="{{ user_profile.tab_background_color }}" oninput="updateColor('--tab-background-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim sekmelerin arka plan rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tab_text_color" class="form-label">Sekme Yazı Rengi:</label>
+                            <input type="color" id="tab_text_color" name="tab_text_color" class="form-control form-control-color" value="{{ user_profile.tab_text_color }}" oninput="updateColor('--tab-text-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim sekmelerin yazı rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tab_active_background_color" class="form-label">Aktif Sekme Arka Plan Rengi:</label>
+                            <input type="color" id="tab_active_background_color" name="tab_active_background_color" class="form-control form-control-color" value="{{ user_profile.tab_active_background_color }}" oninput="updateColor('--tab-active-background-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim aktif sekmenin arka plan rengini değiştirir.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tab_active_text_color" class="form-label">Aktif Sekme Yazı Rengi:</label>
+                            <input type="color" id="tab_active_text_color" name="tab_active_text_color" class="form-control form-control-color" value="{{ user_profile.tab_active_text_color }}" oninput="updateColor('--tab-active-text-color', this.value)">
+                            <small class="form-text text-muted">Bu seçim aktif sekmenin yazı rengini değiştirir.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kaydet ve Varsayılanlara Dön Butonları -->
+                <div class="mb-5">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="submit" name="reset" value="true" class="btn btn-secondary">Varsayılanlara Dön</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Diğer Ayarlar Sekmesi -->
+        <div class="tab-pane fade" id="other" role="tabpanel" aria-labelledby="other-tab">
+            <!-- Diğer ayarlar içeriği -->
+            <p>Buraya diğer ayarlarınızı ekleyebilirsiniz.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateColor(variable, value) {
+        document.documentElement.style.setProperty(variable, value);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% load static %}
+
+<div class="modal fade" id="linkModal" tabindex="-1" aria-labelledby="linkModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="link-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="linkModalLabel">Link Ekle</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="link-url" class="form-label">Link URL'si:</label>
+            <input type="url" class="form-control" id="link-url" required>
+          </div>
+          <div class="mb-3">
+            <label for="link-text" class="form-label">Görünen Metin:</label>
+            <input type="text" class="form-control" id="link-text" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Ekle</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

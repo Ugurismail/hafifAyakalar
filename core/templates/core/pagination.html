@@ -1,0 +1,53 @@
+{% if page_obj.has_other_pages %}
+<nav aria-label="Sayfalar" class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+        <!-- Previous Page Button -->
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ page_param }}={{ page_obj.previous_page_number }}" aria-label="Önceki">
+                <span aria-hidden="true">&lsaquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">
+                <span aria-hidden="true">&lsaquo;</span>
+            </span>
+        </li>
+        {% endif %}
+
+        <!-- Page Selector Dropdown -->
+        <li class="page-item">
+            <select class="form-select form-select-sm" onchange="location.href='?{{ page_param }}=' + this.value;" style="width: auto; display: inline-block;">
+                {% for num in page_obj.paginator.page_range %}
+                    <option value="{{ num }}" {% if page_obj.number == num %}selected{% endif %}>
+                        {{ num }}
+                    </option>
+                {% endfor %}
+            </select>
+        </li>
+
+        <!-- Total Number of Pages -->
+        <li class="page-item disabled">
+            <span class="page-link" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        <!-- Next Page Button -->
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?{{ page_param }}={{ page_obj.next_page_number }}" aria-label="Sonraki">
+                <span aria-hidden="true">&rsaquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">
+                <span aria-hidden="true">&rsaquo;</span>
+            </span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}

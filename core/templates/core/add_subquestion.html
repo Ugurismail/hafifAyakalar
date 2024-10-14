@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>Alt Soru Ekle</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <!-- Soru Metni -->
+                <div class="form-group">
+                    {{ form.question_text.label_tag }}
+                    {{ form.question_text }}
+                </div>
+                <!-- Yanıt Metni -->
+                <div class="form-group mt-3">
+                    {{ form.answer_text.label_tag }}
+                    <!-- Araç Çubuğu -->
+                    <div class="btn-toolbar mb-2" role="toolbar">
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary format-btn" data-format="bold">
+                                <i class="bi bi-type-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary format-btn" data-format="italic">
+                                <i class="bi bi-type-italic"></i>
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary insert-link-btn">
+                            <i class="bi bi-link-45deg"></i> Link Ekle
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary insert-reference-btn">
+                            (bkz:soru)
+                        </button>
+                    </div>
+                    {{ form.answer_text }}
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Gönder</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modallar -->
+{% include 'core/link_modal.html' %}
+{% include 'core/reference_modal.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/answer_form.js' %}"></script>
+
+{% endblock %}

@@ -26,17 +26,47 @@ class InvitationForm(forms.ModelForm):
 
 class QuestionForm(forms.ModelForm):
     answer_text = forms.CharField(
-        widget=forms.Textarea(attrs={'placeholder': 'Yanıtınızı buraya yazın'}),
-        label='Yanıt',
-        required=True
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Yanıtınızı buraya yazın'}),
+        required=False
     )
 
     class Meta:
         model = Question
         fields = ['question_text', 'answer_text']
-        labels = {
-            'question_text': 'Soru',
+        widgets = {
+            'question_text': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Soru metni girin'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        exclude_parent_questions = kwargs.pop('exclude_parent_questions', False)
+        super(QuestionForm, self).__init__(*args, **kwargs)
+        if exclude_parent_questions:
+            self.fields.pop('parent_questions', None)
+        self.fields['question_text'].widget.attrs.update({'class': 'form-control'})
+
+class StartingQuestionForm(forms.ModelForm):
+    # Aynı anda hem soru hem de cevap eklemek için alanlar
+    answer_text = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Yanıtınızı buraya yazın'}))
+
+    class Meta:
+        model = Question
+        fields = ['question_text']  # Yalnızca soru başlığı ekleniyor
+        widgets = {
+            'question_text': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Soru başlığı'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(StartingQuestionForm, self).__init__(*args, **kwargs)
+        self.fields['question_text'].widget.attrs.update({'class': 'form-control'})
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+
 class AnswerForm(forms.ModelForm):
     class Meta:
         model = Answer
