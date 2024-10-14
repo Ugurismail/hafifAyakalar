@@ -37,7 +37,7 @@
         }
     </style>
     {% endif %}
-    <link rel="icon" href="{% static 'core/favicon.ico' %}" type="image/x-icon">
+    <link rel="icon" href="{% static 'imgs/favicon.ico' %}" type="image/x-icon">
     <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 
@@ -47,7 +47,7 @@
         <div class="container-fluid">
             <!-- Logo ve Marka -->
             <a class="navbar-brand d-flex align-items-center" href="{% url 'user_homepage' %}">
-                <img src="{% static 'core/images/logo.png' %}" alt="Logo" width="30" height="30" class="d-inline-block align-top">
+                <img src="{% static 'imgs/logo.png' %}" alt="Logo" width="30" height="30" class="d-inline-block align-top">
                 <span class="ms-2">Camia-F</span>
             </a>
             <!-- Mobil için Toggle Butonu -->

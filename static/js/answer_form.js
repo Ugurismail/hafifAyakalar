@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedText = textarea.value.substring(startPos, endPos);
         const beforeValue = textarea.value.substring(0, startPos);
         const afterValue = textarea.value.substring(endPos);
-        const newText = <${tag}>${selectedText}</${tag}>;
+        const newText = <${tag}>${selectedText}</${tag}>;        
         textarea.value = beforeValue + newText + afterValue;
         textarea.selectionStart = startPos;
         textarea.selectionEnd = startPos + newText.length;
