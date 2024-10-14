@@ -63,7 +63,7 @@ def signup(request):
             user_profile.save()
 
             login(request, user)
-            return redirect('home')
+            return redirect('user_homepage')
     else:
         form = SignupForm()
     return render(request, 'core/signup.html', {'form': form})
@@ -74,14 +74,14 @@ def user_login(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('home')
+            return redirect('user_homepage')
     else:
         form = LoginForm()
     return render(request, 'core/login.html', {'form': form})
 
 def user_logout(request):
     logout(request)
-    return redirect('home')
+    return redirect('user_homepage')
 
 @login_required
 def send_invitation(request):
