@@ -2,22 +2,25 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% block content %}
-<h2>{{ user.username }}'nin Profili</h2>
+<div class="mt-5">
+    <h2>{{ user.username }}'nin Profili</h2>
 
-{% if profile_user != user %}
-<button onclick="openChat('{{ profile_user.username }}', {{ profile_user.id }})">Mesaj Gönder</button>
-{% endif %}
+    {% if profile_user != user %}
+    <button onclick="openChat('{{ profile_user.username }}', {{ profile_user.id }})">Mesaj Gönder</button>
+    {% endif %}
+    
+    <p>Davet Hakkı: {{ user_profile.invitation_quota }}</p>
+    
+    <a href="{% url 'send_invitation' %}">Davet Et</a>
+    
+    {% if invitation_tree %}
+        <h3>Davet Zinciri</h3>
+        <ul>
+            {% for node in invitation_tree %}
+                {% include 'core/invitation_node.html' with node=node %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
 
-<p>Davet Hakkı: {{ user_profile.invitation_quota }}</p>
-
-<a href="{% url 'send_invitation' %}">Davet Et</a>
-
-{% if invitation_tree %}
-    <h3>Davet Zinciri</h3>
-    <ul>
-        {% for node in invitation_tree %}
-            {% include 'core/invitation_node.html' with node=node %}
-        {% endfor %}
-    </ul>
-{% endif %}
 {% endblock %}

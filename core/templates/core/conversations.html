@@ -1,7 +1,8 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<h2>Konuşmalar</h2>
+<div class="mt-5">
+    <h2>Konuşmalar</h2>
 <ul>
     {% for user in users %}
     <li>
@@ -12,4 +13,6 @@
     <li>Henüz bir konuşmanız yok.</li>
     {% endfor %}
 </ul>
+</div>
+
 {% endblock %}
