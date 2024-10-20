@@ -1,0 +1,17 @@
+<!-- templates/core/search_no_results.html -->
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>"{{ query }}" başlığı bulunamadı.</h2>
+    <p>Bu başlık altında ilk yanıtı siz yazabilirsiniz:</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ answer_form.answer_text.label_tag }}
+            {{ answer_form.answer_text }}
+        </div>
+        <button type="submit" class="btn btn-primary">Yanıtı Gönder</button>
+    </form>
+</div>
+{% endblock %}

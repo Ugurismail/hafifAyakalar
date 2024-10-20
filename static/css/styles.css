@@ -179,7 +179,7 @@ body {
 /* Navbar Styles */
 .navbar {
     padding: 1rem 1rem;
-    background-color: var(--header-background-color);
+    background-color: var(--background-color);
     border-bottom: 1px solid #e0e0e0;
     transition: padding 0.3s ease, background-color 0.3s ease;
 }
@@ -304,14 +304,6 @@ a.text-dark:hover {
     color: black;
 }
 
-/* Search Results Positioning */
-#search-results {
-    top: 100%;
-    left: 0;
-    z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
-}
 
 .navbar .position-relative {
     position: relative;
@@ -382,4 +374,50 @@ a.text-dark:hover {
     pointer-events: none;
     font-weight: bold;
     fill: #333;
+}
+
+
+
+#search-results .list-group-item {
+    cursor: pointer;
+}
+
+
+/* styles.css veya question_map.html içindeki <style> etiketi */
+#user-search-input {
+    position: relative;
+}
+#search-form {
+    position: relative;
+}
+
+#search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* styles.css */
+#user-search-container {
+    position: relative;
+}
+
+#user-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #fff; /* Set a solid background color */
+    border: 1px solid #ccc;
+}
+
+#user-search-results .list-group-item {
+    cursor: pointer;
 }

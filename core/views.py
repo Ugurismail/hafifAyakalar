@@ -1,5 +1,6 @@
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect,get_object_or_404
+from django.shortcuts import render, redirect,get_object_or_404, reverse
 from django.contrib.auth.decorators import login_required
 from .forms import InvitationForm, User, AnswerForm, StartingQuestionForm,SignupForm, LoginForm,QuestionForm
 from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem
@@ -9,15 +10,15 @@ from django.http import JsonResponse
 import json, random
 from django.db.models import Q, Count, Max
 from django.utils import timezone
-from django.urls import reverse
 from django.core.paginator import Paginator
 from collections import defaultdict, Counter
 import colorsys, re, json
 from django.db.models.functions import Coalesce
-
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.serializers import serialize
+
 
 
 
@@ -154,13 +155,29 @@ def get_invitation_tree(user):
 
 def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    answers = question.answers.all()
-    answer_form = AnswerForm()
-    return render(request, 'core/question_detail.html', {
+    answers = Answer.objects.filter(question=question)
+    saved_answer_ids = request.user.userprofile.saved_answers.values_list('id', flat=True) if request.user.is_authenticated else []
+    answer_save_dict = {}  # Yanıtların kaydedilme sayıları
+    for answer in answers:
+        answer_save_dict[answer.id] = answer.saved_by.count()
+    if request.method == 'POST':
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            new_answer = form.save(commit=False)
+            new_answer.user = request.user
+            new_answer.question = question
+            new_answer.save()
+            return redirect('question_detail', question_id=question.id)
+    else:
+        form = AnswerForm()
+    context = {
         'question': question,
         'answers': answers,
-        'form': answer_form
-    })
+        'form': form,
+        'saved_answer_ids': saved_answer_ids,
+        'answer_save_dict': answer_save_dict,
+    }
+    return render(request, 'core/question_detail.html', context)
 
 @login_required
 def add_answer(request, question_id):
@@ -324,46 +341,59 @@ def search_suggestions(request):
 
     return JsonResponse({'suggestions': suggestions})
 
-def search(request):
-    query = request.GET.get('q', '')
-    if query:
-        # Kullanıcıyı veya soruyu arayalım
-        users = User.objects.filter(username__iexact=query.lstrip('@'))
-        questions = Question.objects.filter(question_text__iexact=query)
 
-        if users.exists():
-            return redirect('user_profile', username=users.first().username)
-        elif questions.exists():
-            return redirect('question_detail', question_id=questions.first().id)
+@login_required
+def search(request):
+    query = request.GET.get('q', '').strip()
+    if query:
+        questions = Question.objects.filter(question_text__icontains=query)
+        users = User.objects.filter(username__icontains=query)
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            # AJAX isteği ise JSON formatında yanıt dön
+            results = []
+            for question in questions:
+                results.append({
+                    'type': 'question',
+                    'id': question.id,
+                    'text': question.question_text
+                })
+            for user in users:
+                results.append({
+                    'type': 'user',
+                    'id': user.username,
+                    'text': '@' + user.username  # Kullanıcı adının başına '@' ekleyin
+                })
+            return JsonResponse({'results': results})
         else:
-            # Aranan şey bulunamadı, yeni başlık oluşturma sayfasına yönlendirelim
-            return render(request, 'core/new_topic.html', {'query': query})
+            # Normal arama sonuçları sayfasını render et
+            context = {'questions': questions, 'users': users, 'query': query}
+            return render(request, 'core/search_results.html', context)
     else:
-        # Boş arama, ana sayfaya yönlendirelim
-        return redirect('home')
+        return render(request, 'core/search_results.html', {})
 
 @login_required
 def add_question_from_search(request):
+    query = request.GET.get('q', '').strip()
     if request.method == 'POST':
-        question_text = request.POST.get('question_text')
-        answer_text = request.POST.get('answer_text')
-
-        # Soruyu oluştur
-        question = Question.objects.create(
-            question_text=question_text,
-            user=request.user
-        )
-
-        # Yanıtı oluştur
-        Answer.objects.create(
-            question=question,
-            answer_text=answer_text,
-            user=request.user
-        )
-
-        return redirect('question_detail', question_id=question.id)
+        answer_form = AnswerForm(request.POST)
+        if answer_form.is_valid():
+            # Create new question
+            question = Question.objects.create(
+                question_text=query,
+                user=request.user
+            )
+            # Create new answer
+            answer = answer_form.save(commit=False)
+            answer.user = request.user
+            answer.question = question
+            answer.save()
+            return redirect('question_detail', question_id=question.id)
     else:
-        return redirect('home')
+        answer_form = AnswerForm()
+    return render(request, 'core/add_question_from_search.html', {
+        'query': query,
+        'answer_form': answer_form
+    })
 
 def get_user_id(request, username):
     try:
@@ -992,3 +1022,54 @@ def single_answer(request, question_id, answer_id):
     return render(request, 'core/single_answer.html', context)
 
 
+def user_search(request):
+    query = request.GET.get('q', '').strip()
+    users = User.objects.filter(username__icontains=query)[:10]
+    results = [{'id': user.id, 'username': user.username} for user in users]
+    return JsonResponse({'results': results})
+
+
+@login_required
+def map_data(request):
+    filter_param = request.GET.get('filter')
+    user_ids = request.GET.getlist('user_id')
+
+    if filter_param == 'me':
+        # Only the questions of the logged-in user
+        questions = Question.objects.filter(user=request.user)
+    elif user_ids:
+        # Questions from selected users
+        questions = Question.objects.filter(user__id__in=user_ids).distinct()
+    else:
+        # All questions
+        questions = Question.objects.all()
+
+    question_nodes = generate_question_nodes(questions)
+
+    return JsonResponse(question_nodes, safe=False)
+
+def generate_question_nodes(questions):
+    nodes = []
+    links = []
+
+    # Build nodes
+    for question in questions:
+        nodes.append({
+            'id': question.id,
+            'question_id': question.id,
+            'label': question.question_text,
+            'size': 10,  # Adjust size as needed
+            'users': [question.user.id],
+            'color': '#1f77b4',  # Use a default color or assign based on user
+        })
+
+    # Build links (if you have relationships between questions)
+    for question in questions:
+        for subquestion in question.subquestions.all():
+            if subquestion in questions:
+                links.append({
+                    'source': question.id,
+                    'target': subquestion.id
+                })
+
+    return {'nodes': nodes, 'links': links}

@@ -1,121 +1,156 @@
+// static/js/question_map.js
 document.addEventListener('DOMContentLoaded', function () {
-    // Parse the question data from the DOM
-    var questionData = JSON.parse(document.getElementById('question-nodes-data').textContent);
-
-    // Get the dimensions for the SVG
+    // Global değişkenler
     var width = document.getElementById('chart').clientWidth;
-    var height = 800; // İhtiyacınıza göre ayarlayabilirsiniz
+    var height = 800; // İhtiyacınıza göre ayarlayın
+    var svg, g, zoom;
+    var link, node, label;
+    var simulation;
+    var questionData;
+    var selectedUsers = [];
+    var focusQuestionId = getParameterByName('question_id'); // URL'den question_id parametresini al
 
-    // Create the SVG element with zoom and pan functionality
-    var svg = d3.select("#chart")
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
+    // Başlatma fonksiyonu
+    function init() {
+        // SVG ve grup elemanlarını oluşturun
+        svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
 
-    // Create a group to hold all elements
-    var g = svg.append("g");
+        g = svg.append("g");
 
-    // Define the arrow markers for links
-    var defs = svg.append("defs");
+        // Zoom davranışını tanımlayın
+        zoom = d3.zoom()
+            .scaleExtent([0.05, 5])
+            .on("zoom", function (event) {
+                g.attr("transform", event.transform);
+                updateNodeVisibility(event.transform.k);
+            });
 
-    defs.append("marker")
-        .attr("id", "arrowhead")
-        .attr("viewBox", "-0 -5 10 10")
-        .attr("refX", 25)
-        .attr("refY", 0)
-        .attr("orient", "auto")
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .append("path")
-        .attr("d", "M0,-5L10,0L0,5")
-        .attr("fill", "#999");
+        svg.call(zoom);
 
-    // Define the zoom behavior and assign it to a variable
-    var zoom = d3.zoom()
-        .scaleExtent([0.05, 5]) // Allow zooming out more to see all nodes
-        .on("zoom", function (event) {
-            g.attr("transform", event.transform);
-            updateNodeVisibility(event.transform.k);
+        // Ok işaretlerini tanımlayın
+        var defs = svg.append("defs");
+        defs.append("marker")
+            .attr("id", "arrowhead")
+            .attr("viewBox", "-0 -5 10 10")
+            .attr("refX", 25)
+            .attr("refY", 0)
+            .attr("orient", "auto")
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#999");
+
+        // İlk veri yüklemesi (tüm sorular)
+        fetchData('/map-data/', function(data) {
+            questionData = data;
+            createGraph();
         });
 
-    // Apply zoom behavior to the svg
-    svg.call(zoom);
+        // Buton olaylarını tanımlayın
+        setupButtons();
 
-    // Initialize the simulation
-    var simulation = d3.forceSimulation(questionData.nodes)
-        .force("link", d3.forceLink(questionData.links)
-            .id(function (d) { return d.id; })
-            .distance(150)
-        )
-        .force("charge", d3.forceManyBody()
-            .strength(-200)
-        )
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide()
-            .radius(function (d) { return d.size * 1.5; })
-        )
-        .on('end', function() {
-            if (focusQuestionId) {
-                var targetNode = questionData.nodes.find(node => node.question_id.toString() === focusQuestionId);
-                if (targetNode) {
-                    // Haritayı hedef düğüme yakınlaştırın
-                    zoomToNode(targetNode);
+        // Kullanıcı arama işlevselliğini tanımlayın
+        setupUserSearch();
+    }
+
+    // Veri çekme fonksiyonu
+    function fetchData(url, callback) {
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            callback(data);
+        });
+    }
+
+    // Grafiği oluşturma fonksiyonu
+    function createGraph() {
+        // Simülasyonu başlatın
+        simulation = d3.forceSimulation(questionData.nodes)
+            .force("link", d3.forceLink(questionData.links)
+                .id(function (d) { return d.id; })
+                .distance(150)
+            )
+            .force("charge", d3.forceManyBody()
+                .strength(-200)
+            )
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collide", d3.forceCollide()
+                .radius(function (d) { return d.size * 1.5; })
+            )
+            .on('end', function() {
+                if (focusQuestionId) {
+                    var targetNode = questionData.nodes.find(node => node.question_id.toString() === focusQuestionId);
+                    if (targetNode) {
+                        zoomToNode(targetNode);
+                    }
                 }
-            }
-        });
+            });
 
-    // Create links
-    var link = g.append("g")
-        .attr("class", "links")
-        .selectAll("line")
-        .data(questionData.links)
-        .enter().append("line")
-        .attr("stroke-width", 2)
-        .attr("stroke", "#999")
-        .attr("marker-end", "url(#arrowhead)");
+        // Bağlantıları oluşturun
+        link = g.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(questionData.links)
+            .enter().append("line")
+            .attr("stroke-width", 2)
+            .attr("stroke", "#999")
+            .attr("marker-end", "url(#arrowhead)");
 
-    // Create nodes
-    var node = g.append("g")
-        .attr("class", "nodes")
-        .selectAll("circle")
-        .data(questionData.nodes)
-        .enter().append("circle")
-        .attr("r", function (d) { return d.size; })
-        .attr("fill", function (d) {
-            if (d.users.length > 1) {
-                return "#A9A9A9"; // Ortak sorular için gri renk
-            } else {
-                return d.color; // Kullanıcıya özel renk
-            }
-        })
-        .on("click", function (event, d) {
-            window.location.href = "/question/" + d.question_id + "/";
-        })
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended)
-        );
+        // Düğümleri oluşturun
+        node = g.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(questionData.nodes)
+            .enter().append("circle")
+            .attr("r", function (d) { return d.size; })
+            .attr("fill", function (d) {
+                if (d.users.length > 1) {
+                    return "#A9A9A9"; // Ortak sorular için gri renk
+                } else {
+                    return d.color; // Kullanıcıya özel renk
+                }
+            })
+            .on("click", function (event, d) {
+                window.location.href = "/question/" + d.question_id + "/";
+            })
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended)
+            );
 
-    // Create labels
-    var label = g.append("g")
-        .attr("class", "labels")
-        .selectAll("text")
-        .data(questionData.nodes)
-        .enter().append("text")
-        .attr("dy", -10)
-        .attr("text-anchor", "middle")
-        .text(function (d) { return d.label; })
-        .style("font-size", function (d) {
-            // Kullanıcı sayısına göre temel font boyutu
-            return (12 + (d.users.length * 2)) + "px";
-        });
+        // Etiketleri oluşturun
+        label = g.append("g")
+            .attr("class", "labels")
+            .selectAll("text")
+            .data(questionData.nodes)
+            .enter().append("text")
+            .attr("dy", -10)
+            .attr("text-anchor", "middle")
+            .text(function (d) { return d.label; })
+            .style("font-size", function (d) {
+                return (12 + (d.users.length * 2)) + "px";
+            });
 
-    // Start the simulation
-    simulation
-        .on("tick", ticked);
+        // Simülasyonu başlatın
+        simulation.on("tick", ticked);
 
-    // Ticking function to update positions
+        // Maksimum kullanıcı sayısını hesaplayın
+        questionData.maxUserCount = d3.max(questionData.nodes, function(d) { return d.users.length; }) || 1;
+
+        // Düğüm görünürlüğünü başlatın
+        updateNodeVisibility(1);
+    }
+
+    // Simülasyon "tick" fonksiyonu
     function ticked() {
         link
             .attr("x1", function (d) { return d.source.x; })
@@ -129,10 +164,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
         label
             .attr("x", function (d) { return d.x; })
-            .attr("y", function (d) { return d.y - d.size - 5; }); // Etiketi düğümün üstüne yerleştirin
+            .attr("y", function (d) { return d.y - d.size - 5; });
     }
 
-    // Dragging functions
+    // Düğüm görünürlüğünü güncelleme fonksiyonu
+    function updateNodeVisibility(zoomLevel) {
+        node.each(function(d) {
+            var minOpacity = 0.8;
+            var maxOpacity = 0.9;
+            var userCountFactor = (d.users.length - 1) / (questionData.maxUserCount - 1) || 0;
+            var opacity = minOpacity + (maxOpacity - minOpacity) * userCountFactor;
+
+            if (zoomLevel < 0.5) {
+                opacity = opacity * zoomLevel * 2;
+            }
+            d.opacity = opacity;
+
+            d3.select(this).style("opacity", d.opacity);
+        });
+
+        label.each(function(d) {
+            d3.select(this).style("opacity", d.opacity);
+        });
+
+        label.style("font-size", function(d) {
+            var baseSize = 12 + (d.users.length * 2);
+            return baseSize * zoomLevel + "px";
+        });
+    }
+
+    // Sürükleme fonksiyonları
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
@@ -146,69 +207,120 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function dragended(event, d) {
         if (!event.active) simulation.alphaTarget(0);
-        // Düğümlerin serbest kalmasını istiyorsanız aşağıdaki satırları yorumdan çıkarın
-        // d.fx = null;
-        // d.fy = null;
     }
 
-    // Function to update node visibility based on zoom level
-    function updateNodeVisibility(zoomLevel) {
-        node.each(function(d) {
-            // Kullanıcı sayısına göre düğüm opaklığını ayarlayın
-            var minOpacity = 0.8;
-            var maxOpacity = 0.9;
-            var userCountFactor = (d.users.length - 1) / (questionData.maxUserCount - 1) || 0;
-            var opacity = minOpacity + (maxOpacity - minOpacity) * userCountFactor;
-    
-            // Zoom seviyesine göre opaklığı ayarlayın
-            if (zoomLevel < 0.5) {
-                opacity = opacity * zoomLevel * 2; // Daha az önemli düğümleri soluklaştırın
+    // Haritayı belirli bir düğüme yakınlaştırma fonksiyonu
+    function zoomToNode(node) {
+        var scale = 1.5;
+        var x = -node.x * scale + width / 2;
+        var y = -node.y * scale + height / 2;
+        svg.transition()
+            .duration(750)
+            .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+    }
+
+    // Buton olaylarını tanımlama fonksiyonu
+    function setupButtons() {
+        // "Ben" butonu
+        document.getElementById('btn-me').addEventListener('click', function () {
+            // Clear selected users
+            selectedUsers = [];
+            document.getElementById('selected-users-list').innerHTML = '';
+        
+            fetchData('/map-data/?filter=me', function(data) {
+                questionData = data;
+                updateGraph();
+            });
+        });
+
+        // "Tümü" butonu
+        document.getElementById('btn-all').addEventListener('click', function () {
+            // Clear selected users
+            selectedUsers = [];
+            document.getElementById('selected-users-list').innerHTML = '';
+        
+            fetchData('/map-data/', function(data) {
+                questionData = data;
+                updateGraph();
+            });
+        });
+
+        // "Filtrele" butonu
+        document.getElementById('btn-filter-users').addEventListener('click', function () {
+            if (selectedUsers.length > 0) {
+                var params = selectedUsers.map(function(id) {
+                    return 'user_id=' + id;
+                }).join('&');
+                fetchData('/map-data/?' + params, function(data) {
+                    questionData = data;
+                    updateGraph();
+                });
             }
-            d.opacity = opacity; // Hesaplanan opaklığı veriye kaydedin
+        });
+
+    }
+
+    function setupUserSearch() {
+        var userSearchInput = document.getElementById('user-search-input');
+        var userSearchResults = document.getElementById('user-search-results');
+        var selectedUsersList = document.getElementById('selected-users-list');
     
-            // Düğümün opaklığını uygulayın
-            d3.select(this).style("opacity", d.opacity);
+        userSearchInput.addEventListener('input', function () {
+            var query = this.value;
+            if (query.length > 0) {
+                fetch('/user-search/?q=' + encodeURIComponent(query), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    userSearchResults.innerHTML = '';
+                    if (data.results.length > 0) {
+                        data.results.forEach(function (user) {
+                            var div = document.createElement('div');
+                            div.classList.add('list-group-item');
+                            div.textContent = user.username;
+                            div.dataset.userId = user.id;
+                            userSearchResults.appendChild(div);
+                        });
+                        userSearchResults.style.display = 'block';
+                    } else {
+                        userSearchResults.style.display = 'none';
+                    }
+                });
+            } else {
+                userSearchResults.style.display = 'none';
+            }
         });
     
-        label.each(function(d) {
-            // Etiketler düğümlerle aynı opaklığa sahip olsun
-            d3.select(this).style("opacity", d.opacity);
+        // Handle clicks on search results
+        userSearchResults.addEventListener('click', function(event) {
+            var target = event.target;
+            if (target && target.matches('.list-group-item')) {
+                var userId = target.dataset.userId;
+                var username = target.textContent;
+    
+                // Add user to selected list
+                if (!selectedUsers.includes(userId)) {
+                    selectedUsers.push(userId);
+                    addUserToSelectedList(userId, username);
+                }
+    
+                userSearchInput.value = '';
+                userSearchResults.style.display = 'none';
+            }
         });
     
-        label.style("font-size", function(d) {
-            // Zoom seviyesi ve kullanıcı sayısına göre font boyutunu ayarlayın
-            var baseSize = 12 + (d.users.length * 2);
-            return baseSize * zoomLevel + "px";
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#user-search-input') && !event.target.closest('#user-search-results')) {
+                userSearchResults.style.display = 'none';
+            }
         });
     }
 
-    // Compute the maximum number of users for any question
-    questionData.maxUserCount = d3.max(questionData.nodes, function(d) { return d.users.length; }) || 1;
-
-    // Initialize node visibility
-    updateNodeVisibility(1);
-
-    // Seçili kullanıcıları tutmak için bir dizi
-    var selectedUsers = [];
-
-    // Kullanıcı arama sonuçlarına tıklandığında
-    document.getElementById('user-search-results').addEventListener('click', function (event) {
-        if (event.target && event.target.matches('.user-search-item')) {
-            var userId = event.target.dataset.userId;
-            var username = event.target.textContent;
-
-            // Kullanıcı zaten seçiliyse eklemeyin
-            if (!selectedUsers.includes(userId)) {
-                selectedUsers.push(userId);
-                addUserToSelectedList(userId, username);
-            }
-
-            document.getElementById('user-search-input').value = '';
-            this.style.display = 'none';
-        }
-    });
-
-    // Seçili kullanıcılar listesine kullanıcı ekleme fonksiyonu
+    // Seçili kullanıcılar listesine ekleme fonksiyonu
     function addUserToSelectedList(userId, username) {
         var userList = document.getElementById('selected-users-list');
         var li = document.createElement('li');
@@ -220,7 +332,6 @@ document.addEventListener('DOMContentLoaded', function () {
         removeBtn.classList.add('btn', 'btn-sm', 'btn-danger');
         removeBtn.textContent = 'Kaldır';
         removeBtn.addEventListener('click', function () {
-            // Kullanıcıyı listeden ve seçili kullanıcılardan kaldır
             selectedUsers = selectedUsers.filter(function (id) {
                 return id !== userId;
             });
@@ -231,193 +342,29 @@ document.addEventListener('DOMContentLoaded', function () {
         userList.appendChild(li);
     }
 
-    // "Filtrele" butonuna tıklandığında
-    document.getElementById('btn-filter-users').addEventListener('click', function () {
-        if (selectedUsers.length > 0) {
-            var params = selectedUsers.map(function(id) {
-                return 'user_id=' + id;
-            }).join('&');
-            fetch('/map-data/?' + params)
-                .then(response => response.json())
-                .then(data => {
-                    updateGraph(data);
-                });
-        }
-    });
-
-    // "Ben" ve "Tümü" butonlarına tıklandığında seçili kullanıcıları temizleyin
-    document.getElementById('btn-me').addEventListener('click', function () {
-        // Seçili kullanıcıları temizleyin
-        selectedUsers = [];
-        document.getElementById('selected-users-list').innerHTML = '';
-
-        fetch('/map-data/?filter=me')
-            .then(response => response.json())
-            .then(data => {
-                updateGraph(data);
-            });
-    });
-
-    document.getElementById('btn-all').addEventListener('click', function () {
-        // Seçili kullanıcıları temizleyin
-        selectedUsers = [];
-        document.getElementById('selected-users-list').innerHTML = '';
-
-        fetch('/map-data/')
-            .then(response => response.json())
-            .then(data => {
-                updateGraph(data);
-            });
-    });
-
-    // User search functionality
-    document.getElementById('user-search-input').addEventListener('input', function () {
-        var query = this.value;
-        if (query.length > 0) {
-            fetch('/user-search/?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
-                    var resultsDiv = document.getElementById('user-search-results');
-                    resultsDiv.innerHTML = '';
-                    data.results.forEach(function (user) {
-                        var div = document.createElement('div');
-                        div.classList.add('user-search-item');
-                        div.textContent = user.username;
-                        div.dataset.userId = user.id;
-                        resultsDiv.appendChild(div);
-                    });
-                    resultsDiv.style.display = 'block';
-                });
-        } else {
-            document.getElementById('user-search-results').style.display = 'none';
-        }
-    });
-
-    // Hide user search results when clicking outside
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('#user-search-input') && !event.target.closest('#user-search-results')) {
-            document.getElementById('user-search-results').style.display = 'none';
-        }
-    });
-
-    // Function to zoom to a specific node
-    function zoomToNode(node) {
-        var scale = 1.5; // Yakınlaştırma ölçeği
-        var x = -node.x * scale + width / 2;
-        var y = -node.y * scale + height / 2;
-        svg.transition()
-            .duration(750)
-            .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
-    }
-
-    // Function to update the graph with new data
-    function updateGraph(newData) {
-        // Stop the simulation
+    // Grafiği güncelleme fonksiyonu
+    function updateGraph() {
+        // Simülasyonu durdurun
         simulation.stop();
 
-        // Remove existing elements
-        link.remove();
-        node.remove();
-        label.remove();
+        // Mevcut elemanları kaldırın
+        g.selectAll("*").remove();
 
-        // Update questionData
-        questionData = newData;
-
-        // Recalculate maxUserCount
-        questionData.maxUserCount = d3.max(questionData.nodes, function (d) { return d.users.length; }) || 1;
-
-        // Recreate links
-        link = g.append("g")
-            .attr("class", "links")
-            .selectAll("line")
-            .data(questionData.links)
-            .enter().append("line")
-            .attr("stroke-width", 2)
-            .attr("stroke", "#999")
-            .attr("marker-end", "url(#arrowhead)");
-
-        // Recreate nodes
-        node = g.append("g")
-            .attr("class", "nodes")
-            .selectAll("circle")
-            .data(questionData.nodes)
-            .enter().append("circle")
-            .attr("r", function (d) { return d.size; })
-            .attr("fill", function (d) {
-                if (d.users.length > 1) {
-                    return "#A9A9A9";
-                } else {
-                    return d.color;
-                }
-            })
-            .on("click", function (event, d) {
-                window.location.href = "/question/" + d.question_id + "/";
-            })
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended)
-            );
-
-        // Recreate labels
-        label = g.append("g")
-            .attr("class", "labels")
-            .selectAll("text")
-            .data(questionData.nodes)
-            .enter().append("text")
-            .attr("dy", -10)
-            .attr("text-anchor", "middle")
-            .text(function (d) { return d.label; })
-            .style("font-size", function (d) {
-                return (12 + (d.users.length * 2)) + "px";
-            });
-
-        // Restart the simulation with new data
-        simulation.nodes(questionData.nodes);
-        simulation.force("link").links(questionData.links);
-        simulation.alpha(1).restart();
-
-        // Initialize node visibility
-        updateNodeVisibility(1);
+        // Grafiği yeniden oluşturun
+        createGraph();
     }
 
-    // User search functionality
-    document.getElementById('user-search-input').addEventListener('input', function () {
-        var query = this.value;
-        if (query.length > 0) {
-            fetch('/user-search/?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
-                    var resultsDiv = document.getElementById('user-search-results');
-                    resultsDiv.innerHTML = '';
-                    data.results.forEach(function (user) {
-                        var div = document.createElement('div');
-                        div.classList.add('user-search-item');
-                        div.textContent = user.username;
-                        div.dataset.userId = user.id;
-                        resultsDiv.appendChild(div);
-                    });
-                    resultsDiv.style.display = 'block';
-                });
-        } else {
-            document.getElementById('user-search-results').style.display = 'none';
-        }
-    });
-
-    // Hide user search results when clicking outside
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('#user-search-input') && !event.target.closest('#user-search-results')) {
-            document.getElementById('user-search-results').style.display = 'none';
-        }
-    });
-
-    // Function to zoom to a specific node
-    function zoomToNode(node) {
-        var scale = 1.5; // Yakınlaştırma ölçeği
-        var x = -node.x * scale + width / 2;
-        var y = -node.y * scale + height / 2;
-        svg.transition()
-            .duration(750)
-            .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+    // URL parametresini alma fonksiyonu
+    function getParameterByName(name) {
+        var url = window.location.href;
+        name = name.replace(/[\\[\\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+        var results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\\+/g, " "));
     }
+
+    // Başlatma fonksiyonunu çağırın
+    init();
 });

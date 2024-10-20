@@ -6,7 +6,7 @@
 <div class="container" id="naber">
     <div class="row">
         <!-- Left Column: All Questions -->
-        <div class="col-md-3" style="border-right: 1px solid #ccc;">
+        <div class="col-md-2" style="border-right: 1px solid #ccc;">
             <h4>Tüm Sorular</h4>
             <ul class="list-unstyled">
                 {% for question in all_questions %}
@@ -21,7 +21,7 @@
             {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
         </div>
         <!-- Middle Column: Random Questions and Answers -->
-        <div class="col-md-6">
+        <div class="col-md-8">
             <h4>Rastgele Sorular ve Yanıtlar</h4>
             {% for answer in random_items %}
             <div class="card mb-3">
@@ -115,7 +115,7 @@
         </div>
 
         <!-- Right Column: Your Starting Questions -->
-        <div class="col-md-3" style="border-left: 1px solid #ccc;">
+        <div class="col-md-2" style="border-left: 1px solid #ccc;">
             <h5>Başlangıç Sorularınız</h5>
             {% if starting_questions %}
                 <ul class="list-unstyled">

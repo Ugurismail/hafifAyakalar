@@ -56,10 +56,11 @@
             </button>
             <!-- Navbar İçeriği -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Ortadaki Arama Formu (Sadece Giriş Yapmış Kullanıcılar İçin) -->
                 {% if user.is_authenticated %}
-                <form id="search-form" action="{% url 'search' %}" method="get" class="d-flex mx-auto" style="width: 400px;">
+                <form id="search-form" action="{% url 'search' %}" method="get" class="d-flex mx-auto position-relative" style="width: 400px;">
                     <input type="text" id="search-input" name="q" placeholder="Ara..." autocomplete="off" class="form-control me-2">
+                    <!-- Arama Sonuçları İçin Div -->
+                    <div id="search-results" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                 </form>
                 {% endif %}
                 <!-- Sağ taraftaki Navbar Öğeleri -->

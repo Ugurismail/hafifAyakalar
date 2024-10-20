@@ -10,6 +10,7 @@
         <div class="card-body">
             <form method="post">
                 {% csrf_token %}
+                <div class="form-group mt-3">
                 <!-- Araç Çubuğu -->
                 <div class="btn-toolbar mb-2" role="toolbar">
                     <div class="btn-group me-2" role="group">
@@ -28,6 +29,9 @@
                     </button>
                 </div>
                 {{ form.answer_text }}
+                </div>
+
+                
                 <button type="submit" class="btn btn-primary mt-2">Güncelle</button>
             </form>
         </div>
@@ -41,5 +45,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'core/js/answer_form.js' %}"></script>
+<script src="{% static 'js/answer_form.js' %}"></script>
 {% endblock %}

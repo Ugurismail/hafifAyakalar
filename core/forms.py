@@ -71,6 +71,9 @@ class AnswerForm(forms.ModelForm):
     class Meta:
         model = Answer
         fields = ['answer_text']
+        widgets = {
+            'answer_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Yanıtınızı buraya yazın'}),
+        }
 
 class MessageForm(forms.ModelForm):
     recipient = forms.ModelChoiceField(

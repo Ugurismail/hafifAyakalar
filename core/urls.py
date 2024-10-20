@@ -38,8 +38,10 @@ urlpatterns = [
     path('answer/<int:answer_id>/delete/', views.delete_answer, name='delete_answer'),
     path('add-starting-question/', views.add_starting_question, name='add_starting_question'),
     path('question/<int:question_id>/delete/', views.delete_question, name='delete_question'),
-    path('question/<int:question_id>/answer/<int:answer_id>/', views.single_answer, name='single_answer')
-
+    path('question/<int:question_id>/answer/<int:answer_id>/', views.single_answer, name='single_answer'),
+    path('map-data/', views.map_data, name='map_data'),
+    path('user-search/', views.user_search, name='user_search'),
+    
 ]
 
 # urlpatterns = [

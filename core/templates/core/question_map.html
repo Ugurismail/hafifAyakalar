@@ -1,4 +1,4 @@
-={% extends 'core/base.html' %}
+{% extends 'core/base.html' %}
 {% load static %}
 
 {% block content %}
@@ -9,9 +9,10 @@
                 <div class="card-body">
                     <button class="btn btn-primary btn-block mb-2" id="btn-me">Ben</button>
                     <button class="btn btn-primary btn-block mb-2" id="btn-all">Tümü</button>
-                    <div style="position: relative;">
-                        <input type="text" class="form-control mb-0" id="user-search-input" placeholder="Kullanıcı Ara">
-                        <div id="user-search-results"></div>
+                    <div id="user-search-container" class="position-relative">
+                        <input type="text" class="form-control mb-0" id="user-search-input" placeholder="Kullanıcı Ara" autocomplete="off">
+                        <!-- Arama Sonuçları İçin Div -->
+                        <div id="user-search-results" class="list-group position-absolute w-100" style="z-index: 1000; display: none;"></div>
                     </div>
                     <!-- Seçili Kullanıcılar Listesi -->
                     <div id="selected-users" class="mt-2">

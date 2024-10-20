@@ -1,17 +1,24 @@
+<!-- templates/core/search_results.html -->
 {% extends 'core/base.html' %}
 
 {% block content %}
-<h2>Arama Sonuçları</h2>
-
-{% if results %}
-    <ul class="list-group">
-        {% for question in results %}
-            <li class="list-group-item">
-                <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>Aramanıza uygun sonuç bulunamadı.</p>
-{% endif %}
+<div class="container mt-4">
+    <h2>"{{ query }}" için arama sonuçları:</h2>
+    {% if questions or users %}
+        <ul class="list-group">
+            {% for question in questions %}
+                <li class="list-group-item">
+                    <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
+                </li>
+            {% endfor %}
+            {% for user in users %}
+                <li class="list-group-item">
+                    <a href="{% url 'profile' user.username %}">@{{ user.username }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <!-- Sonuç bulunamadığında, `search_no_results.html` şablonuna yönlendiriliyor -->
+    {% endif %}
+</div>
 {% endblock %}
