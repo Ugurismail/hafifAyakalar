@@ -1031,13 +1031,13 @@ def map_data(request):
     user_ids = request.GET.getlist('user_id')
 
     if filter_param == 'me':
-        # Only the questions of the logged-in user, from_search=False ile filtreliyoruz
-        questions = Question.objects.filter(user=request.user, from_search=False)
+        # Giriş yapan kullanıcının soruları
+        questions = Question.objects.filter(users=request.user, from_search=False)
     elif user_ids:
-        # Questions from selected users, from_search=False ile filtreliyoruz
-        questions = Question.objects.filter(user__id__in=user_ids, from_search=False).distinct()
+        # Seçili kullanıcıların soruları
+        questions = Question.objects.filter(users__id__in=user_ids, from_search=False).distinct()
     else:
-        # All questions, from_search=False olanlar
+        # Tüm sorular
         questions = Question.objects.filter(from_search=False)
 
     question_nodes = generate_question_nodes(questions)
@@ -1045,32 +1045,71 @@ def map_data(request):
     return JsonResponse(question_nodes, safe=False)
 
 
-
 def generate_question_nodes(questions):
-    nodes = []
+    nodes = {}
     links = []
+    question_text_to_ids = defaultdict(list)
 
-    # Build nodes
+    # Düğümleri oluştur
     for question in questions:
-        nodes.append({
-            'id': question.id,
-            'question_id': question.id,
-            'label': question.question_text,
-            'size': 10,  # Adjust size as needed
-            'users': [question.user.id],
-            'color': '#1f77b4',  # Use a default color or assign based on user
-        })
+        key = question.question_text
+        question_text_to_ids[key].append(question.id)
+        if key not in nodes:
+            associated_users = list(question.users.all())
+            user_ids = [user.id for user in associated_users]
+            node = {
+                "id": f"q{hash(key)}",
+                "label": question.question_text,
+                "users": user_ids,
+                "size": 20 + 10 * (len(user_ids) - 1),
+                "color": '',
+                "question_id": question.id,
+                "question_ids": [question.id],
+            }
+            # Rengi belirle
+            if len(user_ids) == 1:
+                node["color"] = get_user_color(user_ids[0])
+            elif len(user_ids) > 1:
+                node["color"] = '#CCCCCC'  # Gri renk
+            else:
+                node["color"] = '#000000'  # Siyah
+            nodes[key] = node
+        else:
+            # Kullanıcıları ve boyutu güncelle
+            existing_node = nodes[key]
+            new_user_ids = [user.id for user in question.users.all()]
+            combined_user_ids = list(set(existing_node["users"] + new_user_ids))
+            existing_node["users"] = combined_user_ids
+            existing_node["size"] = 20 + 5 * (len(combined_user_ids) - 1)
+            existing_node["question_ids"].append(question.id)
+            # Rengi güncelle
+            if len(combined_user_ids) == 1:
+                existing_node["color"] = get_user_color(combined_user_ids[0])
+            elif len(combined_user_ids) > 1:
+                existing_node["color"] = '#CCCCCC'
+            else:
+                existing_node["color"] = '#000000'
 
-    # Build links (if you have relationships between questions)
+    # Bağlantıları oluştur
+    link_set = set()
     for question in questions:
+        source_key = question.question_text
         for subquestion in question.subquestions.all():
-            if subquestion in questions:
-                links.append({
-                    'source': question.id,
-                    'target': subquestion.id
-                })
+            target_key = subquestion.question_text
+            if target_key in nodes:
+                link_id = (nodes[source_key]["id"], nodes[target_key]["id"])
+                if link_id not in link_set:
+                    links.append({
+                        "source": nodes[source_key]["id"],
+                        "target": nodes[target_key]["id"]
+                    })
+                    link_set.add(link_id)
 
-    return {'nodes': nodes, 'links': links}
+    question_nodes = {
+        "nodes": list(nodes.values()),
+        "links": links
+    }
+    return question_nodes
 
 @login_required
 def mark_messages_as_read(request):
