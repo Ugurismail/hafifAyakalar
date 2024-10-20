@@ -49,6 +49,7 @@ class Question(models.Model):
     subquestions = models.ManyToManyField('self', symmetrical=False, related_name='parent_questions', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    from_search = models.BooleanField(default=False) 
     # parent_questions alanını kaldırdık
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
     users = models.ManyToManyField(

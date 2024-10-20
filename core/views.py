@@ -21,9 +21,6 @@ from django.core.serializers import serialize
 
 
 
-
-
-
 def home(request):
     if request.user.is_authenticated:
         user_profile = request.user.userprofile
@@ -378,8 +375,10 @@ def add_question_from_search(request):
             # Create new question
             question = Question.objects.create(
                 question_text=query,
-                user=request.user
+                user=request.user,
+                from_search=True  # Burada from_search=True olarak ayarlıyoruz
             )
+            question.users.add(request.user)  # Kullanıcıyı ekliyoruz
             # Create new answer
             answer = answer_form.save(commit=False)
             answer.user = request.user
@@ -510,7 +509,7 @@ def question_detail(request, question_id):
 @login_required
 def question_map(request):
     question_id = request.GET.get('question_id', None)
-    questions = Question.objects.all()
+    questions = Question.objects.filter(from_search=False)
     nodes = {}
     links = []
     question_text_to_ids = defaultdict(list)
@@ -1026,25 +1025,26 @@ def user_search(request):
     results = [{'id': user.id, 'username': user.username} for user in users]
     return JsonResponse({'results': results})
 
-
 @login_required
 def map_data(request):
     filter_param = request.GET.get('filter')
     user_ids = request.GET.getlist('user_id')
 
     if filter_param == 'me':
-        # Only the questions of the logged-in user
-        questions = Question.objects.filter(user=request.user)
+        # Only the questions of the logged-in user, from_search=False ile filtreliyoruz
+        questions = Question.objects.filter(user=request.user, from_search=False)
     elif user_ids:
-        # Questions from selected users
-        questions = Question.objects.filter(user__id__in=user_ids).distinct()
+        # Questions from selected users, from_search=False ile filtreliyoruz
+        questions = Question.objects.filter(user__id__in=user_ids, from_search=False).distinct()
     else:
-        # All questions
-        questions = Question.objects.all()
+        # All questions, from_search=False olanlar
+        questions = Question.objects.filter(from_search=False)
 
     question_nodes = generate_question_nodes(questions)
 
     return JsonResponse(question_nodes, safe=False)
+
+
 
 def generate_question_nodes(questions):
     nodes = []
