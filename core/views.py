@@ -348,7 +348,8 @@ def search(request):
     if query:
         questions = Question.objects.filter(question_text__icontains=query)
         users = User.objects.filter(username__icontains=query)
-        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        is_ajax = request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or request.GET.get('ajax') == '1'
+        if is_ajax:
             # AJAX isteği ise JSON formatında yanıt dön
             results = []
             for question in questions:
@@ -357,12 +358,7 @@ def search(request):
                     'id': question.id,
                     'text': question.question_text
                 })
-            for user in users:
-                results.append({
-                    'type': 'user',
-                    'id': user.username,
-                    'text': '@' + user.username  # Kullanıcı adının başına '@' ekleyin
-                })
+            # Diğer kodlar...
             return JsonResponse({'results': results})
         else:
             # Normal arama sonuçları sayfasını render et
@@ -370,6 +366,7 @@ def search(request):
             return render(request, 'core/search_results.html', context)
     else:
         return render(request, 'core/search_results.html', {})
+
 
 @login_required
 def add_question_from_search(request):
