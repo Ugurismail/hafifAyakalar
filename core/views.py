@@ -1071,3 +1071,12 @@ def generate_question_nodes(questions):
                 })
 
     return {'nodes': nodes, 'links': links}
+
+@login_required
+def mark_messages_as_read(request):
+    if request.method == 'POST':
+        sender_username = request.POST.get('sender_username')
+        sender = get_object_or_404(User, username=sender_username)
+        Message.objects.filter(sender=sender, recipient=request.user, is_read=False).update(is_read=True)
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'error': 'Invalid request'}, status=400)

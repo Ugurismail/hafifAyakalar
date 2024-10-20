@@ -1,7 +1,6 @@
 // static/js/chat.js
 
-// CSRF Token'ı meta etiketinden al
-
+// CSRF Token'ı çerezlerden al
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -27,7 +26,6 @@ $.ajaxSetup({
         }
     }
 });
-
 
 // Global değişkenler
 var openChats = {};  // Açık sohbetleri tutar
@@ -78,12 +76,16 @@ function createChatWindow(username) {
     var chatWindow = $('<div>').addClass('chat-window').attr('data-username', username);
 
     var chatHeader = $('<div>').addClass('chat-header');
-    var title = $('<span>').text(username);
+    var title = $('<span>').addClass('chat-title').text(username);
+
+    // Okunmamış mesaj sayısını gösterecek span
+    var unreadCountSpan = $('<span>').addClass('unread-count').hide(); // Başlangıçta gizli
+
     var closeButton = $('<button>').addClass('close-button').text('X').click(function(event) {
         event.stopPropagation(); // Başlık tıklama olayını tetiklemesini engelle
         closeChat(username);
     });
-    chatHeader.append(title).append(closeButton);
+    chatHeader.append(title).append(unreadCountSpan).append(closeButton);
 
     var chatMessages = $('<div>').addClass('chat-messages');
     var chatInput = $('<div>').addClass('chat-input');
@@ -148,6 +150,21 @@ function restoreChat(username) {
     chat.isMinimized = false;
     positionChatWindows();
     chatWindow.find('.chat-messages').scrollTop(chatWindow.find('.chat-messages')[0].scrollHeight);
+
+    // Mesajları okundu olarak işaretle ve stilini güncelle
+    newMessageCounts[username] = 0;
+    updateChatWindowStyle(username);
+    updateUnreadCount();
+
+    // Sunucuya mesajları okundu olarak işaretlediğimizi bildirelim
+    markMessagesAsRead(username);
+}
+
+// Mesajları okundu olarak işaretleme fonksiyonu
+function markMessagesAsRead(username) {
+    $.post('/messages/mark_as_read/', {
+        'sender_username': username
+    });
 }
 
 // Sohbet pencerelerinin konumunu ve genişliğini ayarlama fonksiyonu
@@ -209,8 +226,7 @@ function loadMessages(username) {
         });
         chatMessages.scrollTop(chatMessages[0].scrollHeight);
 
-        // Mesajlar yüklendiğinde okunmamış mesaj sayısını sıfırla ve stilini güncelle
-        newMessageCounts[username] = 0;
+        // Mesajlar yüklendiğinde stilini güncelle
         updateChatWindowStyle(username);
     });
 }
@@ -257,7 +273,7 @@ function checkForNewMessages() {
                 if (!openChats[sender]) {
                     openChat(sender, message.sender_id);
                 } else {
-                    // Sohbet penceresi açık ise, mesajları güncelle ve arka plan rengini değiştir
+                    // Sohbet penceresi açık ise, mesajları güncelle ve stilini güncelle
                     loadMessages(sender);
                     updateChatWindowStyle(sender);
                 }
@@ -270,32 +286,45 @@ function checkForNewMessages() {
 
 // Sohbet penceresinin stilini güncelleme fonksiyonu
 function updateChatWindowStyle(username) {
-    var chatWindow = openChats[username].window;
+    var chat = openChats[username];
+    var chatWindow = chat.window;
+    var chatHeader = chatWindow.find('.chat-header');
+    var unreadCountSpan = chatHeader.find('.unread-count');
+
     if (newMessageCounts[username] && newMessageCounts[username] > 0) {
-        // Okunmamış mesaj varsa arka plan rengini değiştir
-        chatWindow.addClass('unread');
+        // Okunmamış mesaj varsa başlığın arka plan rengini değiştir ve mesaj sayısını göster
+        chatHeader.addClass('new-message');
+        unreadCountSpan.text(newMessageCounts[username]);
+        unreadCountSpan.show();
     } else {
-        // Okunmamış mesaj yoksa arka plan rengini kaldır
-        chatWindow.removeClass('unread');
+        // Okunmamış mesaj yoksa varsayılan stile dön ve mesaj sayısını gizle
+        chatHeader.removeClass('new-message');
+        unreadCountSpan.hide();
     }
 }
 
 // Okunmamış mesaj sayısını güncelleme fonksiyonu
 function updateUnreadCount() {
     var totalUnread = Object.values(newMessageCounts).reduce((a, b) => a + b, 0);
-    var unreadCountElement = $('#unread-count');
+    var unreadCountElement = $('#unread-count'); // Bu elementin sayfada mevcut olduğundan emin olun
     if (totalUnread > 0) {
         unreadCountElement.text('(' + totalUnread + ')');
+        unreadCountElement.show();
     } else {
         unreadCountElement.text('');
+        unreadCountElement.hide();
     }
 }
 
 $(document).ready(function() {
+    console.log('chat.js yüklendi ve hazır'); // Debug amaçlı
+
     // "Mesaj Gönder" butonuna tıklama event'ı
     $(document).on('click', '.message-button', function() {
+        console.log('Mesaj Gönder butonuna tıklandı'); // Debug amaçlı
         var username = $(this).data('username');
         var userId = $(this).data('userid');
+        console.log('username:', username, 'userId:', userId); // Debug amaçlı
         openChat(username, userId);
     });
 
@@ -327,4 +356,3 @@ $(document).ready(function() {
         positionChatWindows();
     });
 });
-

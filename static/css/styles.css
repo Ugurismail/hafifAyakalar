@@ -421,3 +421,18 @@ a.text-dark:hover {
 #user-search-results .list-group-item {
     cursor: pointer;
 }
+
+.chat-window.new-message {
+    background-color: #d0e7ff; /* Açık mavi renk */
+}
+
+
+/* Okunmamış mesaj sayısını göstermek için badge stili */
+.chat-header .unread-count {
+    background-color: #ff3b30; /* Kırmızı renk */
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    margin-left: 5px;
+    font-size: 0.9em;
+}

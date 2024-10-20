@@ -41,6 +41,7 @@ urlpatterns = [
     path('question/<int:question_id>/answer/<int:answer_id>/', views.single_answer, name='single_answer'),
     path('map-data/', views.map_data, name='map_data'),
     path('user-search/', views.user_search, name='user_search'),
+    path('messages/mark_as_read/', views.mark_messages_as_read, name='mark_messages_as_read'),
     
 ]
 

@@ -70,6 +70,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'user_homepage' %}" title="Ana Sayfa"><i class="bi bi-house"></i></a>
                     </li>
+                    <a href="{% url 'conversations' %}" id="messages-link">
+                        Mesajlar <span id="unread-count" style="display: none;"></span>
+                    </a>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'question_map' %}" title="Harita"><i class="bi bi-diagram-3"></i></a>
                     </li>
