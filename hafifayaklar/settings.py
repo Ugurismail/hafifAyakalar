@@ -113,3 +113,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'  # This should match the name of your login URL pattern
 LOGIN_REDIRECT_URL = 'user_homepage'  # Optional: Redirect after successful login
 LOGOUT_REDIRECT_URL = 'login'  # Optional: Redirect after logout
+
+CSRF_COOKIE_HTTPONLY = False

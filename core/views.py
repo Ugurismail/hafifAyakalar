@@ -251,6 +251,7 @@ def send_message_ajax(request):
         })
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+
 @login_required
 def user_list(request):
     users = User.objects.exclude(id=request.user.id)  # Exclude the current user

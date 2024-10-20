@@ -1,9 +1,25 @@
 // static/js/chat.js
 
 // CSRF Token'ı meta etiketinden al
-var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-// jQuery için global ayar yaparak tüm AJAX isteklerine CSRF token'ını ekleyin
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // İstediğimiz isimle başlayan bir çerez var mı kontrol edin
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+var csrfToken = getCookie('csrftoken');
+
+// Tüm AJAX isteklerine CSRF token'ını ekleyin
 $.ajaxSetup({
     beforeSend: function(xhr, settings) {
         if (!(/^GET|HEAD|OPTIONS|TRACE$/.test(settings.type)) && !this.crossDomain) {
@@ -11,6 +27,7 @@ $.ajaxSetup({
         }
     }
 });
+
 
 // Global değişkenler
 var openChats = {};  // Açık sohbetleri tutar
@@ -310,3 +327,4 @@ $(document).ready(function() {
         positionChatWindows();
     });
 });
+
