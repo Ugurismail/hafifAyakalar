@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = document.getElementById('link-url').value.trim();
             const text = document.getElementById('link-text').value.trim();
             if (url && text && currentTextarea) {
-                const linkMarkup = <a href="${url}">${text}</a>;
+                const linkMarkup = `<a href="${url}">${text}</a>`;
                 insertAtCursor(currentTextarea, linkMarkup);
                 linkModal.hide();
                 linkForm.reset();
@@ -81,24 +81,26 @@ document.addEventListener('DOMContentLoaded', function() {
         referenceSearchInput.addEventListener('input', function() {
             const query = referenceSearchInput.value.trim();
             if (query.length > 1) {
-                fetch(/search/?q=${encodeURIComponent(query)}&ajax=1)
+                fetch(`/search/?q=${encodeURIComponent(query)}&ajax=1`)
                     .then(response => response.json())
                     .then(data => {
                         referenceSearchResults.innerHTML = '';
                         if (data.results && data.results.length > 0) {
                             const ul = document.createElement('ul');
                             ul.classList.add('list-group');
-                            data.results.forEach(question => {
+                            data.results.forEach(result => {
                                 const li = document.createElement('li');
                                 li.classList.add('list-group-item');
-                                li.textContent = question.question_text;
-                                li.addEventListener('click', function() {
-                                    const referenceMarkup = (bkz: <a href="/question/${question.id}/">${question.question_text}</a>);
-                                    insertAtCursor(currentTextarea, referenceMarkup);
-                                    referenceModal.hide();
-                                    referenceSearchInput.value = '';
-                                    referenceSearchResults.innerHTML = '';
-                                });
+                                if (result.type === 'question') {
+                                    li.textContent = result.text;
+                                    li.addEventListener('click', function() {
+                                        const referenceMarkup = `(bkz: <a href="/question/${result.id}/">${result.text}</a>)`;
+                                        insertAtCursor(currentTextarea, referenceMarkup);
+                                        referenceModal.hide();
+                                        referenceSearchInput.value = '';
+                                        referenceSearchResults.innerHTML = '';
+                                    });
+                                }
                                 ul.appendChild(li);
                             });
                             referenceSearchResults.appendChild(ul);
@@ -122,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedText = textarea.value.substring(startPos, endPos);
         const beforeValue = textarea.value.substring(0, startPos);
         const afterValue = textarea.value.substring(endPos);
-        const newText = <${tag}>${selectedText}</${tag}>;        
+        const newText = `<${tag}>${selectedText}</${tag}>`;
         textarea.value = beforeValue + newText + afterValue;
         textarea.selectionStart = startPos;
         textarea.selectionEnd = startPos + newText.length;
