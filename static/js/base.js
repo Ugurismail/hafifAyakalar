@@ -1,4 +1,3 @@
-// static/js/base.js
 document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('search-input');
     var searchResults = document.getElementById('search-results');
@@ -15,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Clear previous results
+                // Önceki sonuçları temizle
                 searchResults.innerHTML = '';
                 if (data.results.length > 0) {
                     data.results.forEach(function(item) {
@@ -23,11 +22,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         div.classList.add('list-group-item');
                         div.textContent = item.text;
                         div.dataset.type = item.type;
-                        div.dataset.id = item.id;
+                        if (item.type === 'question') {
+                            div.dataset.id = item.id;
+                        } else if (item.type === 'user') {
+                            div.dataset.username = item.username;  // data-username özelliğini ekliyoruz
+                        }
                         searchResults.appendChild(div);
                     });
                 } else {
-                    // No results found, show 'Create new topic' option
+                    // Sonuç bulunamadı, 'Yeni başlık oluştur' seçeneğini göster
                     var div = document.createElement('div');
                     div.classList.add('list-group-item');
                     div.dataset.type = 'no-results';
@@ -51,43 +54,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle Enter key
-    searchInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            var firstResult = searchResults.querySelector('.list-group-item');
-            if (firstResult) {
-                var type = firstResult.dataset.type;
-                var id = firstResult.dataset.id;
-                if (type === 'question') {
-                    window.location.href = '/question/' + id + '/';
-                } else if (type === 'user') {
-                    window.location.href = '/profile/' + id + '/';
-                } else if (type === 'no-results') {
-                    // Redirect to 'add_question_from_search'
-                    window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(query);
-                }
-            } else {
-                // No results at all, redirect to 'add_question_from_search'
-                window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(query);
-            }
-        }
-    });
-
-    // Handle clicks on search results
+    // Tıklama olayını yönetme
     searchResults.addEventListener('click', function(event) {
         var target = event.target;
-        if (target && target.id === 'create-new-question') {
-            event.preventDefault();
-            // Redirect to 'add_question_from_search'
-            window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(query);
-        } else if (target && target.matches('.list-group-item')) {
+        if (target.classList.contains('list-group-item')) {
             var type = target.dataset.type;
-            var id = target.dataset.id;
             if (type === 'question') {
+                var id = target.dataset.id;
                 window.location.href = '/question/' + id + '/';
             } else if (type === 'user') {
-                window.location.href = '/profile/' + id + '/';
+                var username = target.dataset.username;  // data-username özelliğini alıyoruz
+                window.location.href = '/profile/' + username + '/';  // username'i kullanarak yönlendiriyoruz
             }
         }
     });

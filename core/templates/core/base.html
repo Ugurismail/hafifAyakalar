@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <!-- Özel CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
     {% if user.is_authenticated %}
     <style>
         :root {
@@ -57,10 +58,10 @@
             <!-- Navbar İçeriği -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 {% if user.is_authenticated %}
-                <form id="search-form" action="{% url 'search' %}" method="get" class="d-flex mx-auto position-relative" style="width: 400px;">
-                    <input type="text" id="search-input" name="q" placeholder="Ara..." autocomplete="off" class="form-control me-2">
-                    <!-- Arama Sonuçları İçin Div -->
-                    <div id="search-results" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                <form id="search-form" class="position-relative">
+                    {% csrf_token %}
+                    <input type="text" id="search-input" class="form-control" placeholder="Ara...">
+                    <div id="search-results"></div>
                 </form>
                 {% endif %}
                 <!-- Sağ taraftaki Navbar Öğeleri -->
@@ -107,8 +108,8 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'profile' %}" title="Profil">
-                                    <i class="bi bi-person"></i>Profilim
-                                </a>
+                                    <i class="bi bi-person"></i> Profilim
+                                </a>                              
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'logout' %}" title="Çıkış"><i class="bi bi-box-arrow-right"></i>Çıkış Yap</a>
@@ -135,12 +136,15 @@
         {% endblock %}
     </div>
 
-    <!-- Bootstrap JS ve diğer kütüphaneler -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery'yi Bootstrap JS'den ÖNCE Dahil Edin -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Ana JavaScript dosyanız -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Ana JavaScript dosyalarınız -->
     <script src="{% static 'js/base.js' %}"></script>
     <script src="{% static 'js/chat.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+
     {% block extra_js %}{% endblock %}
     <!-- Navbar küçülme ve transparanlık efekti -->
     <script>

@@ -3,14 +3,14 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<h2>{{ profile_user.username }}'nin Profili</h2>
+<h1>{{ profile_user.username }}'ın Profili</h1>
 
-<p>Takipçi Sayısı: {{ followers_count }}</p>
-<p>Takip Edilen Sayısı: {{ following_count }}</p>
+<p>Takipçi Sayısı: {{ followers|length }}</p>
+<p>Takip Edilen Sayısı: {{ following|length }}</p>
 
-{% if user != profile_user %}
+{% if user.is_authenticated and user != profile_user %}
     <!-- Takip Et/Takipten Çık Butonu -->
-    {% if profile_user.userprofile in user.userprofile.following.all %}
+    {% if is_following %}
         <form action="{% url 'unfollow_user' username=profile_user.username %}" method="post">
             {% csrf_token %}
             <button type="submit">Takipten Çık</button>
@@ -29,5 +29,4 @@
 {% endif %}
 
 <!-- Kullanıcının soruları ve diğer içerikler -->
-
 {% endblock %}

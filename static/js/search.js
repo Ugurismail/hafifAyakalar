@@ -1,41 +1,69 @@
-$(document).ready(function() {
-    $('#search-input').keyup(function() {
-        var query = $(this).val();
-        if (query.length > 1) {
-            $.ajax({
-                url: '/search_suggestions/',
-                data: {
-                    'q': query
-                },
-                success: function(data) {
-                    // Önerileri göster
-                    showSuggestions(data.suggestions);
-                }
-            });
-        } else {
-            // Önerileri temizle
-            clearSuggestions();
-        }
-    });
+// console.log('search.js yüklendi ve çalışıyor');
+// $(document).ready(function() {
+//     var searchInput = $('#search-input');
+//     var resultsContainer = $('#search-results');
 
-    function showSuggestions(suggestions) {
-        // Önerileri göstermek için bir liste oluşturun veya mevcut bir listeyi güncelleyin
-        var suggestionList = $('#suggestion-list');
-        if (suggestionList.length === 0) {
-            suggestionList = $('<ul id="suggestion-list"></ul>');
-            $('#search-form').append(suggestionList);
-        }
-        suggestionList.empty();
-        suggestions.forEach(function(suggestion) {
-            var item = $('<li></li>').text(suggestion.label);
-            item.click(function() {
-                window.location.href = suggestion.url;
-            });
-            suggestionList.append(item);
-        });
-    }
+//     searchInput.on('input', function() {
+//         var query = $(this).val().trim();
+//         if (query.length > 0) {
+//             $.ajax({
+//                 url: '/search_suggestions/',  // Burada '/search_suggestions/' kullanıyoruz
+//                 data: {
+//                     'q': query
+//                 },
+//                 dataType: 'json',
+//                 success: function(data) {
+//                     console.log(data);  // Gelen veriyi konsola yazdırıyoruz
+//                     showSuggestions(data.suggestions);
+//                 },
+//                 error: function(xhr, status, error) {
+//                     console.error('Arama isteği başarısız oldu:', error);
+//                 }
+//             });
+//         } else {
+//             clearSuggestions();
+//         }
+//     });
 
-    function clearSuggestions() {
-        $('#suggestion-list').remove();
-    }
-});
+// // search.js
+
+// function showSuggestions(results) {
+//     clearSuggestions();
+//     if (results.length > 0) {
+//         var suggestionList = $('<ul id="suggestion-list" class="list-group position-absolute w-100"></ul>');
+//         results.forEach(function(item) {
+//             var listItem = $('<li class="list-group-item list-group-item-action"></li>');
+//             listItem.text(item.text);
+//             listItem.attr('data-type', item.type);
+//             if (item.type === 'question') {
+//                 listItem.attr('data-id', item.id);
+//             } else if (item.type === 'user') {
+//                 listItem.attr('data-username', item.username);  // data-username özelliğini ekliyoruz
+//             }
+//             suggestionList.append(listItem);
+//         });
+//         resultsContainer.append(suggestionList);
+//     }
+// }
+
+
+//     function clearSuggestions() {
+//         $('#suggestion-list').remove();
+//     }
+
+//     // Sonuçlara tıklama işlemi
+//     resultsContainer.on('click', 'li', function() {
+//         var url = $(this).attr('data-url');
+//         console.log('Tıklanan öğenin URL\'si:', url);  // URL'yi konsola yazdırıyoruz
+//         if (url) {
+//             window.location.href = url;
+//         }
+//     });
+
+//     // Arama kutusu veya sonuçlar dışında bir yere tıklandığında önerileri gizle
+//     $(document).on('click', function(event) {
+//         if (!$(event.target).closest('#search-form').length) {
+//             clearSuggestions();
+//         }
+//     });
+// });

@@ -1,6 +1,5 @@
 <!-- templates/core/search_results.html -->
 {% extends 'core/base.html' %}
-
 {% block content %}
 <div class="container mt-4">
     <h2>"{{ query }}" için arama sonuçları:</h2>
@@ -13,12 +12,12 @@
             {% endfor %}
             {% for user in users %}
                 <li class="list-group-item">
-                    <a href="{% url 'profile' user.username %}">@{{ user.username }}</a>
+                    <a href="{% url 'user_profile' user.username %}">@{{ user.username }}</a>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>Sonuç bulunamadı. <a href="{% url 'add_question_from_search' query %}">Yeni bir başlık oluşturmak ister misiniz?</a></p>
+        <p>Sonuç bulunamadı. <a href="{% url 'add_question_from_search' %}?q={{ query }}">Yeni bir başlık oluşturmak ister misiniz?</a></p>
     {% endif %}
 </div>
 {% endblock %}

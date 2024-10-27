@@ -124,18 +124,34 @@ def profile(request):
     invitation_tree = []
     if user.is_superuser:
         invitation_tree = get_invitation_tree(user)
-    return render(request, 'core/profile.html', {'user_profile': user_profile, 'invitation_tree': invitation_tree})
-
+    context = {
+        'user': user,
+        'user_profile': user_profile,
+        'invitation_tree': invitation_tree,
+    }
+    return render(request, 'core/profile.html', context)
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
-    user_profile = profile_user.userprofile
-    followers_count = user_profile.followers.count()
-    following_count = user_profile.following.count()
-    return render(request, 'core/user_profile.html', {
-        'profile_user': profile_user,
-        'followers_count': followers_count,
-        'following_count': following_count
-    })
+    user_profile = get_object_or_404(UserProfile, user=profile_user)
+
+    followers = user_profile.followers.all()
+    following = user_profile.following.all()
+
+    # Kullanıcı giriş yapmamışsa, 'user.userprofile' erişimi hata verebilir
+    if request.user.is_authenticated:
+        current_user_profile = request.user.userprofile
+        is_following = current_user_profile.following.filter(user=profile_user).exists()
+    else:
+        is_following = False
+
+    context = {
+        'profile_user': profile_user,      # Profilini görüntülediğiniz kullanıcı
+        'user_profile': user_profile,      # Kullanıcının profili
+        'followers': followers,
+        'following': following,
+        'is_following': is_following,      # Takip edip etmediğinizi belirten değişken
+    }
+    return render(request, 'core/user_profile.html', context)
 
 def get_invitation_tree(user):
     invitations = Invitation.objects.filter(sender=user)
@@ -319,7 +335,7 @@ def search_suggestions(request):
     for user in users:
         suggestions.append({
             'label': '@' + user.username,
-            'url': reverse('user_profile', args=[user.username])
+            'url': reverse('user_profile', args=[user.username])  # Burada user.username kullanılıyor
         })
 
     # Soruları ara
@@ -329,6 +345,10 @@ def search_suggestions(request):
             'label': question.question_text,
             'url': reverse('question_detail', args=[question.id])
         })
+
+    # Gelen veriyi sunucu konsoluna yazdırın
+    import json
+    print('search_suggestions verisi:', json.dumps({'suggestions': suggestions}, indent=4))
 
     return JsonResponse({'suggestions': suggestions})
 
@@ -346,27 +366,24 @@ def search(request):
                 results.append({
                     'type': 'question',
                     'id': question.id,
-                    'text': question.question_text
+                    'text': question.question_text,
+                    'url': reverse('question_detail', args=[question.id]),
                 })
             for user in users:
                 results.append({
                     'type': 'user',
                     'id': user.id,
-                    'username': user.username
+                    'username': user.username,  # username alanını ekliyoruz
+                    'text': '@' + user.username,
+                    'url': reverse('user_profile', args=[user.username]),
                 })
             return JsonResponse({'results': results})
         else:
-            if questions.exists() or users.exists():
-                # Normal arama sonuçları sayfasını render et
-                context = {'questions': questions, 'users': users, 'query': query}
-                return render(request, 'core/search_results.html', context)
-            else:
-                # Sonuç bulunamazsa, add_question_from_search'a yönlendir
-                return redirect(f'{reverse("add_question_from_search")}?q={query}')
+            # Normal arama sonuçları sayfasını render et
+            context = {'questions': questions, 'users': users, 'query': query}
+            return render(request, 'core/search_results.html', context)
     else:
-        # Sorgu boşsa ana sayfaya yönlendir
-        return redirect('user_homepage')
-
+        return render(request, 'core/search_results.html', {})
 @login_required
 def add_question_from_search(request):
     query = request.GET.get('q', '').strip()

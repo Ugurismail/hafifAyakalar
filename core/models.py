@@ -22,7 +22,6 @@ class Invitation(models.Model):
     def __str__(self):
         return f"Invitation from {self.sender.username if self.sender else 'System'}"
 
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     invitation_quota = models.PositiveIntegerField(default=0)
@@ -41,8 +40,6 @@ def create_user_profile(sender, instance, created, **kwargs):
         else:
             invitation_quota = 0
         UserProfile.objects.create(user=instance, invitation_quota=invitation_quota)
-
-
 
 class Question(models.Model):
     question_text = models.CharField(max_length=255)
@@ -82,7 +79,6 @@ class Question(models.Model):
     class Meta:
         ordering = ['created_at']
 
-
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     answer_text = models.TextField()
@@ -91,7 +87,6 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"Answer to {self.question.question_text} by {self.user.username}"
-
 
 class Message(models.Model):
     sender = models.ForeignKey(
