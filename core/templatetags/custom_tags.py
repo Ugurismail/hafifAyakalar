@@ -1,4 +1,7 @@
+import re
 from django import template
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -14,3 +17,14 @@ def dict_get(dictionary, key):
     if dictionary is None:
         return None
     return dictionary.get(key)
+
+
+@register.filter
+def bkz_link(text):
+    pattern = r'\(bkz:\s*(.*?)\)'
+    def replace(match):
+        query = match.group(1).strip()
+        url = reverse('bkz', args=[query])
+        # Markdown link formatını kullanıyoruz
+        return f'(bkz: [{query}]({url}))'
+    return re.sub(pattern, replace, text)

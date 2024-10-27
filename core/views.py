@@ -126,7 +126,6 @@ def profile(request):
         invitation_tree = get_invitation_tree(user)
     return render(request, 'core/profile.html', {'user_profile': user_profile, 'invitation_tree': invitation_tree})
 
-
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
     user_profile = profile_user.userprofile
@@ -191,7 +190,6 @@ def add_answer(request, question_id):
         form = AnswerForm()
     return render(request, 'core/add_answer.html', {'form': form, 'question': question})
 
-
 @login_required
 def sent_messages(request):
     messages = Message.objects.filter(sender=request.user).order_by('-timestamp')
@@ -229,7 +227,6 @@ def get_conversation(request, username):
     ]
     return JsonResponse({'messages': messages_data})
 
-
 @login_required
 def send_message_ajax(request):
     if request.method == 'POST':
@@ -248,7 +245,6 @@ def send_message_ajax(request):
         })
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-
 @login_required
 def user_list(request):
     users = User.objects.exclude(id=request.user.id)  # Exclude the current user
@@ -265,7 +261,6 @@ def conversations(request):
         if message.recipient != request.user:
             users.add(message.recipient)
     return render(request, 'core/conversations.html', {'users': users})
-
 
 @login_required
 def check_new_messages(request):
@@ -294,7 +289,6 @@ def check_new_messages(request):
     ]
     return JsonResponse({'new_messages': messages_data})
 
-
 @login_required
 def get_unread_message_count(request):
     count = Message.objects.filter(recipient=request.user, is_read=False).count()
@@ -315,7 +309,6 @@ def unfollow_user(request, username):
     target_profile = target_user.userprofile
     user_profile.following.remove(target_profile)
     return redirect('user_profile', username=username)
-
 
 def search_suggestions(request):
     query = request.GET.get('q', '')
@@ -339,7 +332,6 @@ def search_suggestions(request):
 
     return JsonResponse({'suggestions': suggestions})
 
-
 @login_required
 def search(request):
     query = request.GET.get('q', '').strip()
@@ -356,15 +348,24 @@ def search(request):
                     'id': question.id,
                     'text': question.question_text
                 })
-            # Diğer kodlar...
+            for user in users:
+                results.append({
+                    'type': 'user',
+                    'id': user.id,
+                    'username': user.username
+                })
             return JsonResponse({'results': results})
         else:
-            # Normal arama sonuçları sayfasını render et
-            context = {'questions': questions, 'users': users, 'query': query}
-            return render(request, 'core/search_results.html', context)
+            if questions.exists() or users.exists():
+                # Normal arama sonuçları sayfasını render et
+                context = {'questions': questions, 'users': users, 'query': query}
+                return render(request, 'core/search_results.html', context)
+            else:
+                # Sonuç bulunamazsa, add_question_from_search'a yönlendir
+                return redirect(f'{reverse("add_question_from_search")}?q={query}')
     else:
-        return render(request, 'core/search_results.html', {})
-
+        # Sorgu boşsa ana sayfaya yönlendir
+        return redirect('user_homepage')
 
 @login_required
 def add_question_from_search(request):
@@ -372,14 +373,15 @@ def add_question_from_search(request):
     if request.method == 'POST':
         answer_form = AnswerForm(request.POST)
         if answer_form.is_valid():
-            # Create new question
+            # Yeni soru oluştur
             question = Question.objects.create(
                 question_text=query,
                 user=request.user,
-                from_search=True  # Burada from_search=True olarak ayarlıyoruz
+                from_search=True  # Eğer modelinizde bu alan varsa
             )
-            question.users.add(request.user)  # Kullanıcıyı ekliyoruz
-            # Create new answer
+            # Kullanıcıyı soru ile ilişkilendir
+            question.users.add(request.user)
+            # Yeni yanıt oluştur
             answer = answer_form.save(commit=False)
             answer.user = request.user
             answer.question = question
@@ -1018,7 +1020,6 @@ def single_answer(request, question_id, answer_id):
     }
     return render(request, 'core/single_answer.html', context)
 
-
 def user_search(request):
     query = request.GET.get('q', '').strip()
     users = User.objects.filter(username__icontains=query)[:10]
@@ -1043,7 +1044,6 @@ def map_data(request):
     question_nodes = generate_question_nodes(questions)
 
     return JsonResponse(question_nodes, safe=False)
-
 
 def generate_question_nodes(questions):
     nodes = {}
@@ -1119,3 +1119,25 @@ def mark_messages_as_read(request):
         Message.objects.filter(sender=sender, recipient=request.user, is_read=False).update(is_read=True)
         return JsonResponse({'status': 'success'})
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def bkz_view(request, query):
+    try:
+        question = Question.objects.get(question_text__iexact=query)
+        return redirect('question_detail', question_id=question.id)
+    except Question.DoesNotExist:
+        # Soru bulunamazsa, add_question_from_search sayfasına yönlendirin
+        return redirect(f'{reverse("add_question_from_search")}?q={query}')
+
+@login_required
+def reference_search(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+    if query:
+        questions = Question.objects.filter(question_text__icontains=query)
+        for question in questions:
+            results.append({
+                'id': question.id,
+                'text': question.question_text
+            })
+    return JsonResponse({'results': results})

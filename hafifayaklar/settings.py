@@ -20,8 +20,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core'
+    'core',
+    'markdownify',
 ]
+MARKDOWNIFY = {
+    "default": {
+        "BLEACH": False,
+        "WHITELIST_TAGS": [
+            'a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
+            'em', 'i', 'li', 'ol', 'strong', 'ul', 'p', 'br',
+            'pre', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        ],
+        "WHITELIST_ATTRS": ['href', 'src', 'alt'],
+        "WHITELIST_PROTOCOLS": ['http', 'https'],
+    }
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

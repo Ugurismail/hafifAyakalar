@@ -1,142 +1,142 @@
+// answer_form.js
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Mevcut metin alanını takip etmek için değişken
-    let currentTextarea = null;
-
-    // Link ve Referans Modallarını tanımlayın
-    const linkModalElement = document.getElementById('linkModal');
-    const referenceModalElement = document.getElementById('referenceModal');
-    let linkModal = null;
-    let referenceModal = null;
-
-    // Bootstrap modallarını başlatın (eğer varsa)
-    if (linkModalElement) {
-        linkModal = new bootstrap.Modal(linkModalElement);
-    }
-    if (referenceModalElement) {
-        referenceModal = new bootstrap.Modal(referenceModalElement);
-    }
-
-    // Formatlama Butonları (Kalın, İtalik)
-    const formatBtns = document.querySelectorAll('.format-btn');
-    formatBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            currentTextarea = this.closest('form').querySelector('textarea');
-            const format = this.getAttribute('data-format');
-            let tag = '';
-            if (format === 'bold') {
-                tag = 'strong';
-            } else if (format === 'italic') {
-                tag = 'em';
-            }
-            if (tag && currentTextarea) {
-                wrapSelectionWithTag(currentTextarea, tag);
-                currentTextarea.focus();
-            }
+    // Metin Biçimlendirme Butonları
+    var formatButtons = document.querySelectorAll('.format-btn');
+    formatButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var format = this.getAttribute('data-format');
+            var textarea = document.getElementById('id_answer_text');
+            applyFormat(textarea, format);
         });
     });
 
-    // Link Ekleme Butonu
-    const insertLinkBtns = document.querySelectorAll('.insert-link-btn');
-    insertLinkBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            currentTextarea = this.closest('form').querySelector('textarea');
-            if (linkModal) {
-                linkModal.show();
-            }
-        });
-    });
+    function applyFormat(textarea, format) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var selectedText = textarea.value.substring(start, end);
+        var before = textarea.value.substring(0, start);
+        var after = textarea.value.substring(end);
+        var formattedText;
 
-    // Link Ekleme Formu
-    const linkForm = document.getElementById('link-form');
-    if (linkForm) {
-        linkForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const url = document.getElementById('link-url').value.trim();
-            const text = document.getElementById('link-text').value.trim();
-            if (url && text && currentTextarea) {
-                const linkMarkup = `<a href="${url}">${text}</a>`;
-                insertAtCursor(currentTextarea, linkMarkup);
-                linkModal.hide();
-                linkForm.reset();
-            }
-        });
+        if (format === 'bold') {
+            formattedText = '**' + selectedText + '**';
+        } else if (format === 'italic') {
+            formattedText = '*' + selectedText + '*';
+        }
+
+        textarea.value = before + formattedText + after;
+        textarea.focus();
+        textarea.selectionStart = start;
+        textarea.selectionEnd = start + formattedText.length;
     }
 
-    // "(bkz:soru)" Butonu
-    const insertReferenceBtns = document.querySelectorAll('.insert-reference-btn');
-    insertReferenceBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            currentTextarea = this.closest('form').querySelector('textarea');
-            if (referenceModal) {
-                referenceModal.show();
-            }
-        });
+    // Link Ekleme Modali
+    var linkModal = new bootstrap.Modal(document.getElementById('linkModal'));
+    var insertLinkBtn = document.querySelector('.insert-link-btn');
+    var linkForm = document.getElementById('link-form');
+
+    insertLinkBtn.addEventListener('click', function() {
+        linkModal.show();
+        // Formu sıfırla
+        linkForm.reset();
     });
 
-    // Referans Arama İşlevi
-    const referenceSearchInput = document.getElementById('reference-search-input');
-    const referenceSearchResults = document.getElementById('reference-search-results');
+    linkForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        var url = document.getElementById('link-url').value.trim();
+        var text = document.getElementById('link-text').value.trim();
+        if (url && text) {
+            var textarea = document.getElementById('id_answer_text');
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var before = textarea.value.substring(0, start);
+            var after = textarea.value.substring(end);
+            var linkMarkdown = '[' + text + '](' + url + ')';
+            textarea.value = before + linkMarkdown + after;
+            textarea.focus();
+            textarea.selectionStart = start;
+            textarea.selectionEnd = start + linkMarkdown.length;
+            linkModal.hide();
+        }
+    });
 
-    if (referenceSearchInput && referenceSearchResults) {
-        referenceSearchInput.addEventListener('input', function() {
-            const query = referenceSearchInput.value.trim();
-            if (query.length > 1) {
-                fetch(`/search/?q=${encodeURIComponent(query)}&ajax=1`)
-                    .then(response => response.json())
-                    .then(data => {
-                        referenceSearchResults.innerHTML = '';
-                        if (data.results && data.results.length > 0) {
-                            const ul = document.createElement('ul');
-                            ul.classList.add('list-group');
-                            data.results.forEach(result => {
-                                const li = document.createElement('li');
-                                li.classList.add('list-group-item');
-                                if (result.type === 'question') {
-                                    li.textContent = result.text;
-                                    li.addEventListener('click', function() {
-                                        const referenceMarkup = `(bkz: <a href="/question/${result.id}/">${result.text}</a>)`;
-                                        insertAtCursor(currentTextarea, referenceMarkup);
-                                        referenceModal.hide();
-                                        referenceSearchInput.value = '';
-                                        referenceSearchResults.innerHTML = '';
-                                    });
-                                }
-                                ul.appendChild(li);
-                            });
-                            referenceSearchResults.appendChild(ul);
-                        } else {
-                            referenceSearchResults.innerHTML = '<p>Sonuç bulunamadı.</p>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Referans arama sırasında hata oluştu:', error);
-                    });
-            } else {
+    // Referans Ekleme Modali
+    var referenceModal = new bootstrap.Modal(document.getElementById('referenceModal'));
+    var insertReferenceBtn = document.querySelector('.insert-reference-btn');
+    var referenceSearchInput = document.getElementById('reference-search-input');
+    var referenceSearchResults = document.getElementById('reference-search-results');
+    var noResultsDiv = document.getElementById('no-results');
+    var addCurrentQueryBtn = document.getElementById('add-current-query');
+
+    insertReferenceBtn.addEventListener('click', function() {
+        referenceModal.show();
+        referenceSearchInput.value = '';
+        referenceSearchResults.innerHTML = '';
+        noResultsDiv.style.display = 'none';
+    });
+
+    referenceSearchInput.addEventListener('input', function() {
+        var query = this.value.trim();
+        if (query.length > 0) {
+            fetch('/reference-search/?q=' + encodeURIComponent(query), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
                 referenceSearchResults.innerHTML = '';
-            }
-        });
-    }
+                if (data.results.length > 0) {
+                    noResultsDiv.style.display = 'none';
+                    data.results.forEach(function(item) {
+                        var div = document.createElement('div');
+                        div.classList.add('list-group-item');
+                        div.textContent = item.text;
+                        div.dataset.questionId = item.id;
+                        referenceSearchResults.appendChild(div);
+                    });
+                } else {
+                    // Sonuç bulunamadığında
+                    noResultsDiv.style.display = 'block';
+                    referenceSearchResults.innerHTML = '';
+                }
+            });
+        } else {
+            referenceSearchResults.innerHTML = '';
+            noResultsDiv.style.display = 'none';
+        }
+    });
 
-    // Seçili metni etiketle sarmalama fonksiyonu
-    function wrapSelectionWithTag(textarea, tag) {
-        const startPos = textarea.selectionStart || 0;
-        const endPos = textarea.selectionEnd || 0;
-        const selectedText = textarea.value.substring(startPos, endPos);
-        const beforeValue = textarea.value.substring(0, startPos);
-        const afterValue = textarea.value.substring(endPos);
-        const newText = `<${tag}>${selectedText}</${tag}>`;
-        textarea.value = beforeValue + newText + afterValue;
-        textarea.selectionStart = startPos;
-        textarea.selectionEnd = startPos + newText.length;
-    }
+    // Arama Sonuçlarına Tıklama İşlemi
+    referenceSearchResults.addEventListener('click', function(event) {
+        var target = event.target;
+        if (target && target.matches('.list-group-item')) {
+            var questionText = target.textContent;
+            insertReference(questionText);
+            referenceModal.hide();
+        }
+    });
 
-    // İmleç konumuna metin ekleme fonksiyonu
-    function insertAtCursor(textarea, text) {
-        const startPos = textarea.selectionStart || 0;
-        const endPos = textarea.selectionEnd || 0;
-        const beforeValue = textarea.value.substring(0, startPos);
-        const afterValue = textarea.value.substring(endPos);
-        textarea.value = beforeValue + text + afterValue;
-        textarea.selectionStart = textarea.selectionEnd = startPos + text.length;
+    // Mevcut Sorguyu Referans Olarak Ekleme
+    addCurrentQueryBtn.addEventListener('click', function() {
+        var query = referenceSearchInput.value.trim();
+        if (query.length > 0) {
+            insertReference(query);
+            referenceModal.hide();
+        }
+    });
+
+    function insertReference(text) {
+        var textarea = document.getElementById('id_answer_text');
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var before = textarea.value.substring(0, start);
+        var after = textarea.value.substring(end);
+        var referenceText = '(bkz: ' + text + ')';
+        textarea.value = before + referenceText + after;
+        textarea.focus();
+        textarea.selectionStart = start;
+        textarea.selectionEnd = start + referenceText.length;
     }
 });

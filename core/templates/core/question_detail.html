@@ -1,6 +1,9 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load custom_tags %}
+{% load markdownify %}
+
+
 
 {% block content %}
 <div class="container mt-1">
@@ -66,7 +69,7 @@
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|safe }}</p>
+                        <p class="answer-text">{{ answer.answer_text|bkz_link|markdownify|safe }}</p>
                     {% endif %}
                     <!-- Alt Kısım: Oylar, Butonlar, Kullanıcı Bilgisi -->
                     <div class="d-flex justify-content-between align-items-center">

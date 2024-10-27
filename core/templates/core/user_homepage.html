@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load custom_tags %}
+{% load markdownify %}
 {% block title %}Ana Sayfa{% endblock %}
 {% block content %}
 <div class="container " id="naber">
@@ -42,7 +43,7 @@
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Short Answer -->
-                        <p class="answer-text">{{ answer.answer_text|safe }}</p>
+                        <p class="answer-text">{{ answer.answer_text|bkz_link|markdownify|safe }}</p>
                     {% endif %}
                     <!-- Actions and User Info -->
                     <div class="d-flex justify-content-between align-items-center">

@@ -18,7 +18,7 @@
             {% endfor %}
         </ul>
     {% else %}
-        <!-- Sonuç bulunamadığında, `search_no_results.html` şablonuna yönlendiriliyor -->
+        <p>Sonuç bulunamadı. <a href="{% url 'add_question_from_search' query %}">Yeni bir başlık oluşturmak ister misiniz?</a></p>
     {% endif %}
 </div>
 {% endblock %}

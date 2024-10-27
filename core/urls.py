@@ -42,6 +42,11 @@ urlpatterns = [
     path('map-data/', views.map_data, name='map_data'),
     path('user-search/', views.user_search, name='user_search'),
     path('messages/mark_as_read/', views.mark_messages_as_read, name='mark_messages_as_read'),
+    path('bkz/<str:query>/', views.bkz_view, name='bkz'),
+    path('add_question_from_search/', views.add_question_from_search, name='add_question_from_search'),
+    path('reference-search/', views.reference_search, name='reference_search'),
+
+
     
 ]
 
