@@ -60,7 +60,7 @@
             <ul class="list-group mb-4">
                 {% for user in top_question_users %}
                     <li class="list-group-item">
-                        <a href="{% url 'profile' user.username %}">{{ user.username }}</a> - {{ user.question_count }} soru
+                        <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.question_count }} soru
                     </li>
                 {% endfor %}
             </ul>
@@ -68,7 +68,7 @@
             <ul class="list-group">
                 {% for user in top_answer_users %}
                     <li class="list-group-item">
-                        <a href="{% url 'profile' user.username %}">{{ user.username }}</a> - {{ user.answer_count }} yanıt
+                        <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.answer_count }} yanıt
                     </li>
                 {% endfor %}
             </ul>
