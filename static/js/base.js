@@ -54,17 +54,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tıklama olayını yönetme
     searchResults.addEventListener('click', function(event) {
         var target = event.target;
-        if (target.classList.contains('list-group-item')) {
+
+        if (target.id === 'create-new-question') {
+            event.preventDefault();
+            var query = searchInput.value.trim();
+            window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(query);
+        } else if (target.classList.contains('list-group-item')) {
             var type = target.dataset.type;
             if (type === 'question') {
                 var id = target.dataset.id;
                 window.location.href = '/question/' + id + '/';
             } else if (type === 'user') {
-                var username = target.dataset.username;  // data-username özelliğini alıyoruz
-                window.location.href = '/profile/' + username + '/';  // username'i kullanarak yönlendiriyoruz
+                var username = target.dataset.username;
+                window.location.href = '/profile/' + username + '/';
             }
         }
     });
