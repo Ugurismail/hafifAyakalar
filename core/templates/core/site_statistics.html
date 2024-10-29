@@ -28,21 +28,39 @@
                 <!-- Kelime Analizi Tab -->
         <div class="tab-pane fade show active" id="word-analysis" role="tabpanel" aria-labelledby="word-analysis-tab">
             <h3 class="mt-3">Kelime Arama</h3>
-            <form method="get" action="{% url 'site_statistics' %}">
-                <div class="input-group mb-3">
-                    <input type="text" name="search_word" class="form-control" placeholder="Aramak istediğiniz kelime" value="{{ search_word }}">
-                    <button class="btn btn-primary" type="submit">Ara</button>
-                </div>
-            </form>
+    <!-- Kelime Arama Formu -->
+    <form method="get" action="{% url 'site_statistics' %}" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="search_word">Kelime Ara:</label>
+                <input type="text" id="search_word" name="search_word" class="form-control" value="{{ search_word }}">
+            </div>
+            <div class="col-md-8">
+                <label for="exclude_words">Hariç Tutulacak Kelimeler (virgülle ayırın):</label>
+                <input type="text" id="exclude_words" name="exclude_words" class="form-control" value="{{ exclude_words_input }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Ara</button>
+    </form>
+
+    {% if search_word %}
+        <p><strong>"{{ search_word }}"</strong> kelimesi {{ search_word_count }} kez geçiyor.</p>
+    {% endif %}
+
+    {% if exclude_words %}
+        <p><strong>Hariç Tutulan Kelimeler:</strong> {{ exclude_words }}</p>
+    {% endif %}
+
+    <h3>En Sık Geçen Kelimeler</h3>
+    <ul>
+        {% for word, count in top_words %}
+            <li>{{ word }}: {{ count }}</li>
+        {% endfor %}
+    </ul>
             {% if search_word %}
                 <p>"{{ search_word }}" kelimesi toplam {{ search_word_count }} kez kullanılmış.</p>
             {% endif %}
-            <h3 class="mt-4">En Çok Kullanılan 10 Kelime</h3>
-            <ul class="list-group">
-                {% for word, count in top_words %}
-                    <li class="list-group-item">{{ word }} - {{ count }} kez kullanılmış</li>
-                {% endfor %}
-            </ul>
+
         </div>
         <!-- Genel Tab -->
         <div class="tab-pane fade" id="general" role="tabpanel" aria-labelledby="general-tab">

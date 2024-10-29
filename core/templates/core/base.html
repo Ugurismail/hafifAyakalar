@@ -17,26 +17,37 @@
     {% if user.is_authenticated %}
     <style>
         :root {
-            --background-color: {{ user_profile.background_color|default:'#F5F5F5' }};
-            --text-color: {{ user_profile.text_color|default:'#000000' }};
-            --header-background-color: {{ user_profile.header_background_color|default:'#ffffff' }};
-            --header-text-color: {{ user_profile.header_text_color|default:'#333333' }};
-            --link-color: {{ user_profile.link_color|default:'#0d6efd' }};
-            --button-background-color: {{ user_profile.button_background_color|default:'#007bff' }};
-            --button-text-color: {{ user_profile.button_text_color|default:'#ffffff' }};
-            --answer-background-color: {{ user_profile.answer_background_color|default:'#F5F5F5' }};
-            --content-background-color: {{ user_profile.content_background_color|default:'#ffffff' }};
-            --tab-background-color: {{ user_profile.tab_background_color|default:'#f8f9fa' }};
-            --tab-text-color: {{ user_profile.tab_text_color|default:'#000000' }};
-            --tab-active-background-color: {{ user_profile.tab_active_background_color|default:'#ffffff' }};
-            --tab-active-text-color: {{ user_profile.tab_active_text_color|default:'#000000' }};
-            --dropdown-text-color: {{ user_profile.dropdown_text_color|default:'#333333' }};
-            --dropdown-hover-background-color: {{ user_profile.dropdown_hover_background_color|default:'#f2f2f2' }};
-            --dropdown-hover-text-color: {{ user_profile.dropdown_hover_text_color|default:'#0056b3' }};
-            --button-hover-background-color: {{ user_profile.button_hover_background_color|default:'#0056b3' }};
+            --background-color: {{ user.userprofile.background_color }};
+            --text-color: {{ user.userprofile.text_color }};
+            --header-background-color: {{ user.userprofile.header_background_color }};
+            --header-text-color: {{ user.userprofile.header_text_color }};
+            --link-color: {{ user.userprofile.link_color }};
+            --link-hover-color: {{ user.userprofile.link_hover_color }};
+            --button-background-color: {{ user.userprofile.button_background_color }};
+            --button-hover-background-color: {{ user.userprofile.button_hover_background_color }};
+            --button-text-color: {{ user.userprofile.button_text_color }};
+            --hover-background-color: {{ user.userprofile.hover_background_color }};
+            --icon-color: {{ user.userprofile.icon_color }};
+            --icon-hover-color: {{ user.userprofile.icon_hover_color }};
+            --answer-background-color: {{ user.userprofile.answer_background_color }};
+            --content-background-color: {{ user.userprofile.content_background_color }};
+            --tab-background-color: {{ user.userprofile.tab_background_color }};
+            --tab-text-color: {{ user.userprofile.tab_text_color }};
+            --tab-active-background-color: {{ user.userprofile.tab_active_background_color }};
+            --tab-active-text-color: {{ user.userprofile.tab_active_text_color }};
+            --dropdown-text-color: {{ user.userprofile.dropdown_text_color }};
+            --dropdown-hover-background-color: {{ user.userprofile.dropdown_hover_background_color }};
+            --dropdown-hover-text-color: {{ user.userprofile.dropdown_hover_text_color }};
+            --nav-link-hover-color: {{ user.userprofile.nav_link_hover_color }};
+            --nav-link-hover-bg: {{ user.userprofile.nav_link_hover_bg }};
+            --pagination-background-color: {{ user.userprofile.pagination_background_color }};
+            --pagination-text-color: {{ user.userprofile.pagination_text_color }};
+            --pagination-active-background-color: {{ user.userprofile.pagination_active_background_color }};
+            --pagination-active-text-color: {{ user.userprofile.pagination_active_text_color }};
             /* Diğer renk değişkenleri */
         }
     </style>
+
     {% endif %}
     <link rel="icon" href="{% static 'imgs/favicon.ico' %}" type="image/x-icon">
     <meta name="csrf-token" content="{{ csrf_token }}">

@@ -606,6 +606,8 @@ def get_user_color(user_id):
 def about(request):
     return render(request, 'core/about.html')
 
+# core/views.py
+
 @login_required
 def user_settings(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
@@ -617,15 +619,29 @@ def user_settings(request):
             profile.header_background_color = '#ffffff'
             profile.header_text_color = '#333333'
             profile.link_color = '#0d6efd'
+            profile.link_hover_color = '#0056b3'
             profile.button_background_color = '#007bff'
+            profile.button_hover_background_color = '#0056b3'
             profile.button_text_color = '#ffffff'
+            profile.hover_background_color = '#f0f0f0'
+            profile.icon_color = '#333333'
+            profile.icon_hover_color = '#007bff'
             profile.answer_background_color = '#F5F5F5'
             profile.content_background_color = '#ffffff'
             profile.tab_background_color = '#f8f9fa'
             profile.tab_text_color = '#000000'
             profile.tab_active_background_color = '#ffffff'
             profile.tab_active_text_color = '#000000'
-            # Diğer renk alanlarını varsayılan değerlere ayarlayın
+            profile.dropdown_text_color = '#333333'
+            profile.dropdown_hover_background_color = '#f2f2f2'
+            profile.dropdown_hover_text_color = '#0056b3'
+            profile.nav_link_hover_color = '#007bff'
+            profile.nav_link_hover_bg = 'rgba(0, 0, 0, 0.05)'
+            profile.pagination_background_color = '#ffffff'
+            profile.pagination_text_color = '#000000'
+            profile.pagination_active_background_color = '#007bff'
+            profile.pagination_active_text_color = '#ffffff'
+            # Diğer renk alanlarını da varsayılan değerlere ayarlayın
             profile.save()
             messages.success(request, 'Renk ayarlarınız varsayılan değerlere döndürüldü.')
             return redirect('user_settings')
@@ -636,19 +652,34 @@ def user_settings(request):
             profile.header_background_color = request.POST.get('header_background_color', '#ffffff')
             profile.header_text_color = request.POST.get('header_text_color', '#333333')
             profile.link_color = request.POST.get('link_color', '#0d6efd')
+            profile.link_hover_color = request.POST.get('link_hover_color', '#0056b3')
             profile.button_background_color = request.POST.get('button_background_color', '#007bff')
+            profile.button_hover_background_color = request.POST.get('button_hover_background_color', '#0056b3')
             profile.button_text_color = request.POST.get('button_text_color', '#ffffff')
+            profile.hover_background_color = request.POST.get('hover_background_color', '#f0f0f0')
+            profile.icon_color = request.POST.get('icon_color', '#333333')
+            profile.icon_hover_color = request.POST.get('icon_hover_color', '#007bff')
             profile.answer_background_color = request.POST.get('answer_background_color', '#F5F5F5')
             profile.content_background_color = request.POST.get('content_background_color', '#ffffff')
             profile.tab_background_color = request.POST.get('tab_background_color', '#f8f9fa')
             profile.tab_text_color = request.POST.get('tab_text_color', '#000000')
             profile.tab_active_background_color = request.POST.get('tab_active_background_color', '#ffffff')
             profile.tab_active_text_color = request.POST.get('tab_active_text_color', '#000000')
-            # Diğer renk alanlarını ekleyin
+            profile.dropdown_text_color = request.POST.get('dropdown_text_color', '#333333')
+            profile.dropdown_hover_background_color = request.POST.get('dropdown_hover_background_color', '#f2f2f2')
+            profile.dropdown_hover_text_color = request.POST.get('dropdown_hover_text_color', '#0056b3')
+            profile.nav_link_hover_color = request.POST.get('nav_link_hover_color', '#007bff')
+            profile.nav_link_hover_bg = request.POST.get('nav_link_hover_bg', 'rgba(0, 0, 0, 0.05)')
+            profile.pagination_background_color = request.POST.get('pagination_background_color', '#ffffff')
+            profile.pagination_text_color = request.POST.get('pagination_text_color', '#000000')
+            profile.pagination_active_background_color = request.POST.get('pagination_active_background_color', '#007bff')
+            profile.pagination_active_text_color = request.POST.get('pagination_active_text_color', '#ffffff')
+            # Diğer renk alanlarını da kaydedin
             profile.save()
             messages.success(request, 'Renk ayarlarınız güncellendi.')
             return redirect('user_settings')
     return render(request, 'core/user_settings.html', {'user_profile': profile})
+
 
 @login_required
 def edit_answer(request, answer_id):
@@ -820,6 +851,7 @@ def save_item(request):
             return JsonResponse({'status': status, 'save_count': save_count})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+
 def site_statistics(request):
     # Mevcut istatistikler
     user_count = User.objects.filter(
@@ -871,21 +903,24 @@ def site_statistics(request):
     all_texts = all_texts.lower()
     words = re.findall(r'\b\w+\b', all_texts)
 
-    # İstenmeyen kelimeleri çıkar (örn. bağlaçlar)
-    stopwords = set([
-        've', 'ile', 'bir', 'bu', 'için', 'da', 'de', 'ki', 'mi', 'ne', 'ama',
-        'fakat', 'daha', 'çok', 'gibi', 'den', 'ben', 'sen', 'o', 'biz', 'siz',
-        'onlar', 'mı', 'mu', 'mü', 'her', 'şey', 'sadece', 'bütün', 'diğer',
-        'hem', 'veya', 'ya', 'şu', 'öyle', 'böyle', 'eğer', 'çünkü', 'kadar'
-    ])
-    filtered_words = [word for word in words if word not in stopwords]
+    # Kullanıcının hariç tutmak istediği kelimeleri al
+    exclude_words_input = request.GET.get('exclude_words', '')
+    if exclude_words_input:
+        # Virgülle ayrılmış kelimeleri listeye çevir
+        exclude_words_list = re.split(r',\s*', exclude_words_input.strip())
+        exclude_words = set(word.lower() for word in exclude_words_list)
+    else:
+        exclude_words = set()
+
+    # Kelimeleri filtrele
+    filtered_words = [word for word in words if word not in exclude_words]
 
     # Kelime sıklıklarını hesapla
     word_counts = Counter(filtered_words)
     top_words = word_counts.most_common(10)
 
     # Kelime arama
-    search_word = request.GET.get('search_word')
+    search_word = request.GET.get('search_word', '').strip().lower()
     search_word_count = None
     if search_word:
         search_word_count = word_counts.get(search_word.lower(), 0)
@@ -905,9 +940,12 @@ def site_statistics(request):
         'top_words': top_words,
         'search_word_count': search_word_count,
         'search_word': search_word,
+        'exclude_words': ', '.join(sorted(exclude_words)),
+        'exclude_words_input': exclude_words_input,
     }
 
     return render(request, 'core/site_statistics.html', context)
+
 
 def delete_question_and_subquestions(question):
     subquestions = question.subquestions.all()

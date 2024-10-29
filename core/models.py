@@ -22,13 +22,47 @@ class Invitation(models.Model):
     def __str__(self):
         return f"Invitation from {self.sender.username if self.sender else 'System'}"
 
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     invitation_quota = models.PositiveIntegerField(default=0)
     following = models.ManyToManyField('self', symmetrical=False, related_name='followers', blank=True)
 
+    # Renk ayarları alanları
+    background_color = models.CharField(max_length=7, default='#F5F5F5')
+    text_color = models.CharField(max_length=7, default='#000000')
+    header_background_color = models.CharField(max_length=7, default='#ffffff')
+    header_text_color = models.CharField(max_length=7, default='#333333')
+    link_color = models.CharField(max_length=7, default='#0d6efd')
+    link_hover_color = models.CharField(max_length=7, default='#0056b3')
+    button_background_color = models.CharField(max_length=7, default='#007bff')
+    button_hover_background_color = models.CharField(max_length=7, default='#0056b3')
+    button_text_color = models.CharField(max_length=7, default='#ffffff')
+    hover_background_color = models.CharField(max_length=7, default='#f0f0f0')
+    icon_color = models.CharField(max_length=7, default='#333333')
+    icon_hover_color = models.CharField(max_length=7, default='#007bff')
+    answer_background_color = models.CharField(max_length=7, default='#F5F5F5')
+    content_background_color = models.CharField(max_length=7, default='#ffffff')
+    tab_background_color = models.CharField(max_length=7, default='#f8f9fa')
+    tab_text_color = models.CharField(max_length=7, default='#000000')
+    tab_active_background_color = models.CharField(max_length=7, default='#ffffff')
+    tab_active_text_color = models.CharField(max_length=7, default='#000000')
+    dropdown_text_color = models.CharField(max_length=7, default='#333333')
+    dropdown_hover_background_color = models.CharField(max_length=7, default='#f2f2f2')
+    dropdown_hover_text_color = models.CharField(max_length=7, default='#0056b3')
+    nav_link_hover_color = models.CharField(max_length=7, default='#007bff')
+    nav_link_hover_bg = models.CharField(max_length=7, default='rgba(0, 0, 0, 0.05)')
+    pagination_background_color = models.CharField(max_length=7, default='#ffffff')
+    pagination_text_color = models.CharField(max_length=7, default='#000000')
+    pagination_active_background_color = models.CharField(max_length=7, default='#007bff')
+    pagination_active_text_color = models.CharField(max_length=7, default='#ffffff')
+
+    # Diğer renk alanlarını da ekleyin
+
     def __str__(self):
         return f"{self.user.username}'s profile"
+
+
 
 # Kullanıcı oluşturulduğunda otomatik olarak profil oluşturma
 @receiver(post_save, sender=User)
