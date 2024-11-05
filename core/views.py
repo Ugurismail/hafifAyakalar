@@ -207,6 +207,19 @@ def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     answers = question.answers.all()
     
+    # **Form Oluşturma ve İşleme Bölümü**
+    if request.method == 'POST':
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            new_answer = form.save(commit=False)
+            new_answer.user = request.user
+            new_answer.question = question
+            new_answer.save()
+            return redirect('question_detail', question_id=question.id)
+    else:
+        form = AnswerForm()
+
+
     # Kullanıcının bu soruyu kaydedip kaydetmediğini kontrol et
     content_type_question = ContentType.objects.get_for_model(Question)
     user_has_saved_question = SavedItem.objects.filter(
@@ -251,12 +264,16 @@ def question_detail(request, question_id):
     context = {
         'question': question,
         'answers': answers,
+        'form': form,
         'user_has_saved_question': user_has_saved_question,
         'question_save_count': question_save_count,
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
     }
     return render(request, 'core/question_detail.html', context)
+
+
+
 @login_required
 def add_answer(request, question_id):
     question = get_object_or_404(Question, id=question_id)
