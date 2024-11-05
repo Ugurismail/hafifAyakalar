@@ -28,6 +28,7 @@ urlpatterns = [
     # Yanıt İşlemleri
     path('answer/<int:answer_id>/edit/', views.edit_answer, name='edit_answer'),
     path('answer/<int:answer_id>/delete/', views.delete_answer, name='delete_answer'),
+    path('delete-answer/<int:answer_id>/', views.delete_answer, name='delete_answer'),
 
     # Mesajlaşma
     path('messages/sent/', views.sent_messages, name='sent_messages'),
@@ -59,6 +60,9 @@ urlpatterns = [
     # AJAX İşlemleri
     path('ajax/get_unread_message_count/', views.get_unread_message_count, name='get_unread_message_count'),
     path('users/get_user_id/<str:username>/', views.get_user_id, name='get_user_id'),
+    path('vote/', views.vote, name='vote'),
+    path('save-item/', views.save_item, name='save_item'),
+
 ]
 
 

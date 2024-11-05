@@ -81,8 +81,11 @@ a:hover {
 }
 
 .answer {
+    padding: 3% 3% 15px;
+    border-bottom: 1px solid #ddd;
     background-color: var(--answer-background-color);
 }
+
 
 /* Sekme Stilleri */
 .nav-tabs .nav-link {
@@ -164,10 +167,7 @@ a:hover {
 }
 
 /* Answer Styling */
-.answer {
-    padding: 3% 3% 15px;
-    border-bottom: 1px solid #ddd;
-}
+
 
 .answer:last-child {
     border-bottom: none;
@@ -348,19 +348,10 @@ a:hover {
 /* Mevcut stillerinizi ve eklediğiniz tüm renk değişkenlerini burada kullanabilirsiniz. */
 /* static/css/styles.css */
 
-/* İçerik Stilleri */
-.question,
-.answer {
-    background-color: var(--content-background-color);
-    color: var(--text-color);
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-}
 
-.answer {
-    background-color: var(--answer-background-color);
-}
+
+
+
 
 /* Sekme Stilleri */
 .nav-tabs .nav-link {
@@ -405,4 +396,12 @@ a:hover {
     padding: 15px;
     margin-bottom: 15px;
     border-radius: 5px;
+}
+
+.voted-up {
+    color: green !important;
+}
+
+.voted-down {
+    color: red !important;
 }

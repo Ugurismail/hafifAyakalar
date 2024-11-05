@@ -37,8 +37,10 @@ function showSuggestions(results) {
             listItem.attr('data-type', item.type);
             if (item.type === 'question') {
                 listItem.attr('data-id', item.id);
+                listItem.attr('data-url', '/question/' + item.id + '/');
             } else if (item.type === 'user') {
-                listItem.attr('data-username', item.username);  // data-username özelliğini ekliyoruz
+                listItem.attr('data-username', item.username);
+                listItem.attr('data-url', '/profile/' + item.username + '/');
             }
             suggestionList.append(listItem);
         });

@@ -50,12 +50,14 @@
                         <!-- Left: Voting and Save -->
                         <div>
                             <!-- Upvote Button and Count -->
-                            <a href="#" class="vote-btn me-1" data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
+                            <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
+                            data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
                                 <i class="bi-chevron-up"></i>
                             </a>
                             <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
                             <!-- Downvote Button and Count -->
-                            <a href="#" class="vote-btn ms-1 me-1" data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
+                            <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
+                            data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
                                 <i class="bi-chevron-down"></i>
                             </a>
                             <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
@@ -69,8 +71,8 @@
                                 <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                     <i class="bi bi-pencil-square icon-black-white"></i>
                                 </a>
-                                <!-- Delete Button -->
-                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                <!-- Silme Butonu -->
+                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" data-delete-url="{% url 'delete_answer' answer.id %}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
                                     <i class="bi bi-trash icon-black-white"></i>
                                 </a>
                             {% endif %}
@@ -80,12 +82,12 @@
                             <small class="text-muted me-2">
                                 <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                                 | {{ answer.created_at|date:"Y-m-d H:i" }}
-                                {% if answer.updated_at and answer.updated_at != answer.created_at %}
+                                {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
                                     {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
-                                        <!-- If same day, show only time -->
+                                        <!-- If the answer was updated on the same day, show only the time -->
                                         ~ {{ answer.updated_at|date:"H:i" }}
                                     {% else %}
-                                        <!-- If different day, show date and time -->
+                                        <!-- If the answer was updated on a different day, show date and time -->
                                         ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
                                     {% endif %}
                                 {% endif %}
@@ -114,7 +116,6 @@
             </div>
             {% endfor %}
         </div>
-
         <!-- Right Column: Your Starting Questions -->
         <div class="col-md-2" style="border-left: 1px solid #ccc;">
             <h5>Başlangıç Sorularınız</h5>
@@ -136,9 +137,63 @@
             <a href="{% url 'add_starting_question' %}" class="btn btn-primary mt-2 col-12">Başlangıç Sorusu Ekle</a>
             {% include 'core/pagination.html' with page_obj=starting_questions page_param='starting_page' %}
         </div>
-
     </div>
 </div>
+
+<!-- Include Modals -->
+<!-- Delete Answer Modal -->
+<div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="delete-answer-form">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAnswerModalLabel">Yanıtı Sil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bu yanıtı silmek istediğinizden emin misiniz?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">Evet, Sil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header and Body -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Paylaş</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group">
+          <li class="list-group-item">
+            <a href="#" id="shareTwitter" target="_blank">
+              <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
+            </a>
+          </li>
+          <li class="list-group-item">
+            <a href="#" id="shareFacebook" target="_blank">
+              <i class="bi bi-facebook"></i> Facebook ile Paylaş
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'core/link_modal.html' %}
+{% include 'core/reference_modal.html' %}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -202,71 +257,18 @@
                 shareModal.show();
             });
         });
+            // Silme İşlevi
+            var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
+            var deleteAnswerForm = document.getElementById('delete-answer-form');
 
-        // Delete Answer Function
-        var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-        var deleteAnswerForm = document.getElementById('delete-answer-form');
-
-        deleteAnswerBtns.forEach(function(btn) {
-            btn.addEventListener('click', function(event) {
-                var answerId = this.getAttribute('data-answer-id');
-                // Update the form action
-                deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
+            deleteAnswerBtns.forEach(function(btn) {
+                btn.addEventListener('click', function(event) {
+                    var deleteUrl = this.getAttribute('data-delete-url');
+                    // Formun action özelliğini güncelleyin
+                    deleteAnswerForm.action = deleteUrl;
+                });
             });
         });
-    });
 </script>
 {% endblock %}
 
-<!-- Include Modals -->
-<!-- Delete Answer Modal (placed outside the loop to prevent multiple modals) -->
-<div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post" id="delete-answer-form">
-                {% csrf_token %}
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteAnswerModalLabel">Yanıtı Sil</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Bu yanıtı silmek istediğinizden emin misiniz?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-danger">Evet, Sil</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Share Modal -->
-<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header and Body -->
-      <div class="modal-header">
-        <h5 class="modal-title" id="shareModalLabel">Paylaş</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="list-group">
-          <li class="list-group-item">
-            <a href="#" id="shareTwitter" target="_blank">
-              <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
-            </a>
-          </li>
-          <li class="list-group-item">
-            <a href="#" id="shareFacebook" target="_blank">
-              <i class="bi bi-facebook"></i> Facebook ile Paylaş
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-{% include 'core/link_modal.html' %}
-{% include 'core/reference_modal.html' %}

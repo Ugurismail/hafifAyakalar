@@ -47,7 +47,7 @@
                 <!-- Sağ Kısım: Kullanıcı Bilgisi ve Tarih -->
                 <div class="text-end">
                     <small class="text-muted me-2">
-                        <a href="{% url 'profile' answer.user.username %}">{{ answer.user.username }}</a>
+                        <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                         | {{ answer.created_at|date:"Y-m-d H:i" }}
                         {% if answer.updated_at and answer.updated_at != answer.created_at %}
                             {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}

@@ -14,8 +14,16 @@ class SignupForm(UserCreationForm):
         fields = ('username', 'password1', 'password2', 'invitation_code')
 
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(max_length=254, required=True, label='Kullanıcı Adı')
-    password = forms.CharField(label='Şifre', widget=forms.PasswordInput)
+    username = forms.CharField(
+        max_length=254,
+        required=True,
+        label='Kullanıcı Adı',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    password = forms.CharField(
+        label='Şifre',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
 
 class InvitationForm(forms.ModelForm):
     quota_granted = forms.IntegerField(label='Davet Hakkı Sayısı', min_value=1)
@@ -59,13 +67,6 @@ class StartingQuestionForm(forms.ModelForm):
         super(StartingQuestionForm, self).__init__(*args, **kwargs)
         self.fields['question_text'].widget.attrs.update({'class': 'form-control'})
 
-class LoginForm(AuthenticationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-
-    class Meta:
-        model = User
-        fields = ['username', 'password']
 
 class AnswerForm(forms.ModelForm):
     class Meta:

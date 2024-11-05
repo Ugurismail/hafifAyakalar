@@ -4,6 +4,8 @@ import uuid
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 
@@ -62,9 +64,6 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
-
-
-# Kullanıcı oluşturulduğunda otomatik olarak profil oluşturma
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -117,7 +116,10 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     answer_text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
 
     def __str__(self):
         return f"Answer to {self.question.question_text} by {self.user.username}"
@@ -159,22 +161,24 @@ class SavedItem(models.Model):
         unique_together = ('user', 'question', 'answer')
 
 
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+
 class Vote(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, null=True, blank=True
-    )
-    answer = models.ForeignKey(
-        Answer, on_delete=models.CASCADE, null=True, blank=True
-    )
-    value = models.IntegerField()  # +1 veya -1
+    value = models.IntegerField()  # +1 or -1
+
+    # New fields made non-nullable
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    # Remove old fields
+    # question = models.ForeignKey('Question', on_delete=models.CASCADE, null=True, blank=True)
+    # answer = models.ForeignKey('Answer', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'question'], name='unique_user_question_vote'
-            ),
-            models.UniqueConstraint(
-                fields=['user', 'answer'], name='unique_user_answer_vote'
-            ),
-        ]
+        unique_together = ('user', 'content_type', 'object_id')

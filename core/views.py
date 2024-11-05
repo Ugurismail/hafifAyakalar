@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
 import json, random
-from django.db.models import Q, Count, Max
+from django.db.models import Q, Count, Max, F
 from django.utils import timezone
 from django.core.paginator import Paginator
 from collections import defaultdict, Counter
@@ -18,6 +18,9 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.serializers import serialize
+from django.views.decorators.http import require_POST
+from django.contrib.contenttypes.models import ContentType
+
 
 
 
@@ -132,7 +135,7 @@ def profile(request):
     return render(request, 'core/profile.html', context)
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
-    user_profile = get_object_or_404(UserProfile, user=profile_user)
+    user_profile = profile_user.userprofile
 
     followers = user_profile.followers.all()
     following = user_profile.following.all()
@@ -166,12 +169,72 @@ def get_invitation_tree(user):
     return tree
 
 def question_detail(request, question_id):
+    # Retrieve the question
     question = get_object_or_404(Question, id=question_id)
-    answers = Answer.objects.filter(question=question)
-    saved_answer_ids = request.user.userprofile.saved_answers.values_list('id', flat=True) if request.user.is_authenticated else []
-    answer_save_dict = {}  # Yanıtların kaydedilme sayıları
-    for answer in answers:
-        answer_save_dict[answer.id] = answer.saved_by.count()
+
+    # Handle pagination for answers
+    answers_list = Answer.objects.filter(question=question).order_by('created_at')
+    paginator = Paginator(answers_list, 5)  # Show 5 answers per page
+    page_number = request.GET.get('page')
+    answers_page_obj = paginator.get_page(page_number)
+
+    # Get the IDs of the answers on the current page
+    answer_ids = [answer.id for answer in answers_page_obj]
+
+    # Check if the user is authenticated
+    if request.user.is_authenticated:
+        # Check if the user has saved the question
+        user_has_saved_question = SavedItem.objects.filter(user=request.user, question=question).exists()
+
+        # Get saved answer IDs for the user
+        saved_answer_ids = SavedItem.objects.filter(
+            user=request.user,
+            answer__id__in=answer_ids
+        ).values_list('answer__id', flat=True)
+
+        # Get the user's vote on the question
+        content_type_question = ContentType.objects.get_for_model(Question)
+        try:
+            question_vote = Vote.objects.get(
+                user=request.user,
+                content_type=content_type_question,
+                object_id=question.id
+            )
+            question.user_vote_value = question_vote.value
+        except Vote.DoesNotExist:
+            question.user_vote_value = 0  # No vote
+
+        # Get the user's votes on the answers
+        content_type_answer = ContentType.objects.get_for_model(Answer)
+        # Get all votes by user on the answers in this page
+        answer_votes = Vote.objects.filter(
+            user=request.user,
+            content_type=content_type_answer,
+            object_id__in=answer_ids
+        ).values('object_id', 'value')
+        answer_vote_dict = {item['object_id']: item['value'] for item in answer_votes}
+
+        # For each answer, set 'user_vote_value'
+        for answer in answers_page_obj:
+            answer.user_vote_value = answer_vote_dict.get(answer.id, 0)
+    else:
+        # For anonymous users
+        question.user_vote_value = 0
+        user_has_saved_question = False
+        saved_answer_ids = []
+        for answer in answers_page_obj:
+            answer.user_vote_value = 0
+
+    # Count how many times the question has been saved
+    question_save_count = SavedItem.objects.filter(question=question).count()
+
+    # Get save counts for answers
+    answer_save_counts = SavedItem.objects.filter(
+        answer__id__in=answer_ids
+    ).values('answer_id').annotate(count=Count('id'))
+    answer_save_dict = {item['answer_id']: item['count'] for item in answer_save_counts}
+
+    # Handle POST request for new answer
     if request.method == 'POST':
         form = AnswerForm(request.POST)
         if form.is_valid():
@@ -182,11 +245,14 @@ def question_detail(request, question_id):
             return redirect('question_detail', question_id=question.id)
     else:
         form = AnswerForm()
+
     context = {
         'question': question,
-        'answers': answers,
+        'answers': answers_page_obj,  # Use paginated answers
         'form': form,
-        'saved_answer_ids': saved_answer_ids,
+        'user_has_saved_question': user_has_saved_question,
+        'question_save_count': question_save_count,
+        'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
     }
     return render(request, 'core/question_detail.html', context)
@@ -475,55 +541,6 @@ def add_subquestion(request, question_id):
     }
     return render(request, 'core/add_subquestion.html', context)
 
-@login_required
-def question_detail(request, question_id):
-    # Retrieve question and related data
-    question = get_object_or_404(Question, id=question_id)
-    
-    answers_list = Answer.objects.filter(question=question).order_by('created_at')
-    subquestions = question.subquestions.all()
-
-    # Paginate answers
-    paginator = Paginator(answers_list, 5)  # 5 answers per page
-    page_number = request.GET.get('page')
-    answers_page_obj = paginator.get_page(page_number)
-
-    # Check if the user has saved the question
-    user_has_saved_question = SavedItem.objects.filter(user=request.user, question=question).exists()
-
-    # Count how many times the question has been saved
-    question_save_count = SavedItem.objects.filter(question=question).count()
-
-    # Get save counts for paginated answers
-    # We need to adjust 'answer_id' to 'answer__id' in the values()
-    answer_save_counts = SavedItem.objects.filter(answer__in=answers_page_obj).values('answer__id').annotate(count=Count('id'))
-    answer_save_dict = {item['answer__id']: item['count'] for item in answer_save_counts}
-
-    # Get IDs of answers saved by the user
-    saved_answer_ids = SavedItem.objects.filter(user=request.user, answer__in=answers_page_obj).values_list('answer__id', flat=True)
-
-    # Answer form
-    form = AnswerForm(request.POST or None)
-    if request.method == 'POST':
-        if form.is_valid():
-            answer = form.save(commit=False)
-            answer.user = request.user
-            answer.question = question
-            answer.save()
-            messages.success(request, 'Yanıtınız başarıyla eklendi.')
-            return redirect('question_detail', question_id=question.id)
-
-    context = {
-        'question': question,
-        'answers': answers_page_obj,  # Use paginated answers here
-        'subquestions': subquestions,
-        'form': form,
-        'user_has_saved_question': user_has_saved_question,
-        'saved_answer_ids': list(saved_answer_ids),
-        'answer_save_dict': answer_save_dict,
-        'question_save_count': question_save_count,
-    }
-    return render(request, 'core/question_detail.html', context)
 
 @login_required
 def question_map(request):
@@ -606,8 +623,6 @@ def get_user_color(user_id):
 def about(request):
     return render(request, 'core/about.html')
 
-# core/views.py
-
 @login_required
 def user_settings(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
@@ -680,20 +695,6 @@ def user_settings(request):
             return redirect('user_settings')
     return render(request, 'core/user_settings.html', {'user_profile': profile})
 
-
-@login_required
-def edit_answer(request, answer_id):
-    answer = get_object_or_404(Answer, id=answer_id, user=request.user)
-    if request.method == 'POST':
-        form = AnswerForm(request.POST, instance=answer)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Yanıt başarıyla güncellendi.')
-            return redirect('question_detail', question_id=answer.question.id)
-    else:
-        form = AnswerForm(instance=answer)
-    return render(request, 'core/edit_answer.html', {'form': form, 'answer': answer})
-
 @login_required
 def add_starting_question(request):
     if request.method == 'POST':
@@ -717,139 +718,110 @@ def add_starting_question(request):
         form = StartingQuestionForm()
     return render(request, 'core/add_starting_question.html', {'form': form})
 
-@login_required
-def delete_question(request, question_id):
-    question = get_object_or_404(Question, id=question_id)
 
-    if request.method == 'POST':
-        if request.user == question.user:
-            with transaction.atomic():
-                # Delete all answers associated with the question by the user
-                Answer.objects.filter(question=question, user=request.user).delete()
-                # Remove the user from the question's users
-                question.users.remove(request.user)
-                if question.users.count() == 0:
-                    # If no users are associated, delete the question and its subquestions
-                    delete_question_and_subquestions(question)
-                    messages.success(request, 'Soru ve alt soruları başarıyla silindi.')
-                else:
-                    messages.success(request, 'Soru sizin için silindi.')
-            return redirect('user_homepage')
-        else:
-            messages.error(request, 'Bu soruyu silme yetkiniz yok.')
-            return redirect('question_detail', question_id=question.id)
-    else:
-        return render(request, 'core/confirm_delete_question.html', {'question': question})
+
 
 @login_required
+@require_POST
 def vote(request):
-    if request.method == 'POST':
-        content_type = request.POST.get('content_type')
-        object_id = int(request.POST.get('object_id'))
-        value = int(request.POST.get('value'))  # 1 veya -1
+    try:
+        data = json.loads(request.body)
+        content_type_str = data.get('content_type')
+        object_id = data.get('object_id')
+        value = int(data.get('value'))
 
-        if content_type == 'question':
-            question = get_object_or_404(Question, id=object_id)
-            with transaction.atomic():
-                vote, created = Vote.objects.get_or_create(
-                    user=request.user,
-                    question=question,
-                    defaults={'value': value}
-                )
-                if not created:
-                    # Kullanıcı daha önce oy vermiş
-                    if vote.value != value:
-                        # Önceki oyu geri al
-                        if vote.value == 1:
-                            question.upvotes -= 1
-                        elif vote.value == -1:
-                            question.downvotes -= 1
-                        # Yeni oyu ekle
-                        vote.value = value
-                        vote.save()
-                        if value == 1:
-                            question.upvotes += 1
-                        elif value == -1:
-                            question.downvotes += 1
-                    else:
-                        # Aynı oya tekrar basıldıysa, oy geri çekilir
-                        if vote.value == 1:
-                            question.upvotes -= 1
-                        elif vote.value == -1:
-                            question.downvotes -= 1
-                        vote.delete()
-                else:
-                    # Yeni oy
-                    if value == 1:
-                        question.upvotes += 1
-                    elif value == -1:
-                        question.downvotes += 1
-                question.save()
-            return JsonResponse({'upvotes': question.upvotes, 'downvotes': question.downvotes})
-        elif content_type == 'answer':
-            answer = get_object_or_404(Answer, id=object_id)
-            with transaction.atomic():
-                vote, created = Vote.objects.get_or_create(
-                    user=request.user,
-                    answer=answer,
-                    defaults={'value': value}
-                )
-                if not created:
-                    if vote.value != value:
-                        if vote.value == 1:
-                            answer.upvotes -= 1
-                        elif vote.value == -1:
-                            answer.downvotes -= 1
-                        vote.value = value
-                        vote.save()
-                        if value == 1:
-                            answer.upvotes += 1
-                        elif value == -1:
-                            answer.downvotes += 1
-                    else:
-                        if vote.value == 1:
-                            answer.upvotes -= 1
-                        elif vote.value == -1:
-                            answer.downvotes -= 1
-                        vote.delete()
-                else:
-                    if value == 1:
-                        answer.upvotes += 1
-                    elif value == -1:
-                        answer.downvotes += 1
-                answer.save()
-            return JsonResponse({'upvotes': answer.upvotes, 'downvotes': answer.downvotes})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+        if content_type_str == 'question':
+            model = Question
+        elif content_type_str == 'answer':
+            model = Answer
+        else:
+            return JsonResponse({'message': 'Invalid content type'}, status=400)
+
+        content_type = ContentType.objects.get_for_model(model)
+        content_object = model.objects.get(id=object_id)
+
+        # Get or create the vote
+        vote_obj, created = Vote.objects.get_or_create(
+            user=request.user,
+            content_type=content_type,
+            object_id=object_id,
+            defaults={'value': value}
+        )
+
+        if not created:
+            if vote_obj.value == value:
+                # User is unvoting
+                vote_obj.delete()
+            else:
+                # User is changing the vote
+                vote_obj.value = value
+                vote_obj.save()
+
+        # Update the vote counts
+        votes = Vote.objects.filter(content_type=content_type, object_id=object_id)
+        upvotes = votes.filter(value=1).count()
+        downvotes = votes.filter(value=-1).count()
+
+        # Get the user's current vote value
+        try:
+            user_vote = votes.get(user=request.user)
+            user_vote_value = user_vote.value
+        except Vote.DoesNotExist:
+            user_vote_value = 0  # No vote
+
+        # Update the content object's upvotes and downvotes fields
+        content_object.upvotes = upvotes
+        content_object.downvotes = downvotes
+        content_object.save()
+
+        return JsonResponse({
+            'upvotes': upvotes,
+            'downvotes': downvotes,
+            'user_vote_value': user_vote_value
+        })
+
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=500)
+
+# views.py
+
+from django.views.decorators.http import require_POST
 
 @login_required
+@require_POST
 def save_item(request):
-    if request.method == 'POST':
-        content_type = request.POST.get('content_type')
-        object_id = request.POST.get('object_id')
+    try:
+        data = json.loads(request.body)
+        content_type = data.get('content_type')
+        object_id = data.get('object_id')
 
         if content_type == 'question':
             question = Question.objects.get(id=object_id)
             saved_item, created = SavedItem.objects.get_or_create(user=request.user, question=question)
             if not created:
-                saved_item.delete()  # Zaten kayıtlıysa kaldır
+                saved_item.delete()  # If already saved, remove it
                 status = 'removed'
             else:
                 status = 'saved'
-            # Güncellenmiş kaydetme sayısını alın
+            # Get the updated save count
             save_count = SavedItem.objects.filter(question=question).count()
             return JsonResponse({'status': status, 'save_count': save_count})
         elif content_type == 'answer':
             answer = Answer.objects.get(id=object_id)
             saved_item, created = SavedItem.objects.get_or_create(user=request.user, answer=answer)
             if not created:
-                saved_item.delete()  # Zaten kayıtlıysa kaldır
+                saved_item.delete()  # If already saved, remove it
                 status = 'removed'
             else:
                 status = 'saved'
-            # Güncellenmiş kaydetme sayısını alın
+            # Get the updated save count
             save_count = SavedItem.objects.filter(answer=answer).count()
             return JsonResponse({'status': status, 'save_count': save_count})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+        else:
+            return JsonResponse({'error': 'Invalid content type'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 
 def site_statistics(request):
@@ -947,60 +919,62 @@ def site_statistics(request):
     return render(request, 'core/site_statistics.html', context)
 
 
-def delete_question_and_subquestions(question):
-    subquestions = question.subquestions.all()
-    for sub in subquestions:
-        delete_question_and_subquestions(sub)
-    question.delete()
-
-@login_required
 def user_homepage(request):
-    # All questions
-    all_questions_list = Question.objects.annotate(
+        # Tüm soruları al
+    all_questions = Question.objects.annotate(
         answers_count=Count('answers'),
         latest_answer_date=Max('answers__created_at')
-    ).annotate(
-        last_activity=Coalesce('latest_answer_date', 'created_at')
-    ).order_by('-last_activity')
+    ).order_by(F('latest_answer_date').desc(nulls_last=True))
+    
+    # Başlangıç sorularını al
+    starting_questions = StartingQuestion.objects.filter(user=request.user).annotate(
+        total_subquestions=Count('question__subquestions'),
+        latest_subquestion_date=Max('question__subquestions__created_at')
+    ).order_by(F('latest_subquestion_date').desc(nulls_last=True))
+    # Rastgele yanıtları alıyoruz
+    random_items = Answer.objects.all().order_by('?')[:10]
 
-    # Paginate all questions
-    all_questions_paginator = Paginator(all_questions_list, 5)  # Sayfa başına 5 soru
-    page_number = request.GET.get('page')
-    all_questions_page_obj = all_questions_paginator.get_page(page_number)
+    # Kullanıcının oylarını alalım
+    if request.user.is_authenticated:
+        content_type_answer = ContentType.objects.get_for_model(Answer)
+        answer_votes = Vote.objects.filter(
+            user=request.user,
+            content_type=content_type_answer,
+            object_id__in=random_items
+        ).values('object_id', 'value')
+        answer_vote_dict = {item['object_id']: item['value'] for item in answer_votes}
 
-    # Starting questions
-    starting_questions_list = StartingQuestion.objects.filter(user=request.user)
-    starting_questions_with_counts = [
-        {
-            'question': sq.question,
-            'total_subquestions': sq.question.get_total_subquestions_count()
-        }
-        for sq in starting_questions_list
-    ]
+        # Her yanıta `user_vote_value` özelliğini ekleyelim
+        for answer in random_items:
+            answer.user_vote_value = answer_vote_dict.get(answer.id, 0)
+    else:
+        # Kullanıcı giriş yapmamışsa, tüm oy değerlerini 0 olarak ayarla
+        for answer in random_items:
+            answer.user_vote_value = 0
 
-    # Paginate starting questions
-    starting_questions_paginator = Paginator(starting_questions_with_counts, 5)
-    starting_page_number = request.GET.get('starting_page')
-    starting_questions_page_obj = starting_questions_paginator.get_page(starting_page_number)
+    # Kullanıcının kaydettiği yanıtların ID'lerini alalım
+    if request.user.is_authenticated:
+        saved_answer_ids = SavedItem.objects.filter(
+            user=request.user,
+            answer__in=random_items
+        ).values_list('answer__id', flat=True)
+    else:
+        saved_answer_ids = []
 
-    # Random answers
-    random_items = random.sample(list(Answer.objects.select_related('question')), min(10, Answer.objects.count()))
-
-    # User's saved answer IDs
-    saved_answer_ids = SavedItem.objects.filter(user=request.user, answer__in=random_items).values_list('answer__id', flat=True)
-
-    # Answer save counts
+    # Yanıtların kaydedilme sayısını alalım
     answer_save_counts = SavedItem.objects.filter(answer__in=random_items).values('answer_id').annotate(count=Count('id'))
     answer_save_dict = {item['answer_id']: item['count'] for item in answer_save_counts}
 
+    # Diğer işlemler...
     context = {
-        'starting_questions': starting_questions_page_obj,
-        'all_questions': all_questions_page_obj,  # Sayfalandırılmış all_questions
         'random_items': random_items,
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
+        'all_questions': all_questions,
+        'starting_questions': starting_questions,
     }
     return render(request, 'core/user_homepage.html', context)
+
 
 @login_required
 def edit_answer(request, answer_id):
@@ -1015,15 +989,40 @@ def edit_answer(request, answer_id):
         form = AnswerForm(instance=answer)
     return render(request, 'core/edit_answer.html', {'form': form, 'answer': answer})
 
+
+@login_required
+def delete_question(request, question_id):
+    question = get_object_or_404(Question, id=question_id)
+
+    if request.method == 'POST':
+        if request.user == question.user:
+            with transaction.atomic():
+                # Delete all answers associated with the question by the user
+                Answer.objects.filter(question=question, user=request.user).delete()
+                # Remove the user from the question's users
+                question.users.remove(request.user)
+                if question.users.count() == 0:
+                    # If no users are associated, delete the question and its subquestions
+                    delete_question_and_subquestions(question)
+                    messages.success(request, 'Soru ve alt soruları başarıyla silindi.')
+                else:
+                    messages.success(request, 'Soru sizin için silindi.')
+            return redirect('user_homepage')
+        else:
+            messages.error(request, 'Bu soruyu silme yetkiniz yok.')
+            return redirect('question_detail', question_id=question.id)
+    else:
+        return render(request, 'core/confirm_delete_question.html', {'question': question})
+
 @login_required
 def delete_answer(request, answer_id):
     answer = get_object_or_404(Answer, id=answer_id, user=request.user)
+    question_id = answer.question.id
     if request.method == 'POST':
         answer.delete()
-        messages.success(request, 'Yanıt başarıyla silindi.')
+        return redirect('user_homepage')
     else:
-        messages.error(request, 'Yanıt silinemedi.')
-    return redirect('question_detail', question_id=answer.question.id)
+        return redirect('user_homepage')
 
 def delete_question_and_subquestions(question):
     subquestions = question.subquestions.all()
@@ -1055,6 +1054,13 @@ def delete_question(request, question_id):
     else:
         return render(request, 'core/confirm_delete_question.html', {'question': question})
     
+def delete_question_and_subquestions(question):
+    subquestions = question.subquestions.all()
+    for sub in subquestions:
+        delete_question_and_subquestions(sub)
+    question.delete()
+
+
 @login_required
 def single_answer(request, question_id, answer_id):
     question = get_object_or_404(Question, id=question_id)

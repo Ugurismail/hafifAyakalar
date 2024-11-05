@@ -3,6 +3,7 @@ from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+
 register = template.Library()
 
 @register.filter
@@ -19,12 +20,15 @@ def dict_get(dictionary, key):
     return dictionary.get(key)
 
 
+
+
 @register.filter
 def bkz_link(text):
     pattern = r'\(bkz:\s*(.*?)\)'
     def replace(match):
         query = match.group(1).strip()
         url = reverse('bkz', args=[query])
-        # Markdown link formatını kullanıyoruz
-        return f'(bkz: [{query}]({url}))'
-    return re.sub(pattern, replace, text)
+        # Generate HTML link
+        return f'(bkz: <a href="{url}">{query}</a>)'
+    return mark_safe(re.sub(pattern, replace, text))
+
