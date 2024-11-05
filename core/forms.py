@@ -6,6 +6,15 @@ from .models import Invitation, UserProfile,Question,Answer
 from .models import Message
 
 
+class ProfilePhotoForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['photo']
+
+
+
+
+
 class SignupForm(UserCreationForm):
     invitation_code = forms.UUIDField(label='Davet Kodu', required=True)
 

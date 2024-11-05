@@ -69,7 +69,7 @@
             <!-- Navbar İçeriği -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 {% if user.is_authenticated %}
-                <form id="search-form" class="position-relative">
+                <form id="search-form" class="d-flex mx-auto" style="width: 400px;">
                     {% csrf_token %}
                     <input type="text" id="search-input" class="form-control" placeholder="Ara...">
                     <div id="search-results"></div>
@@ -82,14 +82,8 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'user_homepage' %}" title="Ana Sayfa"><i class="bi bi-house"></i></a>
                     </li>
-                    <a href="{% url 'conversations' %}" id="messages-link">
-                        Mesajlar <span id="unread-count" style="display: none;"></span>
-                    </a>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'question_map' %}" title="Harita"><i class="bi bi-diagram-3"></i></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'user_list' %}">Kullanıcılar</a>
                     </li>
                     <!-- Dropdown Menü -->
                     <li class="nav-item dropdown">
@@ -98,8 +92,13 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="extraMenu">
                             <li>
-                                <a class="dropdown-item" href="{% url 'about' %}">
-                                    <i class="bi bi-info-circle"></i>Hakkında
+                                <a class="dropdown-item" href="{% url 'profile' %}" title="Profil">
+                                    <i class="bi bi-person"></i>Profilim
+                                </a>                              
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'conversations' %}" id="messages-link">
+                                    <i class="bi bi-chat-left"></i>Mesajlar
                                 </a>
                             </li>
                             <li>
@@ -113,14 +112,20 @@
                                 </a>
                             </li>
                             <li>
+                                <a class="dropdown-item" href="{% url 'user_list' %}">
+                                    <i class="bi bi-people"></i>Tüm Kullanıcılar
+                                </a>
+                            </li>
+                            <li>
                                 <a class="dropdown-item" href="https://www.typingme.com/10-parmak-klavye-q/10-parmak-q.php">
                                     <i class="bi bi-keyboard"></i>On Parmak
                                 </a>
                             </li>
+
                             <li>
-                                <a class="dropdown-item" href="{% url 'profile' %}" title="Profil">
-                                    <i class="bi bi-person"></i> Profilim
-                                </a>                              
+                                <a class="dropdown-item" href="{% url 'about' %}">
+                                    <i class="bi bi-info-circle"></i>Hakkında
+                                </a>
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'logout' %}" title="Çıkış"><i class="bi bi-box-arrow-right"></i>Çıkış Yap</a>

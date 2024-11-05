@@ -2,25 +2,101 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% block content %}
-<div class="mt-5">
-    <h2>{{ user.username }}'nin Profili</h2>
-
-    {% if profile_user != user %}
-    <button onclick="openChat('{{ profile_user.username }}', {{ profile_user.id }})">Mesaj Gönder</button>
+<div class="container mt-5">
+    <!-- Kullanıcı Bilgileri -->
+    <div class="text-center">
+        <!-- Profil Fotoğrafı -->
+    {% if user_profile.photo %}
+        <img src="{{ user_profile.photo.url }}" alt="Profil Fotoğrafı" class="rounded-circle" width="150" height="150">
+    {% else %}
+        <img src="{% static 'images/default_profile.png' %}" alt="Profil Fotoğrafı" class="rounded-circle" width="150" height="150">
     {% endif %}
-    
-    <p>Davet Hakkı: {{ user_profile.invitation_quota }}</p>
-    
-    <a href="{% url 'send_invitation' %}">Davet Et</a>
-    
-    {% if invitation_tree %}
-        <h3>Davet Zinciri</h3>
-        <ul>
-            {% for node in invitation_tree %}
-                {% include 'core/invitation_node.html' with node=node %}
-            {% endfor %}
+    <div class="mt-2">
+        <a href="{% url 'update_profile_photo' %}" class="btn btn-secondary">Profil Fotoğrafını Güncelle</a>
+    </div>
+        <!-- Kullanıcı Adı -->
+        <h2 class="mt-3">{{ user.username }}</h2>
+        <!-- Takipçi ve Takip Edilen Sayıları -->
+        <p>
+            <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
+        </p>
+    </div>
+
+    <!-- Sabitlenmiş Giriş -->
+    {% if pinned_entry %}
+    <div class="mt-4">
+        <h4>Sabitlenmiş Gönderi</h4>
+        {% if pinned_entry.answer %}
+            <!-- Hem soru hem yanıt birlikte gösterilir -->
+            <p><strong>Soru:</strong> <a href="{% url 'question_detail' pinned_entry.question.id %}">{{ pinned_entry.question.question_text }}</a></p>
+            <p><strong>Yanıt:</strong> {{ pinned_entry.answer.answer_text }}</p>
+            <a href="{% url 'question_detail' pinned_entry.question.id %}#answer-{{ pinned_entry.answer.id }}">Devamını oku</a>
+        {% else %}
+            <!-- Sadece soru sabitlenmişse -->
+            <p><strong>Soru:</strong> <a href="{% url 'question_detail' pinned_entry.question.id %}">{{ pinned_entry.question.question_text }}</a></p>
+        {% endif %}
+    </div>
+{% endif %}
+    <div class="mt-3">
+        <a href="{% url 'send_invitation' %}" class="btn btn-primary">Davet Gönder</a>
+    </div>
+    <!-- Kullanıcının Soruları ve Yanıtları -->
+    <div class="mt-4">
+        <ul class="nav nav-tabs" id="profileTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab">Sorular</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="answers-tab" data-bs-toggle="tab" data-bs-target="#answers" type="button" role="tab">Yanıtlar</button>
+            </li>
+            <!-- Diğer sekmeler -->
         </ul>
-    {% endif %}
+        <div class="tab-content" id="profileTabContent">
+            <!-- Sorular Tabı -->
+            <div class="tab-pane fade show active" id="questions" role="tabpanel">
+                {% if questions %}
+                    <ul class="list-group mt-3">
+                        {% for question in questions %}
+                            <li class="list-group-item">
+                                <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Henüz soru eklemediniz.</p>
+                {% endif %}
+            </div>
+            <!-- Yanıtlar Tabı -->
+            <div class="tab-pane fade" id="answers" role="tabpanel">
+                {% if answers %}
+                    <ul class="list-group mt-3">
+                        {% for answer in answers %}
+                            <li class="list-group-item">
+                                {{ answer.answer_text|truncatewords:20 }}
+                                <a href="{% url 'question_detail' answer.question.id %}#answer-{{ answer.id }}">Devamını oku</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Henüz yanıt eklemediniz.</p>
+                {% endif %}
+            </div>
+            <!-- Profil sayfasında kelimeler sekmesi veya bölümü -->
+<div class="mt-4">
+    <h3>En Çok Kullandığınız Kelimeler</h3>
+    <ul>
+        {% for word, count in top_words %}
+            <li>{{ word }}: {{ count }}</li>
+        {% endfor %}
+    </ul>
 </div>
-
+<div class="mt-4">
+    <h3>İstatistikler</h3>
+    <p>Toplam Soru Sayısı: {{ questions.count }}</p>
+    <p>Toplam Yanıt Sayısı: {{ answers.count }}</p>
+    <!-- Diğer istatistikler -->
+</div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,10 +1,21 @@
+<!-- templates/core/signup.html -->
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block content %}
-<h2>Kayıt Ol</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Kayıt Ol</button>
-</form>
+<div class="container mt-5">
+    <h2>Kayıt Ol</h2>
+    
+    <!-- İstediğiniz mesajı buraya ekleyin -->
+    <div class="alert alert-info">
+        Burası kapalı bir sitedir ve sadece davetiye ile girilebilir. Lütfen bir davetiye bulunuz ya da davetiyenizi kullanarak kayıt olunuz.
+    </div>
+    
+    <!-- Kayıt formu -->
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+    </form>
+</div>
 {% endblock %}

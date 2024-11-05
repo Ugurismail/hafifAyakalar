@@ -41,12 +41,6 @@
                         <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                     </a>
                     <span class="save-count">{{ question_save_count }}</span>
-                    <!-- Düzenle ve Sil Butonları (Sadece İçerik Sahibi İçin) -->
-                    {% if question.user == request.user %}
-                        <a href="{% url 'delete_question' question.id %}" class="ms-2 text-danger" title="Sil">
-                            <i class="bi bi-trash icon-black-white"></i>
-                        </a>
-                    {% endif %}
                 </div>
                 <!-- Sağ Kısım: Kullanıcı Bilgisi ve Tarih -->
                 <div class="text-end">

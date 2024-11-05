@@ -13,7 +13,7 @@ body {
     padding: 1rem 1rem;
     background-color: var(--header-background-color);
     color: var(--header-text-color);
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 10px solid #e0e0e0;
     transition: padding 0.3s ease, background-color 0.3s ease;
 }
 
@@ -398,10 +398,48 @@ a:hover {
     border-radius: 5px;
 }
 
-.voted-up {
+/* .voted-up {
     color: green !important;
+    
 }
 
 .voted-down {
     color: red !important;
+} */
+
+.bi-chevron-up,
+.bi-chevron-down {
+    display: inline-block; /* Transform ve Transition için gerekli */
+    transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
+    cursor: pointer; /* İkonu tıklanabilir yapar */
+    font-size: 1.5rem; /* İkon boyutunu ayarlar */
+}
+
+.voted-up {
+    color: green !important;
+    transform: scale(1.2);
+    text-shadow:
+        0 0 5px rgba(0, 255, 0, 0.7),
+        0 0 10px rgba(0, 255, 0, 0.6),
+        0 0 20px rgba(0, 255, 0, 0.5),
+        0 0 40px rgba(0, 255, 0, 0.4);
+}
+
+.voted-down {
+    color: red !important;
+    transform: scale(1.2);
+    text-shadow:
+        0 0 5px rgba(255, 0, 0, 0.7),
+        0 0 10px rgba(255, 0, 0, 0.6),
+        0 0 20px rgba(255, 0, 0, 0.5),
+        0 0 40px rgba(255, 0, 0, 0.4);
+}
+
+.bi-chevron-up:hover,
+.bi-chevron-down:hover {
+    color: #555;
+    transform: scale(1.1);
+    text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.5),
+        0 0 6px rgba(0, 0, 0, 0.4);
 }

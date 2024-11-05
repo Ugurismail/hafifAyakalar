@@ -1,32 +1,57 @@
 <!-- templates/core/user_profile.html -->
-
 {% extends 'core/base.html' %}
-
+{% load static %}
 {% block content %}
-<h1>{{ profile_user.username }}'ın Profili</h1>
+<div class="container mt-5">
+    <!-- Kullanıcı Bilgileri -->
+    <div class="text-center">
+        <!-- Profil Fotoğrafı -->
+        <img src="{{ user_profile.photo.url|default:'/static/images/default_profile.png' }}" alt="Profil Fotoğrafı" class="rounded-circle" width="150" height="150">
+        <!-- Kullanıcı Adı -->
+        <h2 class="mt-3">{{ profile_user.username }}</h2>
+        <!-- Takipçi ve Takip Edilen Sayıları -->
+        <p>
+            <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
+        </p>
+        <!-- Takip Et/Takibi Bırak Butonu -->
+        {% if request.user != profile_user %}
+            {% if is_following %}
+                <form action="{% url 'unfollow_user' profile_user.username %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary">Takibi Bırak</button>
+                </form>
+            {% else %}
+                <form action="{% url 'follow_user' profile_user.username %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Takip Et</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
 
-<p>Takipçi Sayısı: {{ followers|length }}</p>
-<p>Takip Edilen Sayısı: {{ following|length }}</p>
-
-{% if user.is_authenticated and user != profile_user %}
-    <!-- Takip Et/Takipten Çık Butonu -->
-    {% if is_following %}
-        <form action="{% url 'unfollow_user' username=profile_user.username %}" method="post">
-            {% csrf_token %}
-            <button type="submit">Takipten Çık</button>
-        </form>
-    {% else %}
-        <form action="{% url 'follow_user' username=profile_user.username %}" method="post">
-            {% csrf_token %}
-            <button type="submit">Takip Et</button>
-        </form>
+    <!-- Sabitlenmiş Giriş -->
+    {% if pinned_entry %}
+    <div class="mt-4">
+        <h4>Sabitlenmiş Gönderi</h4>
+        <!-- Sabitlenmiş giriş içeriğini burada gösterin -->
+        {% if pinned_entry.content_type.model == 'question' %}
+            <p><a href="{% url 'question_detail' pinned_entry.content_object.id %}">{{ pinned_entry.content_object.question_text }}</a></p>
+        {% elif pinned_entry.content_type.model == 'answer' %}
+            <p>{{ pinned_entry.content_object.answer_text|truncatewords:30 }}</p>
+            <a href="{% url 'question_detail' pinned_entry.content_object.question.id %}#answer-{{ pinned_entry.content_object.id }}">Devamını oku</a>
+        {% endif %}
+    </div>
     {% endif %}
 
-    <!-- Mesaj Gönder Butonu -->
-    <button class="message-button" data-username="{{ profile_user.username }}" data-userid="{{ profile_user.id }}">
-        Mesaj Gönder
-    </button>
-{% endif %}
-
-<!-- Kullanıcının soruları ve diğer içerikler -->
+    <!-- Kullanıcının Soruları ve Yanıtları -->
+    <div class="mt-4">
+        <!-- Sekmeler ve içerikler aynı şekilde -->
+        <ul class="nav nav-tabs" id="profileTab" role="tablist">
+            <!-- Sekme başlıkları -->
+        </ul>
+        <div class="tab-content" id="profileTabContent">
+            <!-- Sekme içerikleri -->
+        </div>
+    </div>
+</div>
 {% endblock %}

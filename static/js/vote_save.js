@@ -1,14 +1,14 @@
 // static/js/vote_save.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Function to get CSRF token
+    // CSRF tokenını almak için fonksiyon
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let cookie of cookies) {
                 cookie = cookie.trim();
-                // Check if this cookie string begins with the name we want
+                // İstediğimiz cookie ile başlıyor mu kontrol edelim
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -19,44 +19,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const csrftoken = getCookie('csrftoken');
 
-    // **Voting Functionality**
-    const voteButtons = document.querySelectorAll('.vote-btn');
-
-    voteButtons.forEach(function(voteButton) {
-        voteButton.addEventListener('click', function(event) {
+    // **Oylama İşlevselliği**
+    document.addEventListener('click', function(event) {
+        if (event.target.matches('.vote-btn') || event.target.closest('.vote-btn')) {
             event.preventDefault();
+            const voteButton = event.target.closest('.vote-btn');
+            const contentType = voteButton.getAttribute('data-content-type');
+            const objectId = voteButton.getAttribute('data-object-id');
+            const value = parseInt(voteButton.getAttribute('data-value'));
 
-            const contentType = this.getAttribute('data-content-type');
-            const objectId = this.getAttribute('data-object-id');
-            const value = parseInt(this.getAttribute('data-value'));
+            // FormData oluşturma
+            const formData = new FormData();
+            formData.append('content_type', contentType);
+            formData.append('object_id', objectId);
+            formData.append('value', value);
 
             fetch('/vote/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken // CSRF tokenını ekliyoruz
                 },
-                body: JSON.stringify({
-                    'content_type': contentType,
-                    'object_id': objectId,
-                    'value': value
-                })
+                body: formData
             })
             .then(response => {
                 if (!response.ok) {
-                    // For debugging purposes, you can get the error text
+                    // Hata durumunda hata mesajını alın
                     return response.text().then(text => { throw new Error(text) });
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.upvotes !== undefined && data.downvotes !== undefined) {
-                    // Update the vote counts in the UI
+                    // Oy sayımlarını güncelle
                     if (contentType === 'question') {
                         document.getElementById('question-upvotes').innerText = data.upvotes;
                         document.getElementById('question-downvotes').innerText = data.downvotes;
 
-                        // Update vote button styles
+                        // Oy butonlarının stilini güncelle
                         const upvoteButton = document.querySelector(`.vote-btn[data-content-type="question"][data-object-id="${objectId}"][data-value="1"]`);
                         const downvoteButton = document.querySelector(`.vote-btn[data-content-type="question"][data-object-id="${objectId}"][data-value="-1"]`);
                         updateVoteButtonStyles(upvoteButton, downvoteButton, data.user_vote_value);
@@ -65,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById(`answer-upvotes-${objectId}`).innerText = data.upvotes;
                         document.getElementById(`answer-downvotes-${objectId}`).innerText = data.downvotes;
 
-                        // Update vote button styles
+                        // Oy butonlarının stilini güncelle
                         const upvoteButton = document.querySelector(`.vote-btn[data-content-type="answer"][data-object-id="${objectId}"][data-value="1"]`);
                         const downvoteButton = document.querySelector(`.vote-btn[data-content-type="answer"][data-object-id="${objectId}"][data-value="-1"]`);
                         updateVoteButtonStyles(upvoteButton, downvoteButton, data.user_vote_value);
@@ -77,46 +76,45 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
             });
-        });
+        }
     });
 
-    // **Save Functionality**
-    const saveButtons = document.querySelectorAll('.save-btn');
-
-    saveButtons.forEach(function(saveButton) {
-        saveButton.addEventListener('click', function(event) {
+    // **Kaydetme İşlevselliği**
+    document.addEventListener('click', function(event) {
+        if (event.target.matches('.save-btn') || event.target.closest('.save-btn')) {
             event.preventDefault();
+            const saveButton = event.target.closest('.save-btn');
+            const contentType = saveButton.getAttribute('data-content-type');
+            const objectId = saveButton.getAttribute('data-object-id');
+            const icon = saveButton.querySelector('i');
+            const saveCountSpan = saveButton.nextElementSibling;
 
-            const contentType = this.getAttribute('data-content-type');
-            const objectId = this.getAttribute('data-object-id');
-            const icon = this.querySelector('i');
-            const saveCountSpan = this.nextElementSibling; // Assuming the save count is next to the button
+            // FormData oluşturma
+            const formData = new FormData();
+            formData.append('content_type', contentType);
+            formData.append('object_id', objectId);
 
             fetch('/save-item/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken // CSRF tokenını ekliyoruz
                 },
-                body: JSON.stringify({
-                    'content_type': contentType,
-                    'object_id': objectId
-                })
+                body: formData
             })
             .then(response => {
                 if (!response.ok) {
-                    // For debugging purposes, you can get the error text
+                    // Hata durumunda hata mesajını alın
                     return response.text().then(text => { throw new Error(text) });
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.status === 'saved') {
-                    // Update the icon to indicate saved
+                    // İkonu kaydedildi olarak güncelle
                     icon.classList.remove('bi-bookmark');
                     icon.classList.add('bi-bookmark-fill');
-                } else if (data.status === 'removed') {
-                    // Update the icon to indicate not saved
+                } else if (data.status === 'unsaved' || data.status === 'removed') {
+                    // İkonu kaydedilmedi olarak güncelle
                     icon.classList.remove('bi-bookmark-fill');
                     icon.classList.add('bi-bookmark');
                 }
@@ -127,18 +125,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
             });
-        });
+        }
     });
+
+    // Oy butonlarının stilini güncelleyen fonksiyon
     function updateVoteButtonStyles(upvoteButton, downvoteButton, userVoteValue) {
-        // Remove any existing 'voted' classes
-        upvoteButton.classList.remove('voted-up');
-        downvoteButton.classList.remove('voted-down');
-    
-        // Add the appropriate class based on user vote
+        // Mevcut 'voted' sınıflarını kaldır
+        if (upvoteButton) upvoteButton.classList.remove('voted-up');
+        if (downvoteButton) downvoteButton.classList.remove('voted-down');
+
+        // Kullanıcının oyuna göre uygun sınıfı ekle
         if (userVoteValue === 1 || userVoteValue === "1") {
-            upvoteButton.classList.add('voted-up');
+            if (upvoteButton) upvoteButton.classList.add('voted-up');
         } else if (userVoteValue === -1 || userVoteValue === "-1") {
-            downvoteButton.classList.add('voted-down');
+            if (downvoteButton) downvoteButton.classList.add('voted-down');
         }
     }
 });

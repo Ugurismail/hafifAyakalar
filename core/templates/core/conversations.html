@@ -2,12 +2,12 @@
 
 {% block content %}
 <div class="mt-5">
-    <h2>Konuşmalar</h2>
+    <h2>Konuşmalara devam edin</h2>
 <ul>
     {% for user in users %}
     <li>
         {{ user.username }}
-        <button class="message-button" data-username="{{ user.username }}" data-userid="{{ user.id }}">Mesajlaş</button>
+        <button class="message-button" data-username="{{ user.username }}" data-userid="{{ user.id }}">Konuşma Başlat</button>
     </li>
     {% empty %}
     <li>Henüz bir konuşmanız yok.</li>

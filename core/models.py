@@ -4,10 +4,15 @@ import uuid
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
 
+class PinnedEntry(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True, blank=True)
+    answer = models.ForeignKey('Answer', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Invitation(models.Model):
     code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -16,7 +21,7 @@ class Invitation(models.Model):
     )
     quota_granted = models.PositiveIntegerField(default=0)
     is_used = models.BooleanField(default=False)
-    date_created = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     used_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, related_name='used_invitations', null=True, blank=True
     )
@@ -24,11 +29,11 @@ class Invitation(models.Model):
     def __str__(self):
         return f"Invitation from {self.sender.username if self.sender else 'System'}"
 
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     invitation_quota = models.PositiveIntegerField(default=0)
     following = models.ManyToManyField('self', symmetrical=False, related_name='followers', blank=True)
+    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
 
     # Renk ayarları alanları
     background_color = models.CharField(max_length=7, default='#F5F5F5')
@@ -80,6 +85,7 @@ class Question(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     from_search = models.BooleanField(default=False) 
+    saveditem = GenericRelation('SavedItem')
     # parent_questions alanını kaldırdık
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
     users = models.ManyToManyField(
@@ -120,6 +126,7 @@ class Answer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
     upvotes = models.IntegerField(default=0)
     downvotes = models.IntegerField(default=0)
+    saveditem = GenericRelation('SavedItem')
 
     def __str__(self):
         return f"Answer to {self.question.question_text} by {self.user.username}"
@@ -149,23 +156,24 @@ class StartingQuestion(models.Model):
 
 class SavedItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, null=True, blank=True
-    )
-    answer = models.ForeignKey(
-        Answer, on_delete=models.CASCADE, null=True, blank=True
-    )
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
     saved_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'question', 'answer')
+        unique_together = ('user', 'content_type', 'object_id')
 
+    def save(self, *args, **kwargs):
+        if not self.content_type and not self.object_id:
+            if hasattr(self, 'question'):
+                self.content_type = ContentType.objects.get_for_model(Question)
+                self.object_id = self.question.id
+            elif hasattr(self, 'answer'):
+                self.content_type = ContentType.objects.get_for_model(Answer)
+                self.object_id = self.answer.id
+        super(SavedItem, self).save(*args, **kwargs)
 
-
-from django.db import models
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 
 class Vote(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -182,3 +190,9 @@ class Vote(models.Model):
 
     class Meta:
         unique_together = ('user', 'content_type', 'object_id')
+
+class Entry(models.Model):
+    # Soru ve yanıtları temsil eden soyut bir model
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
