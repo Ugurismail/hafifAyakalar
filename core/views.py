@@ -155,37 +155,158 @@ def profile(request):
         'pinned_entry': pinned_entry,
         'top_words': top_words,
     }
-    return render(request, 'core/profile.html', context)
+    return redirect('user_profile', username=request.user.username)
+
+# core/views.py
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import Coalesce
 
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
     user_profile = profile_user.userprofile
+    active_tab = request.GET.get('active_tab', 'sorular')
+    # Kullanıcının kendi profili mi?
+    is_own_profile = request.user.is_authenticated and request.user == profile_user
 
     # Kullanıcının soruları ve yanıtları
-    questions = Question.objects.filter(user=profile_user)
-    answers = Answer.objects.filter(user=profile_user)
+    questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
+    answers_list = Answer.objects.filter(user=profile_user).order_by('-created_at')
+
+    # Sorular için sayfalama
+    question_page = request.GET.get('question_page', 1)
+    question_paginator = Paginator(questions_list, 50)
+    try:
+        questions = question_paginator.page(question_page)
+    except PageNotAnInteger:
+        questions = question_paginator.page(1)
+    except EmptyPage:
+        questions = question_paginator.page(question_paginator.num_pages)
+
+    # Yanıtlar için sayfalama
+    answer_page = request.GET.get('answer_page', 1)
+    answer_paginator = Paginator(answers_list, 50)
+    try:
+        answers = answer_paginator.page(answer_page)
+    except PageNotAnInteger:
+        answers = answer_paginator.page(1)
+    except EmptyPage:
+        answers = answer_paginator.page(answer_paginator.num_pages)
+
+    # Kelimeler Sekmesi
+    # Tüm soru ve yanıt metinlerini birleştir
+    question_texts = questions_list.values_list('question_text', flat=True)
+    answer_texts = answers_list.values_list('answer_text', flat=True)
+    all_texts = ' '.join(question_texts) + ' ' + ' '.join(answer_texts)
+    all_texts = all_texts.lower()
+
+    # Kelimeleri ayıkla
+    words = re.findall(r'\b\w+\b', all_texts)
+
+    # Hariç tutulacak kelimeleri al
+    exclude_words_list = request.GET.getlist('exclude_words')
+    exclude_words_set = set(word.lower() for word in exclude_words_list)
+
+    exclude_word = request.GET.get('exclude_word', '').strip().lower()
+
+    if exclude_word:
+        exclude_words_set.add(exclude_word)
+        exclude_words_list = list(exclude_words_set)
+
+
+    include_word = request.GET.get('include_word', '').strip().lower()
+    if include_word:
+        exclude_words_set.discard(include_word)
+        exclude_words_list = list(exclude_words_set)
+
+    # Kelimeleri filtrele
+    filtered_words = [word for word in words if word not in exclude_words_set]
+
+    # Kelime sıklıklarını hesapla
+    word_counts = Counter(filtered_words)
+    top_words = word_counts.most_common(10)
+
+    # Kelime arama
+    search_word = request.GET.get('search_word', '').strip().lower()
+    search_word_count = None
+    if search_word:
+        search_word_count = word_counts.get(search_word, 0)
+    
+    exclude_words = ', '.join(sorted(exclude_words_set))
+
+    # İstatistikler Sekmesi
+    # Toplam upvote ve downvote sayıları
+    total_upvotes = Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total'] + Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total']
+    total_downvotes = Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total'] + Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total']
+
+    # Toplam kaydedilme sayısı
+    content_type_question = ContentType.objects.get_for_model(Question)
+    content_type_answer = ContentType.objects.get_for_model(Answer)
+    total_saves_questions = SavedItem.objects.filter(content_type=content_type_question, object_id__in=questions_list.values_list('id', flat=True)).count()
+    total_saves_answers = SavedItem.objects.filter(content_type=content_type_answer, object_id__in=answers_list.values_list('id', flat=True)).count()
+    total_saves = total_saves_questions + total_saves_answers
+
+    # En çok upvote alan girdi
+    most_upvoted_question = questions_list.order_by('-upvotes').first()
+    most_upvoted_answer = answers_list.order_by('-upvotes').first()
+    most_upvoted_entry = max(
+        [entry for entry in [most_upvoted_question, most_upvoted_answer] if entry],
+        key=lambda x: x.upvotes,
+        default=None
+    )
+
+    # En çok downvote alan girdi
+    most_downvoted_question = questions_list.order_by('-downvotes').first()
+    most_downvoted_answer = answers_list.order_by('-downvotes').first()
+    most_downvoted_entry = max(
+        [entry for entry in [most_downvoted_question, most_downvoted_answer] if entry],
+        key=lambda x: x.downvotes,
+        default=None
+    )
+
+    # En çok kaydedilen girdi
+    most_saved_question = questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
+    most_saved_answer = answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
+    most_saved_entry = max(
+        [entry for entry in [most_saved_question, most_saved_answer] if entry],
+        key=lambda x: x.save_count,
+        default=None
+    )
 
     # Takipçi ve takip edilen sayıları
     follower_count = user_profile.followers.count()
     following_count = user_profile.following.count()
 
     # Kullanıcının takip edip etmediğini kontrol et
-    if request.user.is_authenticated:
+    is_following = False
+    if request.user.is_authenticated and request.user != profile_user:
         is_following = request.user.userprofile.following.filter(user=profile_user).exists()
-    else:
-        is_following = False
-
 
     context = {
         'profile_user': profile_user,
         'user_profile': user_profile,
         'questions': questions,
         'answers': answers,
+        'top_words': top_words,
+        'exclude_words': ', '.join(exclude_words_set),
+        'search_word': search_word,
+        'search_word_count': search_word_count,
+        'total_upvotes': total_upvotes,
+        'total_downvotes': total_downvotes,
+        'total_saves': total_saves,
+        'most_upvoted_entry': most_upvoted_entry,
+        'most_downvoted_entry': most_downvoted_entry,
+        'most_saved_entry': most_saved_entry,
         'follower_count': follower_count,
         'following_count': following_count,
         'is_following': is_following,
-        'pinned_entry': pinned_entry,
+        'is_own_profile': is_own_profile,
+        'active_tab': active_tab,
+        'exclude_words_list': exclude_words_list,
+        'exclude_words': exclude_words,
     }
+
     return render(request, 'core/user_profile.html', context)
 
 
