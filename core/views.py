@@ -40,28 +40,31 @@ def home(request):
         'following_questions': following_questions,
     })
 
+
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
             invitation_code = form.cleaned_data['invitation_code']
-            # Validate the invitation code
+            # Davetiye kodunu kontrol et
             try:
                 invitation = Invitation.objects.get(code=invitation_code, is_used=False)
             except Invitation.DoesNotExist:
                 messages.error(request, 'Geçersiz veya kullanılmış davet kodu.')
                 return render(request, 'core/signup.html', {'form': form})
 
-            user = form.save()
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
 
-            # Mark the invitation as used and link it to the user
+            # Davetiye kodunu kullanılmış olarak işaretle ve kullanıcıya bağla
             invitation.is_used = True
             invitation.used_by = user
             invitation.save()
 
-            # Assign invitation quota to the new user
-            user_profile = user.userprofile
-            user_profile.invitation_quota = invitation.quota_granted
+            # Kullanıcının profilindeki davetiye kotasını güncelle
+            user_profile = user.userprofile  # Otomatik olarak oluşturulmuş olmalı
+            user_profile.invitation_quota += invitation.quota_granted
             user_profile.save()
 
             login(request, user)
@@ -69,6 +72,7 @@ def signup(request):
     else:
         form = SignupForm()
     return render(request, 'core/signup.html', {'form': form})
+
 
 def user_login(request):
     if request.method == 'POST':
@@ -84,7 +88,6 @@ def user_login(request):
 def user_logout(request):
     logout(request)
     return redirect('user_homepage')
-
 
 @login_required
 def send_invitation(request):
@@ -166,7 +169,7 @@ from django.db.models.functions import Coalesce
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
     user_profile = profile_user.userprofile
-    active_tab = request.GET.get('active_tab', 'sorular')
+    active_tab = request.GET.get('tab', 'sorular') 
     # Kullanıcının kendi profili mi?
     is_own_profile = request.user.is_authenticated and request.user == profile_user
 
@@ -289,15 +292,18 @@ def user_profile(request, username):
     except PinnedEntry.DoesNotExist:
         pinned_entry = None
     
-        # Davetler Sekmesi
+    # Davetler Sekmesi
     if is_own_profile:
+        user_profile = request.user.userprofile
         invitations = Invitation.objects.filter(sender=request.user).order_by('-created_at')
         total_invitations = invitations.count()
         used_invitations = invitations.filter(is_used=True).count()
+        remaining_invitations = user_profile.invitation_quota - total_invitations
     else:
         invitations = None
         total_invitations = 0
         used_invitations = 0
+        remaining_invitations = 0
 
     context = {
         'profile_user': profile_user,
@@ -325,10 +331,32 @@ def user_profile(request, username):
         'invitations': invitations,
         'total_invitations': total_invitations,
         'used_invitations': used_invitations,
+        'remaining_invitations': remaining_invitations,
+        'active_tab': active_tab,
     }
 
     return render(request, 'core/user_profile.html', context)
 
+@login_required
+def create_invitation(request):
+    if request.method == 'POST':
+        user_profile = request.user.userprofile
+        total_invitations = Invitation.objects.filter(sender=request.user).count()
+        remaining_invitations = user_profile.invitation_quota - total_invitations
+
+        quota_granted = int(request.POST.get('quota_granted', 1))
+
+        if quota_granted > remaining_invitations:
+            messages.error(request, f"En fazla {remaining_invitations} adet davetiye kotası verebilirsiniz.")
+        else:
+            Invitation.objects.create(sender=request.user, quota_granted=quota_granted)
+            # Kullanıcının davetiye kotasını azalt
+            user_profile.invitation_quota -= quota_granted
+            user_profile.save()
+            messages.success(request, f"Davetiye oluşturuldu. Kullanıcıya {quota_granted} adet davetiye kotası verilecek.")
+
+    # Yönlendirme yaparken 'tab' parametresini ekleyin
+    return redirect(f'{reverse("user_profile", args=[request.user.username])}?tab=davetler')
 
 
 def get_invitation_tree(user):
@@ -1257,26 +1285,42 @@ def delete_question_and_subquestions(question):
         delete_question_and_subquestions(sub)
     question.delete()
 
-
 @login_required
 def single_answer(request, question_id, answer_id):
     question = get_object_or_404(Question, id=question_id)
     answer = get_object_or_404(Answer, id=answer_id, question=question)
-    
-    # Kullanıcının kaydettiği yanıtların ID'lerini al
-    saved_answer_ids = SavedItem.objects.filter(user=request.user, answer=answer).values_list('answer__id', flat=True)
-    
-    # Yanıt için kaydedilme sayısını al
-    answer_save_counts = SavedItem.objects.filter(answer=answer).values('answer_id').annotate(count=Count('id'))
-    answer_save_dict = {item['answer_id']: item['count'] for item in answer_save_counts}
-    
+
+    # SavedItem sorgusunu düzeltin
+    saved_answer_ids = SavedItem.objects.filter(
+        user=request.user,
+        content_type=ContentType.objects.get_for_model(Answer),
+        object_id=answer.id
+    ).values_list('object_id', flat=True)
+
+    # Yanıtın kaydedilme sayısını al
+    content_type_answer = ContentType.objects.get_for_model(Answer)
+    answer_save_counts = SavedItem.objects.filter(
+        content_type=content_type_answer,
+        object_id=answer.id
+    ).values('object_id').annotate(count=Count('id'))
+    answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
+
+    # Kullanıcının oylarını al
+    user_votes = Vote.objects.filter(
+        user=request.user,
+        content_type=content_type_answer,
+        object_id=answer.id
+    ).values('object_id', 'value')
+    user_vote_dict = {vote['object_id']: vote['value'] for vote in user_votes}
+    answer.user_vote_value = user_vote_dict.get(answer.id, 0)
+
     context = {
         'question': question,
-        'answers': [answer],
-        'saved_answer_ids': list(saved_answer_ids),
+        'answers': [answer],  # Tek bir yanıt
+        'saved_answer_ids': saved_answer_ids,
         'answer_save_dict': answer_save_dict,
     }
-    return render(request, 'core/single_answer.html', context)
+    return render(request, 'core/question_detail.html', context)
 
 def user_search(request):
     query = request.GET.get('q', '').strip()
@@ -1400,42 +1444,25 @@ def reference_search(request):
             })
     return JsonResponse({'results': results})
 
-@login_required
-@require_POST
-def follow_user(request, username):
-    target_user = get_object_or_404(User, username=username)
-    request.user.userprofile.following.add(target_user.userprofile)
-    return JsonResponse({'status': 'success'})
 
 @login_required
-@require_POST
-def unfollow_user(request, username):
-    target_user = get_object_or_404(User, username=username)
-    request.user.userprofile.following.remove(target_user.userprofile)
-    return JsonResponse({'status': 'success'})
-
+def pin_entry(request, answer_id):
+    if request.method == 'POST':
+        user = request.user
+        # Mevcut sabitlenmiş girdiyi kaldır
+        PinnedEntry.objects.filter(user=user).delete()
+        # Yeni girdiyi sabitle
+        answer = get_object_or_404(Answer, id=answer_id)
+        PinnedEntry.objects.create(user=user, answer=answer)
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
 @login_required
-def pin_entry(request, entry_type, entry_id):
-    if entry_type == 'question':
-        question = get_object_or_404(Question, id=entry_id)
-        # Mevcut bir PinnedEntry varsa, güncelle; yoksa oluştur
-        pinned_entry, created = PinnedEntry.objects.get_or_create(user=request.user)
-        pinned_entry.question = question
-        pinned_entry.answer = None  # Yanıt yok
-        pinned_entry.save()
-    elif entry_type == 'answer':
-        answer = get_object_or_404(Answer, id=entry_id)
-        question = answer.question
-        pinned_entry, created = PinnedEntry.objects.get_or_create(user=request.user)
-        pinned_entry.question = question
-        pinned_entry.answer = answer
-        pinned_entry.save()
-    else:
-        # Geçersiz giriş türü
-        return redirect('profile')
-    return redirect('profile')
+def unpin_entry(request):
+    if request.method == 'POST':
+        user = request.user
+        PinnedEntry.objects.filter(user=user).delete()
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
 @login_required

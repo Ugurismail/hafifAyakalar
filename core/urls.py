@@ -13,7 +13,8 @@ urlpatterns = [
 
     # Kullanıcı Profili
     path('profile/update_photo/', views.update_profile_photo, name='update_profile_photo'),
-    path('profile/pin_entry/<str:entry_type>/<int:entry_id>/', views.pin_entry, name='pin_entry'),
+    path('pin_entry/answer/<int:answer_id>/', views.pin_entry, name='pin_entry'),
+    path('unpin_entry/', views.unpin_entry, name='unpin_entry'),
     path('profile/', views.profile, name='profile'),
     path('profile/<str:username>/follow/', views.follow_user, name='follow_user'),
     path('profile/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
@@ -61,6 +62,7 @@ urlpatterns = [
     path('vote/', views.vote, name='vote'),
     path('save-item/', views.save_item, name='save_item'),
     path('users/', views.user_list, name='user_list'),
+    path('create_invitation/', views.create_invitation, name='create_invitation'),
     path('send-invitation/', views.send_invitation, name='send_invitation'),
     
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='core/password_change.html'), name='password_change'),

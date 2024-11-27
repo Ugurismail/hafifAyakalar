@@ -11,16 +11,20 @@ class ProfilePhotoForm(forms.ModelForm):
         model = UserProfile
         fields = ['photo']
 
-
-
-
-
-class SignupForm(UserCreationForm):
-    invitation_code = forms.UUIDField(label='Davet Kodu', required=True)
+class SignupForm(forms.ModelForm):
+    invitation_code = forms.CharField(max_length=100, required=True)
+    password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
         model = User
-        fields = ('username', 'password1', 'password2', 'invitation_code')
+        fields = ['username', 'password']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        return user
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -75,7 +79,6 @@ class StartingQuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(StartingQuestionForm, self).__init__(*args, **kwargs)
         self.fields['question_text'].widget.attrs.update({'class': 'form-control'})
-
 
 class AnswerForm(forms.ModelForm):
     class Meta:

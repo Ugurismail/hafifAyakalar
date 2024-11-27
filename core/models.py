@@ -8,18 +8,13 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 
 
-class PinnedEntry(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True, blank=True)
-    answer = models.ForeignKey('Answer', on_delete=models.SET_NULL, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 class Invitation(models.Model):
     code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     sender = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='sent_invitations', null=True, blank=True
     )
-    quota_granted = models.PositiveIntegerField(default=0)
+    quota_granted = models.PositiveIntegerField(default=0)  # Eklendi
     is_used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     used_by = models.ForeignKey(
@@ -31,7 +26,7 @@ class Invitation(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    invitation_quota = models.PositiveIntegerField(default=0)
+    invitation_quota = models.PositiveIntegerField(default=0) 
     following = models.ManyToManyField('self', symmetrical=False, related_name='followers', blank=True)
     photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
 
@@ -69,15 +64,6 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        # Süper kullanıcıya başlangıç davet hakkı veriyoruz
-        if instance.is_superuser:
-            invitation_quota = 999999999
-        else:
-            invitation_quota = 0
-        UserProfile.objects.create(user=instance, invitation_quota=invitation_quota)
 
 class Question(models.Model):
     question_text = models.CharField(max_length=255)
@@ -190,6 +176,14 @@ class Vote(models.Model):
 
     class Meta:
         unique_together = ('user', 'content_type', 'object_id')
+
+class PinnedEntry(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"PinnedEntry of {self.user.username}"
+
 
 class Entry(models.Model):
     # Soru ve yanıtları temsil eden soyut bir model

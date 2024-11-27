@@ -122,10 +122,21 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
                                     <li>
-                                        <a class="dropdown-item copy-link" href="#" data-answer-id="{{ answer.id }}"><i class="bi bi-link-45deg"></i> Linki Kopyala</a>
+                                        <button class="dropdown-item copy-link-btn" data-url="{% url 'single_answer' question.id answer.id %}">
+                                            <i class="bi bi-link-45deg"></i> Linki Kopyala
+                                        </button>
                                     </li>
                                     <li>
                                         <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}"><i class="bi bi-share"></i> Paylaş</a>
+                                    </li>
+                                    <li>
+                                        <form action="{% url 'pin_entry' answer_id=answer.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-pin-angle"></i> Profil Sabitle
+                                            </button>
+                                        </form>
+                                        
                                     </li>
                                 </ul>
                             </div>

@@ -108,7 +108,15 @@
                                             <i class="bi bi-share"></i> Paylaş
                                         </a>
                                     </li>
-                                    <li><a class="dropdown-item" href="{% url 'pin_entry' 'question' answer.question.id %}">Profilde Sabitle</a></li>
+                                    <li>
+                                        <form action="{% url 'pin_entry' answer_id=answer.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-pin-angle"></i> Profil Sabitle
+                                            </button>
+                                        </form>
+                                        
+                                    </li>
                                 </ul>
                             </div>
                         </div>
