@@ -283,6 +283,22 @@ def user_profile(request, username):
     if request.user.is_authenticated and request.user != profile_user:
         is_following = request.user.userprofile.following.filter(user=profile_user).exists()
 
+        # Sabitlenmiş giriş (pinned_entry)
+    try:
+        pinned_entry = PinnedEntry.objects.get(user=profile_user)
+    except PinnedEntry.DoesNotExist:
+        pinned_entry = None
+    
+        # Davetler Sekmesi
+    if is_own_profile:
+        invitations = Invitation.objects.filter(sender=request.user).order_by('-created_at')
+        total_invitations = invitations.count()
+        used_invitations = invitations.filter(is_used=True).count()
+    else:
+        invitations = None
+        total_invitations = 0
+        used_invitations = 0
+
     context = {
         'profile_user': profile_user,
         'user_profile': user_profile,
@@ -305,6 +321,10 @@ def user_profile(request, username):
         'active_tab': active_tab,
         'exclude_words_list': exclude_words_list,
         'exclude_words': exclude_words,
+        'pinned_entry': pinned_entry, 
+        'invitations': invitations,
+        'total_invitations': total_invitations,
+        'used_invitations': used_invitations,
     }
 
     return render(request, 'core/user_profile.html', context)

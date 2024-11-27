@@ -4,49 +4,91 @@
 {% load instance_of %}
 {% block content %}
 <div class="container mt-5">
-    <!-- Kullanıcı Bilgileri -->
-    <div class="text-center">
-        <!-- Profil Fotoğrafı -->
-        {% if user_profile.photo %}
-            <img src="{{ user_profile.photo.url }}" alt="Profil Fotoğrafı" class="rounded-circle" width="150" height="150">
-        {% else %}
-            <img src="{% static 'images/default_profile.png' %}" alt="Profil Fotoğrafı" class="rounded-circle" width="150" height="150">
-        {% endif %}
-        <!-- Kullanıcı Adı -->
-        <h2 class="mt-3">{{ profile_user.username }}</h2>
-        <!-- Takipçi ve Takip Edilen Sayıları -->
-        <p>
-            <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
-        </p>
-
-        {% if is_own_profile %}
-            <!-- Kullanıcının kendi profilinde göreceği seçenekler -->
-            <a href="{% url 'update_profile_photo' %}" class="btn btn-primary">Profil Fotosunu Güncelle</a>
-            <a href="{% url 'send_invitation' %}" class="btn btn-secondary">Davet Gönder</a>
-            <a href="{% url 'user_settings' %}" class="btn btn-info">Ayarlar</a>
-        {% else %}
-            <!-- Diğer kullanıcıların profilinde gösterilecek takip et/etme butonu -->
-            {% if request.user.is_authenticated %}
-                {% if is_following %}
-                    <form action="{% url 'unfollow_user' profile_user.username %}" method="post" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Takibi Bırak</button>
-                    </form>
+    <div class="container mt-5">
+        <!-- Kullanıcı Bilgileri -->
+        <div class="row">
+            <!-- Sol Taraf: Profil Fotoğrafı ve Bilgiler -->
+            <div class="col-md-3 text-center">
+                <!-- Profil Fotoğrafı -->
+                {% if user_profile.photo %}
+                    <img src="{{ user_profile.photo.url }}" alt="Profil Fotoğrafı" class="rounded-circle img-fluid">
                 {% else %}
-                    <form action="{% url 'follow_user' profile_user.username %}" method="post" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Takip Et</button>
-                    </form>
+                    <img src="{% static 'imgs/default_profile.jpg' %}" alt="Profil Fotoğrafı" class="rounded-circle img-fluid">
                 {% endif %}
-            {% endif %}
-        {% endif %}
-    </div>
+                <!-- Kullanıcı Adı -->
+                <h3 class="mt-3">{{ profile_user.username }}</h3>
+                <!-- Takipçi ve Takip Edilen Sayıları -->
+                <p>
+                    <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
+                </p>
+                <!-- Butonlar -->
+                {% if is_own_profile %}
+                    <!-- Kullanıcının kendi profilinde göreceği seçenekler -->
+                    <a href="{% url 'update_profile_photo' %}" class="btn btn-primary btn-sm mb-1">Profil Fotosunu Güncelle</a>
+                    <a href="{% url 'password_change' %}" class="btn btn-secondary btn-sm mb-1">Şifreyi Değiştir</a>
+                    <a href="{% url 'user_settings' %}" class="btn btn-info btn-sm mb-1">Ayarlar</a>
+                {% else %}
+                    <!-- Diğer kullanıcıların profilinde gösterilecek takip et/etme butonu ve mesaj gönder -->
+                    {% if request.user.is_authenticated %}
+                        {% if is_following %}
+                            <form action="{% url 'unfollow_user' profile_user.username %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm mb-1">Takibi Bırak</button>
+                            </form>
+                        {% else %}
+                            <form action="{% url 'follow_user' profile_user.username %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-sm mb-1">Takip Et</button>
+                            </form>
+                        {% endif %}
+                        <!-- Mesaj Gönder Butonu -->
+                        <a href="#" class="btn btn-success btn-sm mb-1 message-button" data-username="{{ profile_user.username }}" data-userid="{{ profile_user.id }}">Mesaj Gönder</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <!-- Sağ Taraf: Sabitlenmiş Girdi -->
+            <div class="col-md-9">
+                {% if pinned_entry %}
+                    <div class="pinned-entry">
+                        <h5>Sabitlenmiş Girdi</h5>
+                        <p>
+                            {% if pinned_entry.content|length > 200 %}
+                                {{ pinned_entry.content|truncatechars:200 }} <a href="#" data-bs-toggle="modal" data-bs-target="#pinnedEntryModal">Tümünü Görüntüle</a>
+                            {% else %}
+                                {{ pinned_entry.content }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- Pinned Entry Modal -->
+                    <div class="modal fade" id="pinnedEntryModal" tabindex="-1" aria-labelledby="pinnedEntryModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="pinnedEntryModalLabel">Sabitlenmiş Girdi</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                </div>
+                                <div class="modal-body">
+                                    {{ pinned_entry.content }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p>Sabitlenmiş bir girdi yok.</p>
+                {% endif %}
+            </div>
+        </div>
 
     <!-- Sekmeler -->
     <ul class="nav nav-tabs mt-5" id="profileTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link {% if active_tab == 'sorular' %}active{% endif %}" id="sorular-tab" data-bs-toggle="tab" data-bs-target="#sorular" type="button" role="tab" aria-controls="sorular" aria-selected="{% if active_tab == 'sorular' %}true{% else %}false{% endif %}">Sorular</button>
         </li>
+        {% if is_own_profile %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'davetler' %}active{% endif %}" id="davetler-tab" data-bs-toggle="tab" data-bs-target="#davetler" type="button" role="tab" aria-controls="davetler" aria-selected="{% if active_tab == 'davetler' %}true{% else %}false{% endif %}">Davetler</button>
+            </li>
+        {% endif %}
         <li class="nav-item" role="presentation">
             <button class="nav-link {% if active_tab == 'yanitlar' %}active{% endif %}" id="yanitlar-tab" data-bs-toggle="tab" data-bs-target="#yanitlar" type="button" role="tab" aria-controls="yanitlar" aria-selected="{% if active_tab == 'yanitlar' %}true{% else %}false{% endif %}">Yanıtlar</button>
         </li>
@@ -58,6 +100,40 @@
         </li>
     </ul>
     <div class="tab-content" id="profileTabContent">
+        <!-- Davetler Tab -->
+        {% if is_own_profile %}
+            <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}" id="davetler" role="tabpanel" aria-labelledby="davetler-tab">
+                <div class="mt-4">
+                    <h5>Davetlerim</h5>
+                    <p>Gönderilen Davetiye Sayısı: {{ total_invitations }}</p>
+                    <p>Kullanılan Davetiye Sayısı: {{ used_invitations }}</p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Kod</th>
+                                <th>Gönderildiği Tarih</th>
+                                <th>Kullanıldı mı?</th>
+                                <th>Kullanan Kullanıcı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invite in invitations %}
+                            <tr>
+                                <td>{{ invite.code }}</td>
+                                <td>{{ invite.created_at|date:"d M Y H:i" }}</td>
+                                <td>{% if invite.is_used %}Evet{% else %}Hayır{% endif %}</td>
+                                <td>{% if invite.used_by %}{{ invite.used_by.username }}{% else %}-{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4">Henüz davetiye gönderilmedi.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
         <!-- Sorular Tab -->
         <div class="tab-pane fade {% if active_tab == 'sorular' %}show active{% endif %}" id="sorular" role="tabpanel" aria-labelledby="sorular-tab">
             <div class="mt-4">
@@ -164,7 +240,6 @@
         </div>
 
         <!-- Kelimeler Tab -->
-
         <div class="tab-pane fade {% if active_tab == 'kelimeler' %}show active{% endif %}" id="kelimeler" role="tabpanel" aria-labelledby="kelimeler-tab">
             <div class="mt-4 row">
                 <!-- Sol Taraf: En Çok Kullanılan Kelimeler -->
@@ -285,6 +360,7 @@
                 {% endif %}
             </div>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}
