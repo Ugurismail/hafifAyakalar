@@ -1,19 +1,29 @@
 /* static/css/styles.css */
 
-/* Body Stilleri */
+/* General Styles */
 body {
     background-color: var(--background-color);
     color: var(--text-color);
-    padding-top: 70px; /* Navbar yüksekliğine göre ayarlayın */
+    padding-top: 70px; /* Adjust according to your navbar height */
     font-family: Arial, sans-serif;
 }
 
-/* Navbar Stilleri */
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}
+
+/* Navbar Styles */
 .navbar {
     padding: 1rem 1rem;
     background-color: var(--header-background-color);
     color: var(--header-text-color);
-    border-bottom: 10px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
     transition: padding 0.3s ease, background-color 0.3s ease;
 }
 
@@ -46,18 +56,7 @@ body {
     color: var(--dropdown-hover-text-color);
 }
 
-/* Link Stilleri */
-a {
-    color: var(--link-color);
-    text-decoration: none;
-}
-
-a:hover {
-    color: var(--link-hover-color);
-    text-decoration: underline;
-}
-
-/* Buton Stilleri */
+/* Buttons */
 .btn-primary {
     background-color: var(--button-background-color);
     border-color: var(--button-background-color);
@@ -70,9 +69,10 @@ a:hover {
     color: var(--button-text-color);
 }
 
-/* İçerik Stilleri */
+/* Content Styles */
 .question,
-.answer {
+.answer,
+.random-item-card {
     background-color: var(--content-background-color);
     color: var(--text-color);
     padding: 15px;
@@ -86,8 +86,15 @@ a:hover {
     background-color: var(--answer-background-color);
 }
 
+.answer:last-child {
+    border-bottom: none;
+}
 
-/* Sekme Stilleri */
+.answer-text {
+    text-align: justify;
+}
+
+/* Tabs */
 .nav-tabs .nav-link {
     background-color: var(--tab-background-color);
     color: var(--tab-text-color);
@@ -98,12 +105,12 @@ a:hover {
     color: var(--tab-active-text-color);
 }
 
-/* List Group Item Hover */
+/* List Group */
 .list-group-item:hover {
     background-color: var(--hover-background-color);
 }
 
-/* Pagination Stilleri */
+/* Pagination */
 .pagination .page-link {
     background-color: var(--pagination-background-color);
     color: var(--pagination-text-color);
@@ -114,14 +121,7 @@ a:hover {
     color: var(--pagination-active-text-color);
 }
 
-/* Badge Stilleri */
-.badge {
-    font-size: 0.9em;
-    background-color: var(--icon-color);
-    color: var(--button-text-color);
-}
-
-/* Vote ve Save Butonları */
+/* Vote and Save Buttons */
 .vote-btn,
 .save-btn {
     color: var(--icon-color) !important;
@@ -130,6 +130,7 @@ a:hover {
     padding: 0;
     font-size: 1.2rem;
     text-decoration: none !important;
+    cursor: pointer;
 }
 
 .vote-btn:hover,
@@ -142,11 +143,6 @@ a:hover {
     text-decoration: none !important;
 }
 
-/* Answer Text */
-.answer-text {
-    text-align: justify;
-}
-
 /* Icons */
 .bi-geo-alt-fill {
     font-size: 1.2em;
@@ -157,262 +153,22 @@ a:hover {
     color: var(--icon-hover-color);
 }
 
-/* Nav Link Badges */
-.nav-link {
-    position: relative;
-}
-
+/* Badges */
 .nav-link .badge {
     font-size: 0.75em;
 }
 
-/* Answer Styling */
-
-
-.answer:last-child {
-    border-bottom: none;
+.badge {
+    color: blue;
 }
 
-/* Dropdown Item Icons */
-.dropdown-item i {
-    width: 20px;
-    text-align: center;
-    margin-right: 8px;
-}
-
-/* Search Results */
-#search-results .list-group-item {
-    cursor: pointer;
-}
-
-/* Search Form */
-#search-form {
-    position: relative;
-}
-
-#search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
-    background-color: var(--content-background-color);
-    border: 1px solid #ccc;
-}
-
-/* User Search */
-#user-search-container {
-    position: relative;
-}
-
-#user-search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
-    background-color: var(--content-background-color);
-    border: 1px solid #ccc;
-}
-
-#user-search-results .list-group-item {
-    cursor: pointer;
-}
-
-/* Chat Window */
-.chat-window {
-    position: fixed;
-    bottom: 0;
-    height: 40px; /* Başlangıçta minimize edilmiş yükseklik */
-    background-color: var(--content-background-color);
-    border: 1px solid #ccc;
-    display: flex;
-    flex-direction: column;
-    transition: height 0.3s;
-    overflow: hidden;
-}
-
-.chat-window.maximized {
-    height: 400px; /* Maximize edilmiş yükseklik */
-}
-
-.chat-window.unread {
-    border-top: 3px solid var(--button-background-color);
-}
-
-/* Chat Header */
-.chat-header {
-    background-color: var(--header-background-color);
-    color: var(--header-text-color);
-    padding: 5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.chat-header span {
-    flex-grow: 1;
-    font-weight: bold;
-}
-
-.chat-header .close-button {
-    background-color: transparent;
-    border: none;
-    color: var(--header-text-color);
-    font-size: 16px;
-    cursor: pointer;
-    margin-left: 5px;
-}
-
-.chat-header .close-button:hover {
-    color: #ffcccc;
-}
-
-/* Chat Messages */
-.chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background-color: var(--content-background-color);
-    display: none; /* Başlangıçta gizli */
-}
-
-.chat-window.maximized .chat-messages {
-    display: block; /* Maximize edildiğinde görünür */
-}
-
-/* Chat Input */
-.chat-input {
-    padding: 10px;
-    display: none; /* Başlangıçta gizli */
-}
-
-.chat-window.maximized .chat-input {
-    display: flex; /* Maximize edildiğinde görünür */
-}
-
-.chat-input textarea {
-    flex-grow: 1;
-    resize: none;
-}
-
-.chat-input button {
-    margin-left: 10px;
-    padding: 5px 10px;
-}
-
-/* Message Bubbles */
-.message {
-    margin-bottom: 10px;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-.message.sender {
-    background-color: #dcf8c6;
-    text-align: right;
-}
-
-.message.recipient {
-    background-color: #ffffff;
-    text-align: left;
-}
-
-/* Responsive Settings */
-@media (max-width: 600px) {
-    .chat-window {
-        height: 40px;
-    }
-
-    .chat-window.maximized {
-        height: 300px;
-    }
-}
-
-/* Unread Message Badge */
-.chat-header .unread-count {
-    background-color: #ff3b30;
-    color: white;
-    border-radius: 10px;
-    padding: 2px 6px;
-    margin-left: 5px;
-    font-size: 0.9em;
-}
-
-/* Diğer Stiller */
-/* Mevcut stillerinizi ve eklediğiniz tüm renk değişkenlerini burada kullanabilirsiniz. */
-/* static/css/styles.css */
-
-
-
-
-
-
-/* Sekme Stilleri */
-.nav-tabs .nav-link {
-    background-color: var(--tab-background-color);
-    color: var(--tab-text-color);
-}
-
-.nav-tabs .nav-link.active {
-    background-color: var(--tab-active-background-color);
-    color: var(--tab-active-text-color);
-}
-
-/* İkon ve Hover Renkleri */
-.vote-btn,
-.save-btn {
-    color: var(--icon-color) !important;
-}
-
-.vote-btn:hover,
-.save-btn:hover {
-    color: var(--icon-hover-color) !important;
-}
-
-.list-group-item:hover {
-    background-color: var(--hover-background-color);
-}
-
-/* Dropdown Stilleri */
-.navbar .dropdown-menu .dropdown-item {
-    color: var(--dropdown-text-color);
-}
-
-.navbar .dropdown-menu .dropdown-item:hover {
-    background-color: var(--dropdown-hover-background-color);
-    color: var(--dropdown-hover-text-color);
-}
-
-/* Rastgele Sorular ve Yanıtlar Bölümü */
-.random-item-card {
-    background-color: var(--content-background-color);
-    color: var(--text-color);
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-}
-
-/* .voted-up {
-    color: green !important;
-    
-}
-
-.voted-down {
-    color: red !important;
-} */
-
+/* Voted Buttons */
 .bi-chevron-up,
 .bi-chevron-down {
-    display: inline-block; /* Transform ve Transition için gerekli */
+    display: inline-block;
     transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
-    cursor: pointer; /* İkonu tıklanabilir yapar */
-    font-size: 1.5rem; /* İkon boyutunu ayarlar */
+    cursor: pointer;
+    font-size: 1.5rem;
 }
 
 .voted-up {
@@ -443,3 +199,119 @@ a:hover {
         0 0 3px rgba(0, 0, 0, 0.5),
         0 0 6px rgba(0, 0, 0, 0.4);
 }
+
+/* Dropdown Icons */
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+    margin-right: 8px;
+}
+
+/* Search Results */
+#search-results .list-group-item,
+#user-search-results .list-group-item {
+    cursor: pointer;
+}
+
+#search-form,
+#user-search-container {
+    position: relative;
+}
+
+#search-results,
+#user-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: var(--content-background-color);
+    border: 1px solid #ccc;
+}
+
+/* Message Notifications */
+.msg {
+    color: blue;
+}
+
+/* Chat Styles */
+.chat-container {
+    background-color: #f9f9f9;
+}
+
+.chat-bubble {
+    max-width: 75%;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.sent-message {
+    background-color: var(--button-background-color);
+    color: var(--button-text-color);
+    align-self: flex-end;
+    margin-bottom: 10px;
+}
+
+.received-message {
+    background-color: var(--content-background-color);
+    color: var(--text-color);
+    align-self: flex-start;
+    margin-bottom: 10px;
+}
+
+/* Chat Message Text */
+.chat-container .chat-bubble p {
+    font-size: 0.95em;
+    margin-bottom: 5px;
+}
+
+.chat-container .chat-bubble small {
+    font-size: 0.8em;
+}
+
+/* Input Area */
+form .input-group {
+    width: 100%;
+}
+
+form .input-group textarea {
+    flex: 1;
+    resize: none;
+}
+
+form .input-group button {
+    flex-shrink: 0;
+}
+
+form .input-group .form-control,
+form .input-group .btn {
+    border-radius: 0;
+}
+
+/* Remove outline from input on focus */
+input:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Highlight Unread Conversations */
+.unread-conversation {
+    background-color: #ffe6e6; /* Light red background */
+}
+
+.unread-conversation:hover {
+    background-color: #ffcccc; /* Slightly darker red on hover */
+}
+
+/* Responsive Settings */
+@media (max-width: 600px) {
+    .chat-container {
+        height: 300px;
+    }
+}
+
+/* Additional Styles */
+/* Define your custom CSS variables or additional styles here */

@@ -1,0 +1,47 @@
+<!-- templates/core/message_list.html -->
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mesajlar</h2>
+    {% if conversations %}
+        <ul class="list-group">
+            {% for other_user, convo_data in conversations.items %}
+                {% with latest_message=convo_data.messages.0 %}
+                <a href="{% url 'message_detail' other_user.username %}" class="text-decoration-none text-dark">
+                    <li class="list-group-item d-flex justify-content-between align-items-center {% if convo_data.unread_count > 0 %}unread-conversation{% endif %}">
+                        <div class="d-flex align-items-center">
+                            <!-- User Avatar -->
+                            {% if other_user.userprofile.photo %}
+                                <img src="{{ other_user.userprofile.photo.url }}" alt="{{ other_user.username }}" class="rounded-circle me-3" width="50" height="50">
+                            {% else %}
+                                <img src="{% static 'imgs/default_profile.jpg' %}" alt="{{ other_user.username }}" class="rounded-circle me-3" width="50" height="50">
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-1">{{ other_user.username }}</h5>
+                                <p class="mb-0 text-muted" style="font-size: 0.9em;">
+                                    {% if latest_message.sender == request.user %}
+                                        <strong>Sen:</strong> {{ latest_message.body|truncatechars:30 }}
+                                    {% else %}
+                                        {{ latest_message.body|truncatechars:30 }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">{{ latest_message.timestamp|date:"d M Y H:i" }}</small>
+                            {% if convo_data.unread_count > 0 %}
+                                <span class="badge bg-danger">{{ convo_data.unread_count }}</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                </a>
+                {% endwith %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Henüz bir mesajınız yok.</p>
+    {% endif %}
+</div>
+{% endblock %}

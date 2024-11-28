@@ -89,14 +89,14 @@ class AnswerForm(forms.ModelForm):
         }
 
 class MessageForm(forms.ModelForm):
-    recipient = forms.ModelChoiceField(
-        queryset=User.objects.all(),
-        widget=forms.HiddenInput()
-    )
-
     class Meta:
         model = Message
-        fields = ['recipient', 'body']
+        fields = ['body']
         widgets = {
-            'body': forms.Textarea(attrs={'rows': 4}),
+            'body': forms.Textarea(attrs={
+                'rows': 2,
+                'placeholder': 'Mesajınızı buraya yazın',
+                'style': 'resize: none; width: 100%;',
+                'class': 'form-control',
+            }),
         }

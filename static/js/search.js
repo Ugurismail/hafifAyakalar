@@ -1,4 +1,3 @@
-console.log('search.js yüklendi ve çalışıyor');
 $(document).ready(function() {
     var searchInput = $('#search-input');
     var resultsContainer = $('#search-results');

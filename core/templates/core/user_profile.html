@@ -42,7 +42,7 @@
                             </form>
                         {% endif %}
                         <!-- Mesaj Gönder Butonu -->
-                        <a href="#" class="btn btn-success btn-sm mb-1 message-button" data-username="{{ profile_user.username }}" data-userid="{{ profile_user.id }}">Mesaj Gönder</a>
+                        <a href="{% url 'send_message_from_answer' answer.id %}" class="btn btn-success btn-sm mb-1 message-button" data-username="{{ profile_user.username }}" data-userid="{{ profile_user.id }}">Mesaj Gönder</a>
                     {% endif %}
                 {% endif %}
             </div>

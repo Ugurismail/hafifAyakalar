@@ -1,0 +1,15 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ recipient.username }} kullanıcısına mesaj gönder</h2>
+    <p><strong>Yanıt:</strong> {{ answer.answer_text }}</p>
+    <hr>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.recipient }}
+        {{ form.body|as_crispy_field }}
+        <button type="submit" class="btn btn-primary mt-2">Gönder</button>
+    </form>
+</div>
+{% endblock %}

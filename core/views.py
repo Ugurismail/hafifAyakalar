@@ -20,6 +20,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.serializers import serialize
 from django.views.decorators.http import require_POST
 from django.contrib.contenttypes.models import ContentType
+from django.views.decorators.cache import cache_control
 
 
 
@@ -473,94 +474,13 @@ def view_message(request, message_id):
         message.save()
     return render(request, 'core/view_message.html', {'message': message})
 
-@login_required
-def get_conversation(request, username):
-    other_user = get_object_or_404(User, username=username)
-    messages = Message.objects.filter(
-        Q(sender=request.user, recipient=other_user) |
-        Q(sender=other_user, recipient=request.user)
-    ).order_by('timestamp')
-
-    # Mesajları okundu olarak işaretleyin
-    messages.filter(recipient=request.user, is_read=False).update(is_read=True)
-
-    messages_data = [
-        {
-            'sender': msg.sender.username,
-            'sender_id': msg.sender.id,
-            'body': msg.body,
-            'timestamp': msg.timestamp.strftime('%d/%m/%Y %H:%M')
-        }
-        for msg in messages
-    ]
-    return JsonResponse({'messages': messages_data})
-
-@login_required
-def send_message_ajax(request):
-    if request.method == 'POST':
-        recipient_username = request.POST.get('recipient_username')
-        body = request.POST.get('body')
-        recipient = get_object_or_404(User, username=recipient_username)
-        message = Message.objects.create(
-            sender=request.user,
-            recipient=recipient,
-            body=body
-        )
-        return JsonResponse({
-            'sender': request.user.username,
-            'body': message.body,
-            'timestamp': message.timestamp.strftime('%d/%m/%Y %H:%M')
-        })
-    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @login_required
 def user_list(request):
     users = User.objects.exclude(id=request.user.id)  # Exclude the current user
     return render(request, 'core/user_list.html', {'users': users})
 
-@login_required
-def conversations(request):
-    # Kullanıcının konuştuğu diğer kullanıcıları listeleyelim
-    messages = Message.objects.filter(Q(sender=request.user) | Q(recipient=request.user)).order_by('-timestamp')
-    users = set()
-    for message in messages:
-        if message.sender != request.user:
-            users.add(message.sender)
-        if message.recipient != request.user:
-            users.add(message.recipient)
-    return render(request, 'core/conversations.html', {'users': users})
 
-@login_required
-def check_new_messages(request):
-    last_check = request.session.get('last_message_check')
-    now = timezone.now()
-    if last_check:
-        last_check = timezone.datetime.fromisoformat(last_check)
-    else:
-        last_check = now
-    # Son kontrol zamanını güncelle
-    request.session['last_message_check'] = now.isoformat()
-
-    new_messages = Message.objects.filter(
-        recipient=request.user,
-        timestamp__gt=last_check
-    ).order_by('timestamp')
-
-    messages_data = [
-        {
-            'sender': msg.sender.username,
-            'sender_id': msg.sender.id,
-            'body': msg.body,
-            'timestamp': msg.timestamp.strftime('%d/%m/%Y %H:%M')
-        }
-        for msg in new_messages
-    ]
-    return JsonResponse({'new_messages': messages_data})
-
-@login_required
-def get_unread_message_count(request):
-    count = Message.objects.filter(recipient=request.user, is_read=False).count()
-    return JsonResponse({'unread_count': count})
 
 @login_required
 def follow_user(request, username):
@@ -1413,14 +1333,6 @@ def generate_question_nodes(questions):
     }
     return question_nodes
 
-@login_required
-def mark_messages_as_read(request):
-    if request.method == 'POST':
-        sender_username = request.POST.get('sender_username')
-        sender = get_object_or_404(User, username=sender_username)
-        Message.objects.filter(sender=sender, recipient=request.user, is_read=False).update(is_read=True)
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @login_required
 def bkz_view(request, query):
@@ -1488,3 +1400,131 @@ def get_top_words(user):
     top_words = word_counts.most_common(10)
 
     return top_words
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Message
+from .forms import MessageForm
+from django.db.models import Q
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def message_list(request):
+    # Get all messages involving the user
+    messages = Message.objects.filter(
+        Q(sender=request.user) | Q(recipient=request.user)
+    )
+
+    # Annotate each conversation with the latest message timestamp
+    conversations = messages.values(
+        'sender', 'recipient'
+    ).annotate(
+        last_message_time=Max('timestamp')
+    ).order_by('-last_message_time')
+
+    # Use a set to avoid duplicate user pairs
+    conversation_users = []
+    conversation_dict = {}
+
+    for convo in conversations:
+        # Determine the other user in the conversation
+        if convo['sender'] == request.user.id:
+            other_user_id = convo['recipient']
+        else:
+            other_user_id = convo['sender']
+
+        if other_user_id not in conversation_users:
+            other_user = User.objects.get(id=other_user_id)
+            # Fetch messages with this user
+            messages_with_user = messages.filter(
+                Q(sender=other_user, recipient=request.user) |
+                Q(sender=request.user, recipient=other_user)
+            ).order_by('-timestamp')
+
+            # Count unread messages from other_user to request.user
+            unread_count = messages_with_user.filter(
+                sender=other_user,
+                recipient=request.user,
+                is_read=False
+            ).count()
+
+            conversation_dict[other_user] = {
+                'messages': messages_with_user,
+                'unread_count': unread_count,
+            }
+
+            conversation_users.append(other_user_id)
+
+    context = {
+        'conversations': conversation_dict
+    }
+    return render(request, 'core/message_list.html', context)
+
+
+@login_required
+def message_detail(request, username):
+    
+    other_user = get_object_or_404(User, username=username)
+    messages_qs = Message.objects.filter(
+        Q(sender=request.user, recipient=other_user) |
+        Q(sender=other_user, recipient=request.user)
+    ).order_by('timestamp')
+
+    # Mesajları okundu olarak işaretle
+    messages_qs.filter(recipient=request.user, is_read=False).update(is_read=True)
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.recipient = other_user
+            message.save()
+            return redirect('message_detail', username=other_user.username)
+    else:
+        form = MessageForm(initial={'recipient': other_user})
+    
+        # Mark messages as read
+    messages_qs.filter(
+        recipient=request.user,
+        is_read=False
+    ).update(is_read=True)
+
+    context = {
+        'form': form,
+        'messages': messages_qs,
+        'other_user': other_user,
+    }
+    return render(request, 'core/message_detail.html', context)
+
+@login_required
+def send_message_from_answer(request, answer_id):
+    from .models import Answer
+    answer = get_object_or_404(Answer, id=answer_id)
+    recipient = answer.user
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.recipient = recipient
+            message.save()
+            return redirect('message_detail', username=recipient.username)
+    else:
+        form = MessageForm(initial={'recipient': recipient})
+
+    context = {
+        'form': form,
+        'recipient': recipient,
+        'answer': answer,
+    }
+    return render(request, 'core/send_message_from_answer.html', context)
+
+@login_required
+def check_new_messages(request):
+    # Kullanıcının okunmamış mesajlarını say
+    unread_count = Message.objects.filter(recipient=request.user, is_read=False).count()
+    return JsonResponse({'unread_count': unread_count})

@@ -32,14 +32,12 @@ urlpatterns = [
     path('answer/<int:answer_id>/edit/', views.edit_answer, name='edit_answer'),
     path('answer/<int:answer_id>/delete/', views.delete_answer, name='delete_answer'),
     
-    #mesajlar
-    path('messages/send_ajax/', views.send_message_ajax, name='send_message_ajax'),
-    path('messages/mark_as_read/', views.mark_messages_as_read, name='mark_messages_as_read'),
-    path('messages/check_new_messages/', views.check_new_messages, name='check_new_messages'),
-    path('messages/unread_count/', views.get_unread_message_count, name='get_unread_message_count'),
-    path('messages/<str:username>/', views.get_conversation, name='get_conversation'),
-    path('messages/', views.conversations, name='conversations'),
-
+    # Mesajlaşma URL'leri
+    path('messages/', views.message_list, name='message_list'),
+    path('messages/<str:username>/', views.message_detail, name='message_detail'),
+    path('send_message/answer/<int:answer_id>/', views.send_message_from_answer, name='send_message_from_answer'),
+    path('check_new_messages/', views.check_new_messages, name='check_new_messages'),
+    
     # Arama
     path('search/', views.search, name='search'),
     path('search_suggestions/', views.search_suggestions, name='search_suggestions'),

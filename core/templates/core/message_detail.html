@@ -1,0 +1,56 @@
+templates/core/message_detail.html
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ other_user.username }} ile Mesajlaşma</h2>
+    <div class="chat-container border rounded" style="height: 500px; overflow-y: scroll; padding: 15px;">
+        {% for message in messages %}
+            {% if message.sender == request.user %}
+                <!-- Sent message -->
+                <div class="d-flex justify-content-end mb-3">
+                    <div class="bg-primary text-white p-2 rounded chat-bubble sent-message">
+                        <p class="mb-1">{{ message.body }}</p>
+                        <small class="d-block text-end">{{ message.timestamp|date:"d M Y H:i" }}</small>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Received message -->
+                <div class="d-flex justify-content-start mb-3">
+                    {% if other_user.userprofile.photo %}
+                        <img src="{{ other_user.userprofile.photo.url }}" alt="{{ other_user.username }}" class="rounded-circle me-2" width="40" height="40">
+                    {% else %}
+                        <img src="{% static 'imgs/default_profile.jpg' %}" alt="{{ other_user.username }}" class="rounded-circle me-2" width="40" height="40">
+                    {% endif %}
+                    <div class="bg-light text-dark p-2 rounded chat-bubble received-message">
+                        <p class="mb-1">{{ message.body }}</p>
+                        <small class="d-block text-start">{{ message.timestamp|date:"d M Y H:i" }}</small>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <p>Henüz mesaj yok.</p>
+        {% endfor %}
+    </div>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        <div class="input-group">
+            {{ form.body }}
+            <button type="submit" class="btn btn-primary">Gönder</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var chatContainer = document.querySelector('.chat-container');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+</script>
+{% endblock %}
+
+
