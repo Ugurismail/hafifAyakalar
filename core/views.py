@@ -1462,42 +1462,45 @@ def message_list(request):
     }
     return render(request, 'core/message_list.html', context)
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from .models import Message
+from django.utils import timezone
+from django.contrib.auth.models import User
 
 @login_required
 def message_detail(request, username):
-    
     other_user = get_object_or_404(User, username=username)
-    messages_qs = Message.objects.filter(
+    Message.objects.filter(sender=other_user, recipient=request.user, is_read=False).update(is_read=True)
+    
+    # Mesajları doğru şekilde sıralayın: en eski önce, en yeni sonra
+    messages = Message.objects.filter(
         Q(sender=request.user, recipient=other_user) |
         Q(sender=other_user, recipient=request.user)
-    ).order_by('timestamp')
-
-    # Mesajları okundu olarak işaretle
-    messages_qs.filter(recipient=request.user, is_read=False).update(is_read=True)
-
-    if request.method == 'POST':
-        form = MessageForm(request.POST)
-        if form.is_valid():
-            message = form.save(commit=False)
-            message.sender = request.user
-            message.recipient = other_user
-            message.save()
-            return redirect('message_detail', username=other_user.username)
-    else:
-        form = MessageForm(initial={'recipient': other_user})
+    ).order_by('timestamp')  # 'timestamp' alanına göre artan sırada
     
-        # Mark messages as read
-    messages_qs.filter(
-        recipient=request.user,
-        is_read=False
-    ).update(is_read=True)
-
+    if request.method == 'POST':
+        body = request.POST.get('body')
+        if body:
+            Message.objects.create(
+                sender=request.user,
+                recipient=other_user,
+                body=body,
+                timestamp=timezone.now(),
+                is_read=False
+            )
+            # Diğer kullanıcının mesajlarını okunmuş olarak işaretlemek isteğe bağlıdır
+            Message.objects.filter(sender=other_user, recipient=request.user).update(is_read=True)
+            return redirect('message_detail', username=username)
+    
     context = {
-        'form': form,
-        'messages': messages_qs,
         'other_user': other_user,
+        'messages': messages
     }
     return render(request, 'core/message_detail.html', context)
+
+
 
 @login_required
 def send_message_from_answer(request, answer_id):

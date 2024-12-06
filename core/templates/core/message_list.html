@@ -32,7 +32,7 @@
                         <div class="text-end">
                             <small class="text-muted d-block">{{ latest_message.timestamp|date:"d M Y H:i" }}</small>
                             {% if convo_data.unread_count > 0 %}
-                                <span class="badge bg-danger">{{ convo_data.unread_count }}</span>
+                                <span class="badge">{{ convo_data.unread_count }}</span>
                             {% endif %}
                         </div>
                     </li>

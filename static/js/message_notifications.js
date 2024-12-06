@@ -11,9 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             var messageIcon = document.getElementById('message-icon');
             if (data.unread_count > 0) {
-                messageIcon.classList.add('text-danger');
+                messageIcon.classList.add('msg');
             } else {
-                messageIcon.classList.remove('text-danger');
+                messageIcon.classList.remove('msg');
             }
         });
     }

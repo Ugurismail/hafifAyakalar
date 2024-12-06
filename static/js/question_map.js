@@ -1,4 +1,5 @@
 // static/js/question_map.js
+
 document.addEventListener('DOMContentLoaded', function () {
     // Global değişkenler
     var width = document.getElementById('chart').clientWidth;
