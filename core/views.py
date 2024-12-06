@@ -2,13 +2,13 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect,get_object_or_404, reverse
 from django.contrib.auth.decorators import login_required
-from .forms import InvitationForm, User, AnswerForm, StartingQuestionForm,SignupForm, LoginForm,QuestionForm,ProfilePhotoForm
+from .forms import InvitationForm, User, AnswerForm, StartingQuestionForm,SignupForm, LoginForm,QuestionForm,ProfilePhotoForm,MessageForm
 from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem,PinnedEntry
 from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
 import json, random
-from django.db.models import Q, Count, Max, F, ExpressionWrapper, IntegerField
+from django.db.models import Q, Count, Max, F, ExpressionWrapper, IntegerField, Sum
 from django.utils import timezone
 from django.core.paginator import Paginator
 from collections import defaultdict, Counter
@@ -21,7 +21,7 @@ from django.core.serializers import serialize
 from django.views.decorators.http import require_POST
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.cache import cache_control
-
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 
@@ -40,7 +40,6 @@ def home(request):
         'all_questions': all_questions,
         'following_questions': following_questions,
     })
-
 
 def signup(request):
     if request.method == 'POST':
@@ -73,7 +72,6 @@ def signup(request):
     else:
         form = SignupForm()
     return render(request, 'core/signup.html', {'form': form})
-
 
 def user_login(request):
     if request.method == 'POST':
@@ -126,7 +124,6 @@ def send_invitation(request):
         'invitation_quota': user_profile.invitation_quota,
     })
 
-
 @login_required
 def profile(request):
     user = request.user
@@ -161,24 +158,18 @@ def profile(request):
     }
     return redirect('user_profile', username=request.user.username)
 
-# core/views.py
-
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Sum, Count, Q
-from django.db.models.functions import Coalesce
 
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
     user_profile = profile_user.userprofile
     active_tab = request.GET.get('tab', 'sorular') 
-    # Kullanıcının kendi profili mi?
     is_own_profile = request.user.is_authenticated and request.user == profile_user
 
-    # Kullanıcının soruları ve yanıtları
+    # Soru ve yanıt listeleri
     questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
     answers_list = Answer.objects.filter(user=profile_user).order_by('-created_at')
 
-    # Sorular için sayfalama
+    # Sorular sayfalama
     question_page = request.GET.get('question_page', 1)
     question_paginator = Paginator(questions_list, 50)
     try:
@@ -188,7 +179,7 @@ def user_profile(request, username):
     except EmptyPage:
         questions = question_paginator.page(question_paginator.num_pages)
 
-    # Yanıtlar için sayfalama
+    # Yanıtlar sayfalama
     answer_page = request.GET.get('answer_page', 1)
     answer_paginator = Paginator(answers_list, 50)
     try:
@@ -198,36 +189,34 @@ def user_profile(request, username):
     except EmptyPage:
         answers = answer_paginator.page(answer_paginator.num_pages)
 
-    # Kelimeler Sekmesi
-    # Tüm soru ve yanıt metinlerini birleştir
+    # Kelimeler sekmesi
     question_texts = questions_list.values_list('question_text', flat=True)
     answer_texts = answers_list.values_list('answer_text', flat=True)
-    all_texts = ' '.join(question_texts) + ' ' + ' '.join(answer_texts)
-    all_texts = all_texts.lower()
-
-    # Kelimeleri ayıkla
+    all_texts = (' '.join(question_texts) + ' ' + ' '.join(answer_texts)).lower()
     words = re.findall(r'\b\w+\b', all_texts)
 
-    # Hariç tutulacak kelimeleri al
-    exclude_words_list = request.GET.getlist('exclude_words')
-    exclude_words_set = set(word.lower() for word in exclude_words_list)
+    # Hariç tutulacak kelimeler virgüllerle ayrılmış tek bir parametreden alınır.
+    exclude_words_str = request.GET.get('exclude_words', '')
+    exclude_words_list = [w.strip() for w in exclude_words_str.split(',') if w.strip()]
+    exclude_words_set = set(exclude_words_list)
 
     exclude_word = request.GET.get('exclude_word', '').strip().lower()
-
     if exclude_word:
         exclude_words_set.add(exclude_word)
-        exclude_words_list = list(exclude_words_set)
-
 
     include_word = request.GET.get('include_word', '').strip().lower()
-    if include_word:
-        exclude_words_set.discard(include_word)
-        exclude_words_list = list(exclude_words_set)
+    if include_word and include_word in exclude_words_set:
+        exclude_words_set.remove(include_word)
+
+    # Güncellenen set'i tekrar stringe çevir
+    exclude_words_list = list(exclude_words_set)
+    exclude_words_list.sort()
+    exclude_words_str = ', '.join(exclude_words_list)
 
     # Kelimeleri filtrele
     filtered_words = [word for word in words if word not in exclude_words_set]
 
-    # Kelime sıklıklarını hesapla
+    # Kelime sıklıkları
     word_counts = Counter(filtered_words)
     top_words = word_counts.most_common(10)
 
@@ -236,26 +225,24 @@ def user_profile(request, username):
     search_word_count = None
     if search_word:
         search_word_count = word_counts.get(search_word, 0)
-    
-    exclude_words = ', '.join(sorted(exclude_words_set))
 
-    # İstatistikler Sekmesi
-    # Toplam upvote ve downvote sayıları
-    total_upvotes = Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total'] + Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total']
-    total_downvotes = Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total'] + Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total']
+    # İstatistikler sekmesi
+    total_upvotes = (Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total'] +
+                     Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total'])
+    total_downvotes = (Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total'] +
+                       Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total'])
 
-    # Toplam kaydedilme sayısı
     content_type_question = ContentType.objects.get_for_model(Question)
     content_type_answer = ContentType.objects.get_for_model(Answer)
-    total_saves_questions = SavedItem.objects.filter(content_type=content_type_question, object_id__in=questions_list.values_list('id', flat=True)).count()
-    total_saves_answers = SavedItem.objects.filter(content_type=content_type_answer, object_id__in=answers_list.values_list('id', flat=True)).count()
+    total_saves_questions = SavedItem.objects.filter(content_type=content_type_question, object_id__in=questions_list).count()
+    total_saves_answers = SavedItem.objects.filter(content_type=content_type_answer, object_id__in=answers_list).count()
     total_saves = total_saves_questions + total_saves_answers
 
     # En çok upvote alan girdi
     most_upvoted_question = questions_list.order_by('-upvotes').first()
     most_upvoted_answer = answers_list.order_by('-upvotes').first()
     most_upvoted_entry = max(
-        [entry for entry in [most_upvoted_question, most_upvoted_answer] if entry],
+        (e for e in [most_upvoted_question, most_upvoted_answer] if e),
         key=lambda x: x.upvotes,
         default=None
     )
@@ -264,7 +251,7 @@ def user_profile(request, username):
     most_downvoted_question = questions_list.order_by('-downvotes').first()
     most_downvoted_answer = answers_list.order_by('-downvotes').first()
     most_downvoted_entry = max(
-        [entry for entry in [most_downvoted_question, most_downvoted_answer] if entry],
+        (e for e in [most_downvoted_question, most_downvoted_answer] if e),
         key=lambda x: x.downvotes,
         default=None
     )
@@ -273,29 +260,24 @@ def user_profile(request, username):
     most_saved_question = questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
     most_saved_answer = answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
     most_saved_entry = max(
-        [entry for entry in [most_saved_question, most_saved_answer] if entry],
+        (e for e in [most_saved_question, most_saved_answer] if e),
         key=lambda x: x.save_count,
         default=None
     )
 
-    # Takipçi ve takip edilen sayıları
     follower_count = user_profile.followers.count()
     following_count = user_profile.following.count()
 
-    # Kullanıcının takip edip etmediğini kontrol et
     is_following = False
     if request.user.is_authenticated and request.user != profile_user:
         is_following = request.user.userprofile.following.filter(user=profile_user).exists()
 
-        # Sabitlenmiş giriş (pinned_entry)
     try:
         pinned_entry = PinnedEntry.objects.get(user=profile_user)
     except PinnedEntry.DoesNotExist:
         pinned_entry = None
-    
-    # Davetler Sekmesi
+
     if is_own_profile:
-        user_profile = request.user.userprofile
         invitations = Invitation.objects.filter(sender=request.user).order_by('-created_at')
         total_invitations = invitations.count()
         used_invitations = invitations.filter(is_used=True).count()
@@ -312,7 +294,7 @@ def user_profile(request, username):
         'questions': questions,
         'answers': answers,
         'top_words': top_words,
-        'exclude_words': ', '.join(exclude_words_set),
+        'exclude_words': exclude_words_str,
         'search_word': search_word,
         'search_word_count': search_word_count,
         'total_upvotes': total_upvotes,
@@ -327,13 +309,11 @@ def user_profile(request, username):
         'is_own_profile': is_own_profile,
         'active_tab': active_tab,
         'exclude_words_list': exclude_words_list,
-        'exclude_words': exclude_words,
-        'pinned_entry': pinned_entry, 
+        'pinned_entry': pinned_entry,
         'invitations': invitations,
         'total_invitations': total_invitations,
         'used_invitations': used_invitations,
         'remaining_invitations': remaining_invitations,
-        'active_tab': active_tab,
     }
 
     return render(request, 'core/user_profile.html', context)
@@ -376,6 +356,10 @@ def get_invitation_tree(user):
 def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     answers = question.answers.all()
+
+    all_questions = Question.objects.annotate(
+        answers_count=Count('answers')
+    ).order_by('-created_at') 
     
     # **Form Oluşturma ve İşleme Bölümü**
     if request.method == 'POST':
@@ -439,10 +423,9 @@ def question_detail(request, question_id):
         'question_save_count': question_save_count,
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
+        'all_questions': all_questions,
     }
     return render(request, 'core/question_detail.html', context)
-
-
 
 @login_required
 def add_answer(request, question_id):
@@ -474,13 +457,10 @@ def view_message(request, message_id):
         message.save()
     return render(request, 'core/view_message.html', {'message': message})
 
-
 @login_required
 def user_list(request):
     users = User.objects.exclude(id=request.user.id)  # Exclude the current user
     return render(request, 'core/user_list.html', {'users': users})
-
-
 
 @login_required
 def follow_user(request, username):
@@ -646,7 +626,6 @@ def add_subquestion(request, question_id):
         'parent_question': parent_question,
     }
     return render(request, 'core/add_subquestion.html', context)
-
 
 @login_required
 def question_map(request):
@@ -824,9 +803,6 @@ def add_starting_question(request):
         form = StartingQuestionForm()
     return render(request, 'core/add_starting_question.html', {'form': form})
 
-
-
-
 @login_required
 def vote(request):
     if request.method == 'POST':
@@ -882,9 +858,6 @@ def vote(request):
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-
-from django.views.decorators.http import require_POST
-
 @login_required
 def save_item(request):
     if request.method == 'POST':
@@ -934,7 +907,7 @@ def save_item(request):
 def site_statistics(request):
     # Toplam kullanıcı sayısı (en az bir soru veya yanıt yazmış olanlar)
     user_count = User.objects.filter(
-        Q(question__isnull=False) | Q(answer__isnull=False)
+        Q(questions__isnull=False) | Q(answers__isnull=False)
     ).distinct().count()
 
     # Toplam soru ve yanıt sayısı
@@ -947,12 +920,12 @@ def site_statistics(request):
 
     # En çok soru soran kullanıcılar
     top_question_users = User.objects.annotate(
-        question_count=Count('question')
+        question_count=Count('questions')
     ).order_by('-question_count')[:5]
 
     # En çok yanıt veren kullanıcılar
     top_answer_users = User.objects.annotate(
-        answer_count=Count('answer')
+        answer_count=Count('answers')
     ).order_by('-answer_count')[:5]
 
     # En çok oy alan sorular (upvotes - downvotes)
@@ -1053,11 +1026,12 @@ def site_statistics(request):
 
     return render(request, 'core/site_statistics.html', context)
 
-from django.contrib.contenttypes.models import ContentType
 
 def user_homepage(request):
     if not request.user.is_authenticated:
         return redirect('signup')
+    
+    today = timezone.now().date()
     
     # Tüm soruları al
     all_questions = Question.objects.annotate(
@@ -1356,7 +1330,6 @@ def reference_search(request):
             })
     return JsonResponse({'results': results})
 
-
 @login_required
 def pin_entry(request, answer_id):
     if request.method == 'POST':
@@ -1368,14 +1341,12 @@ def pin_entry(request, answer_id):
         PinnedEntry.objects.create(user=user, answer=answer)
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 
-
 @login_required
 def unpin_entry(request):
     if request.method == 'POST':
         user = request.user
         PinnedEntry.objects.filter(user=user).delete()
     return redirect(request.META.get('HTTP_REFERER', 'home'))
-
 
 @login_required
 def update_profile_photo(request):
@@ -1389,7 +1360,6 @@ def update_profile_photo(request):
         form = ProfilePhotoForm(instance=request.user.userprofile)
     return render(request, 'core/update_profile_photo.html', {'form': form})
 
-
 def get_top_words(user):
     answers = Answer.objects.filter(user=user)
     questions = Question.objects.filter(user=user)
@@ -1400,13 +1370,6 @@ def get_top_words(user):
     top_words = word_counts.most_common(10)
 
     return top_words
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Message
-from .forms import MessageForm
-from django.db.models import Q
 
 
 @login_required
@@ -1462,12 +1425,6 @@ def message_list(request):
     }
     return render(request, 'core/message_list.html', context)
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from .models import Message
-from django.utils import timezone
-from django.contrib.auth.models import User
 
 @login_required
 def message_detail(request, username):
@@ -1499,8 +1456,6 @@ def message_detail(request, username):
         'messages': messages
     }
     return render(request, 'core/message_detail.html', context)
-
-
 
 @login_required
 def send_message_from_answer(request, answer_id):

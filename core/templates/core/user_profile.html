@@ -1,7 +1,7 @@
-<!-- templates/core/user_profile.html -->
 {% extends 'core/base.html' %}
 {% load static %}
 {% load instance_of %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="container mt-5">
@@ -15,80 +15,71 @@
                 {% else %}
                     <img src="{% static 'imgs/default_profile.jpg' %}" alt="Profil Fotoğrafı" class="rounded-circle img-fluid">
                 {% endif %}
+
                 <!-- Kullanıcı Adı -->
                 <h3 class="mt-3">{{ profile_user.username }}</h3>
-                <!-- Takipçi ve Takip Edilen Sayıları -->
+
+                <!-- Takipçi ve Takip Edilen -->
                 <p>
                     <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
                 </p>
+
                 <!-- Butonlar -->
                 {% if is_own_profile %}
-                    <!-- Kullanıcının kendi profilinde göreceği seçenekler -->
-                    <a href="{% url 'update_profile_photo' %}" class="btn btn-primary btn-sm mb-1">Profil Fotosunu Güncelle</a>
+                    <a href="{% url 'update_profile_photo' %}" class="btn btn-secondary btn-sm mb-1">Profil Fotosunu Güncelle</a>
                     <a href="{% url 'password_change' %}" class="btn btn-secondary btn-sm mb-1">Şifreyi Değiştir</a>
-                    <a href="{% url 'user_settings' %}" class="btn btn-info btn-sm mb-1">Ayarlar</a>
+                    <a href="{% url 'user_settings' %}" class="btn btn-secondary btn-sm mb-1">Ayarlar</a>
                 {% else %}
-                    <!-- Diğer kullanıcıların profilinde gösterilecek takip et/etme butonu ve mesaj gönder -->
                     {% if request.user.is_authenticated %}
                         {% if is_following %}
-                            <form action="{% url 'unfollow_user' profile_user.username %}" method="post">
+                            <form action="{% url 'unfollow_user' profile_user.username %}" method="post" class="d-inline-block me-2 mb-1">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">Takibi Bırak</button>
+                                <button type="submit" class="btn btn-secondary btn-sm mb-1">Takibi Bırak</button>
                             </form>
                         {% else %}
-                            <form action="{% url 'follow_user' profile_user.username %}" method="post">
+                            <form action="{% url 'follow_user' profile_user.username %}" method="post" class="d-inline-block me-2 mb-1">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">Takip Et</button>
+                                <button type="submit" class="btn btn-secondary btn-sm mb-1">Takip Et</button>
                             </form>
                         {% endif %}
-                        <!-- Mesaj Gönder Butonu -->
-                        <a href="{% url 'message_detail' profile_user.username %}" class="btn btn-success btn-sm mb-1">Mesaj Gönder</a>
+                        <a href="{% url 'message_detail' profile_user.username %}" class="btn btn-secondary btn-sm mb-1">Mesaj Gönder</a>
                     {% endif %}
                 {% endif %}
             </div>
+
             <!-- Sağ Taraf: Sabitlenmiş Girdi -->
             <div class="col-md-9">
-                {% if pinned_entry %}
+                {% if pinned_entry and pinned_entry.answer %}
                     <div class="pinned-entry">
-                        <h5>Sabitlenmiş Girdi</h5>
-                            <!-- Sabitlenmiş Girdi -->
-                        {% if pinned_entry and pinned_entry.answer %}
-                        <div class="pinned-entry">
-                            <h5>Sabitlenmiş Yanıt</h5>
-                            <!-- Yanıtın ait olduğu soruyu başlık olarak gösterelim -->
-                            <h6><a href="{% url 'question_detail' pinned_entry.answer.question.id %}">{{ pinned_entry.answer.question.question_text }}</a></h6>
-                            <p>
-                                {{ pinned_entry.answer.answer_text|linebreaksbr }}
-                            </p>
-                            {% if is_own_profile %}
-                                <!-- Sabitlenmiş Girdiyi Kaldırma Butonu -->
-                                <form action="{% url 'unpin_entry' %}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-sm">Sabitlenmiş Girdiyi Kaldır</button>
-                                </form>
+                        <h6>
+                            <a href="{% url 'question_detail' pinned_entry.answer.question.id %}">
+                                {{ pinned_entry.answer.question.question_text }}
+                            </a>
+                        </h6>
+                        <div class="card-body">
+                            {% if pinned_entry.answer.answer_text|length > 500 %}
+                                <p class="answer-text" id="answer-summary-{{ pinned_entry.answer.id }}">
+                                    {{ pinned_entry.answer.answer_text|slice:":500" }}...
+                                </p>
+                                <p class="answer-text" id="answer-full-{{ pinned_entry.answer.id }}" style="display: none;">
+                                    {{ pinned_entry.answer.answer_text|safe }}
+                                </p>
+                                <a href="#" class="read-more" data-answer-id="{{ pinned_entry.answer.id }}">Tamamını oku</a>
+                            {% else %}
+                                <p class="answer-text">
+                                    {{ pinned_entry.answer.answer_text|safe }}
+                                </p>
                             {% endif %}
                         </div>
-                        {% else %}
-                        <p>Sabitlenmiş içerik bulunamadı.</p>
+                        {% if is_own_profile %}
+                            <form action="{% url 'unpin_entry' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-secondary btn-sm">Sabitlenmiş Girdiyi Kaldır</button>
+                            </form>
                         {% endif %}
-
-                    </div>
-                    <!-- Pinned Entry Modal -->
-                    <div class="modal fade" id="pinnedEntryModal" tabindex="-1" aria-labelledby="pinnedEntryModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="pinnedEntryModalLabel">Sabitlenmiş Girdi</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                                </div>
-                                <div class="modal-body">
-                                    {{ pinned_entry.content }}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 {% else %}
-                    <p>Sabitlenmiş bir girdi yok.</p>
+                    <p>Sabitlenmiş içerik bulunamadı.</p>
                 {% endif %}
             </div>
         </div>
@@ -114,286 +105,266 @@
             </li>
         </ul>
 
-    <div class="tab-content" id="profileTabContent">
-        <!-- Davetler Tab -->
-        {% if is_own_profile %}
-            <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}" id="davetler" role="tabpanel" aria-labelledby="davetler-tab">
+        <div class="tab-content" id="profileTabContent">
+            <!-- Davetler Tab -->
+            {% if is_own_profile %}
+                <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}" id="davetler" role="tabpanel">
+                    <div class="mt-4">
+                        <h5>Davetlerim</h5>
+                        <p>Gönderilen Davetiye Sayısı: {{ total_invitations }}</p>
+                        <p>Kullanılan Davetiye Sayısı: {{ used_invitations }}</p>
+                        <p>Kalan Davetiye Sayısı: {{ remaining_invitations }}</p>
+
+                        {% if remaining_invitations > 0 %}
+                            <form action="{% url 'create_invitation' %}" method="post" class="form-inline">
+                                {% csrf_token %}
+                                <div class="input-group mb-2">
+                                    <input type="number" name="quota_granted" min="1" max="{{ remaining_invitations }}" value="1" class="form-control" style="max-width: 100px;" required>
+                                    <button type="submit" class="btn btn-primary btn-sm">Davetiye Oluştur</button>
+                                </div>
+                                <input type="hidden" name="tab" value="davetler">
+                            </form>
+                        {% else %}
+                            <p>Davetiye kotanız dolmuştur.</p>
+                        {% endif %}
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Kod</th>
+                                    <th>Gönderildiği Tarih</th>
+                                    <th>Verilen Kota</th>
+                                    <th>Kullanıldı mı?</th>
+                                    <th>Kullanan Kullanıcı</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invite in invitations %}
+                                <tr>
+                                    <td>{{ invite.code }}</td>
+                                    <td>{{ invite.created_at|date:"d M Y H:i" }}</td>
+                                    <td>{{ invite.quota_granted }}</td>
+                                    <td>{% if invite.is_used %}Evet{% else %}Hayır{% endif %}</td>
+                                    <td>{% if invite.used_by %}{{ invite.used_by.username }}{% else %}-{% endif %}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5">Henüz davetiye gönderilmedi.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Sorular Tab -->
+            <div class="tab-pane fade {% if active_tab == 'sorular' %}show active{% endif %}" id="sorular" role="tabpanel">
                 <div class="mt-4">
-                    <h5>Davetlerim</h5>
-                    <p>Gönderilen Davetiye Sayısı: {{ total_invitations }}</p>
-                    <p>Kullanılan Davetiye Sayısı: {{ used_invitations }}</p>
-                    <p>Kalan Davetiye Sayısı: {{ remaining_invitations }}</p>
-                    <!-- Davetiye Oluşturma Formu -->
-                    {% if remaining_invitations > 0 %}
-                    <form action="{% url 'create_invitation' %}" method="post" class="form-inline">
-                        {% csrf_token %}
-                        <div class="input-group mb-2">
-                            <input type="number" name="quota_granted" min="1" max="{{ remaining_invitations }}" value="1" class="form-control" style="max-width: 100px;" required>
-                            <button type="submit" class="btn btn-primary btn-sm">Davetiye Oluştur</button>
+                    {% for question in questions %}
+                        <div class="question">
+                            <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
                         </div>
-                        <input type="hidden" name="tab" value="davetler">
-                    </form>
-                {% else %}
-                    <p>Davetiye kotanız dolmuştur.</p>
-                {% endif %}
-                    <!-- Davetiyeler Tablosu -->
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Kod</th>
-                                <th>Gönderildiği Tarih</th>
-                                <th>Verilen Kota</th>
-                                <th>Kullanıldı mı?</th>
-                                <th>Kullanan Kullanıcı</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for invite in invitations %}
-                            <tr>
-                                <td>{{ invite.code }}</td>
-                                <td>{{ invite.created_at|date:"d M Y H:i" }}</td>
-                                <td>{{ invite.quota_granted }}</td>
-                                <td>{% if invite.is_used %}Evet{% else %}Hayır{% endif %}</td>
-                                <td>{% if invite.used_by %}{{ invite.used_by.username }}{% else %}-{% endif %}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5">Henüz davetiye gönderilmedi.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endif %}
+                    {% empty %}
+                        <p>Henüz soru yok.</p>
+                    {% endfor %}
 
-        <!-- Sorular Tab -->
-        <div class="tab-pane fade {% if active_tab == 'sorular' %}show active{% endif %}" id="sorular" role="tabpanel" aria-labelledby="sorular-tab">
-            <div class="mt-4">
-                {% for question in questions %}
-                    <div class="question">
-                        <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
-                    </div>
-                {% empty %}
-                    <p>Henüz soru yok.</p>
-                {% endfor %}
-
-                <!-- Pagination -->
-                <nav aria-label="Sorular Sayfaları">
-                    <ul class="pagination">
-                        {% if questions.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?question_page={{ questions.previous_page_number }}" aria-label="Önceki">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link" aria-label="Önceki">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </span>
-                            </li>
-                        {% endif %}
-                        {% for num in questions.paginator.page_range %}
-                            {% if questions.number == num %}
-                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    <!-- Sorular Sayfalandırma -->
+                    <nav aria-label="Sorular Sayfaları">
+                        <ul class="pagination">
+                            {% if questions.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?question_page={{ questions.previous_page_number }}&tab=sorular" aria-label="Önceki">&laquo;</a>
+                                </li>
                             {% else %}
-                                <li class="page-item"><a class="page-link" href="?question_page={{ num }}">{{ num }}</a></li>
+                                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                             {% endif %}
-                        {% endfor %}
-                        {% if questions.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?question_page={{ questions.next_page_number }}" aria-label="Sonraki">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link" aria-label="Sonraki">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </span>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Yanıtlar Tab -->
-        <div class="tab-pane fade {% if active_tab == 'yanitlar' %}show active{% endif %}" id="yanitlar" role="tabpanel" aria-labelledby="yanitlar-tab">
-            <div class="mt-4">
-                {% for answer in answers %}
-                    <div class="answer">
-                        <p><a href="{% url 'question_detail' answer.question.id %}">{{ answer.question.question_text }}</a></p>
-                        <p>{{ answer.answer_text|truncatewords:20 }}</p>
-                    </div>
-                {% empty %}
-                    <p>Henüz yanıt yok.</p>
-                {% endfor %}
-
-                <!-- Pagination -->
-                <nav aria-label="Yanıtlar Sayfaları">
-                    <ul class="pagination">
-                        {% if answers.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?answer_page={{ answers.previous_page_number }}" aria-label="Önceki">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link" aria-label="Önceki">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </span>
-                            </li>
-                        {% endif %}
-                        {% for num in answers.paginator.page_range %}
-                            {% if answers.number == num %}
-                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?answer_page={{ num }}">{{ num }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-                        {% if answers.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?answer_page={{ answers.next_page_number }}" aria-label="Sonraki">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link" aria-label="Sonraki">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </span>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Kelimeler Tab -->
-        <div class="tab-pane fade {% if active_tab == 'kelimeler' %}show active{% endif %}" id="kelimeler" role="tabpanel" aria-labelledby="kelimeler-tab">
-            <div class="mt-4 row">
-                <!-- Sol Taraf: En Çok Kullanılan Kelimeler -->
-                <div class="col-md-6">
-                    <h5>En Çok Kullandığınız Kelimeler</h5>
-                    {% if top_words %}
-                        <ul>
-                            {% for word, count in top_words %}
-                                <li>{{ word }}: {{ count }}</li>
+                            {% for num in questions.paginator.page_range %}
+                                {% if questions.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?question_page={{ num }}&tab=sorular">{{ num }}</a></li>
+                                {% endif %}
                             {% endfor %}
+                            {% if questions.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?question_page={{ questions.next_page_number }}&tab=sorular" aria-label="Sonraki">&raquo;</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                            {% endif %}
                         </ul>
-                    {% else %}
-                        <p>Gösterilecek kelime yok.</p>
-                    {% endif %}
+                    </nav>
                 </div>
-                <!-- Sağ Taraf: Çıkarılmış Kelimeler ve Kelime Çıkarma -->
-                <div class="col-md-6">
-                    <!-- Kelime Çıkarma Formu -->
-                    {% if is_own_profile %}
-                        <h5>Kelime Çıkar</h5>
-                        <form method="get" action="">
-                            <input type="hidden" name="active_tab" value="kelimeler">
-                            {% for ew in exclude_words_list %}
-                                <input type="hidden" name="exclude_words" value="{{ ew }}">
+            </div>
+
+            <!-- Yanıtlar Tab -->
+            <div class="tab-pane fade {% if active_tab == 'yanitlar' %}show active{% endif %}" id="yanitlar" role="tabpanel">
+                <div class="mt-4">
+                    {% for answer in answers %}
+                        <div class="answer">
+                            <p><a href="{% url 'question_detail' answer.question.id %}">{{ answer.question.question_text }}</a></p>
+                            <p>{{ answer.answer_text|truncatewords:20 }}</p>
+                        </div>
+                    {% empty %}
+                        <p>Henüz yanıt yok.</p>
+                    {% endfor %}
+
+                    <!-- Yanıtlar Sayfalandırma -->
+                    <nav aria-label="Yanıtlar Sayfaları">
+                        <ul class="pagination">
+                            {% if answers.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?answer_page={{ answers.previous_page_number }}&tab=yanitlar" aria-label="Önceki">&laquo;</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                            {% endif %}
+                            {% for num in answers.paginator.page_range %}
+                                {% if answers.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?answer_page={{ num }}&tab=yanitlar">{{ num }}</a></li>
+                                {% endif %}
                             {% endfor %}
+                            {% if answers.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?answer_page={{ answers.next_page_number }}&tab=yanitlar" aria-label="Sonraki">&raquo;</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Kelimeler Tab -->
+            <div class="tab-pane fade {% if active_tab == 'kelimeler' %}show active{% endif %}" id="kelimeler" role="tabpanel">
+                <div class="mt-4 row">
+                    <div class="col-md-6">
+                        <h5>En Çok Kullandığınız Kelimeler</h5>
+                        {% if top_words %}
+                            <ul>
+                                {% for word, count in top_words %}
+                                    <li>{{ word }}: {{ count }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Gösterilecek kelime yok.</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {% if is_own_profile %}
+                        <h5>Kelime Arama</h5>
+                        <form method="get" action="">
+                            <input type="hidden" name="tab" value="kelimeler">
+                            <input type="hidden" name="exclude_words" value="{{ exclude_words }}">
                             <div class="input-group mb-3">
-                                <input type="text" name="exclude_word" class="form-control" placeholder="Çıkarmak istediğiniz kelimeyi girin">
-                                <button class="btn btn-danger" type="submit">Çıkar</button>
+                                <input type="text" name="search_word" class="form-control" placeholder="Kelimeyi girin" value="{{ search_word }}">
+                                <button class="btn btn-primary" type="submit">Ara</button>
                             </div>
                         </form>
-                    {% endif %}
+                        {% if search_word %}
+                            <p>"{{ search_word }}" kelimesini {{ search_word_count }} kez kullandınız.</p>
+                        {% endif %}
+                            <h5>Kelime Çıkar</h5>
+                            <form method="get" action="">
+                                <input type="hidden" name="tab" value="kelimeler">
+                                <input type="hidden" name="exclude_words" value="{{ exclude_words }}">
+                                <div class="input-group mb-3">
+                                    <input type="text" name="exclude_word" class="form-control" placeholder="Çıkarmak istediğiniz kelimeyi girin">
+                                    <button class="btn btn-danger" type="submit">Çıkar</button>
+                                </div>
+                            </form>
+                        {% endif %}
 
-                    <!-- Çıkarılmış Kelimeler -->
-                    <h5>Çıkarılmış Kelimeler</h5>
-                    {% if exclude_words_list %}
-                        <ul>
-                            {% for word in exclude_words_list %}
-                                <li>
-                                    {{ word }}
-                                    {% if is_own_profile %}
-                                        <!-- Kelimeyi geri ekleme butonu -->
-                                        <form method="get" action="" style="display: inline;">
-                                            <input type="hidden" name="active_tab" value="kelimeler">
-                                            <!-- Mevcut exclude_words'ları ekle, bu kelime hariç -->
-                                            {% for ew in exclude_words_list %}
-                                                {% if ew != word %}
-                                                    <input type="hidden" name="exclude_words" value="{{ ew }}">
-                                                {% endif %}
-                                            {% endfor %}
-                                            <button type="submit" name="include_word" value="{{ word }}" class="btn btn-sm btn-success">Geri Ekle</button>
-                                        </form>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
+                        <h5>Çıkarılmış Kelimeler</h5>
+                        {% if exclude_words_list %}
+                            <ul>
+                                {% for word in exclude_words_list %}
+                                    <li>
+                                        {{ word }}
+                                        {% if is_own_profile %}
+                                            <form method="get" action="" style="display: inline;">
+                                                <input type="hidden" name="tab" value="kelimeler">
+                                                <input type="hidden" name="exclude_words" value="{{ exclude_words }}">
+                                                <button type="submit" name="include_word" value="{{ word }}" class="btn btn-sm btn-secondary">Geri Ekle</button>
+                                            </form>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Bu bölümü sadece kullanıcının kendisi görebilir.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- İstatistikler Tab -->
+            <div class="tab-pane fade {% if active_tab == 'istatistikler' %}show active{% endif %}" id="istatistikler" role="tabpanel">
+                <div class="mt-4">
+                    <h5>İstatistikler</h5>
+                    <p>Toplam Upvotes: {{ total_upvotes }}</p>
+                    <p>Toplam Downvotes: {{ total_downvotes }}</p>
+                    <p>Toplam Kaydedilme Sayısı: {{ total_saves }}</p>
+
+                    <h6>En Çok Upvote Alan Girdi:</h6>
+                    {% if most_upvoted_entry %}
+                        {% if most_upvoted_entry|instance_of:'Question' %}
+                            <p>Soru: <a href="{% url 'question_detail' most_upvoted_entry.id %}">{{ most_upvoted_entry.question_text }}</a> ({{ most_upvoted_entry.upvotes }} upvotes)</p>
+                        {% elif most_upvoted_entry|instance_of:'Answer' %}
+                            <p>Yanıt: <a href="{% url 'question_detail' most_upvoted_entry.question.id %}">{{ most_upvoted_entry.question.question_text }}</a> ({{ most_upvoted_entry.upvotes }} upvotes)</p>
+                        {% endif %}
                     {% else %}
-                        <p>Çıkarılmış kelime yok.</p>
+                        <p>Henüz upvote alan bir girdi yok.</p>
                     {% endif %}
 
-                    <!-- Kelime Arama -->
-                    <h5>Kelime Arama</h5>
-                    <form method="get" action="">
-                        <input type="hidden" name="active_tab" value="kelimeler">
-                        {% for ew in exclude_words_list %}
-                            <input type="hidden" name="exclude_words" value="{{ ew }}">
-                        {% endfor %}
-                        <div class="input-group mb-3">
-                            <input type="text" name="search_word" class="form-control" placeholder="Kelimeyi girin" value="{{ search_word }}">
-                            <button class="btn btn-primary" type="submit">Ara</button>
-                        </div>
-                    </form>
-                    {% if search_word %}
-                        <p>"{{ search_word }}" kelimesini {{ search_word_count }} kez kullandınız.</p>
+                    <h6>En Çok Downvote Alan Girdi:</h6>
+                    {% if most_downvoted_entry %}
+                        {% if most_downvoted_entry|instance_of:'Question' %}
+                            <p>Soru: <a href="{% url 'question_detail' most_downvoted_entry.id %}">{{ most_downvoted_entry.question_text }}</a> ({{ most_downvoted_entry.downvotes }} downvotes)</p>
+                        {% elif most_downvoted_entry|instance_of:'Answer' %}
+                            <p>Yanıt: <a href="{% url 'question_detail' most_downvoted_entry.question.id %}">{{ most_downvoted_entry.question.question_text }}</a> ({{ most_downvoted_entry.downvotes }} downvotes)</p>
+                        {% endif %}
+                    {% else %}
+                        <p>Henüz downvote alan bir girdi yok.</p>
+                    {% endif %}
+
+                    <h6>En Çok Kaydedilen Girdi:</h6>
+                    {% if most_saved_entry %}
+                        {% if most_saved_entry|instance_of:'Question' %}
+                            <p>Soru: <a href="{% url 'question_detail' most_saved_entry.id %}">{{ most_saved_entry.question_text }}</a></p>
+                        {% elif most_saved_entry|instance_of:'Answer' %}
+                            <p>Yanıt: <a href="{% url 'question_detail' most_saved_entry.question.id %}">{{ most_saved_entry.question.question_text }}</a></p>
+                        {% endif %}
+                    {% else %}
+                        <p>Henüz kaydedilen bir girdi yok.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
-
-        <!-- İstatistikler Tab -->
-        <div class="tab-pane fade {% if active_tab == 'istatistikler' %}show active{% endif %}" id="istatistikler" role="tabpanel" aria-labelledby="istatistikler-tab">
-            <div class="mt-4">
-                <h5>İstatistikler</h5>
-                <p>Toplam Upvotes: {{ total_upvotes }}</p>
-                <p>Toplam Downvotes: {{ total_downvotes }}</p>
-                <p>Toplam Kaydedilme Sayısı: {{ total_saves }}</p>
-
-                <h6>En Çok Upvote Alan Girdi:</h6>
-                {% if most_upvoted_entry %}
-                    {% if most_upvoted_entry|instance_of:'Question' %}
-                        <p>Soru: <a href="{% url 'question_detail' most_upvoted_entry.id %}">{{ most_upvoted_entry.question_text }}</a> ({{ most_upvoted_entry.upvotes }} upvotes)</p>
-                    {% elif most_upvoted_entry|instance_of:'Answer' %}
-                        <p>Yanıt: <a href="{% url 'question_detail' most_upvoted_entry.question.id %}">{{ most_upvoted_entry.question.question_text }}</a> ({{ most_upvoted_entry.upvotes }} upvotes)</p>
-                    {% endif %}
-                {% else %}
-                    <p>Henüz upvote alan bir girdi yok.</p>
-                {% endif %}
-
-                <h6>En Çok Downvote Alan Girdi:</h6>
-                {% if most_downvoted_entry %}
-                    {% if most_downvoted_entry|instance_of:'Question' %}
-                        <p>Soru: <a href="{% url 'question_detail' most_downvoted_entry.id %}">{{ most_downvoted_entry.question_text }}</a> ({{ most_downvoted_entry.downvotes }} downvotes)</p>
-                    {% elif most_downvoted_entry|instance_of:'Answer' %}
-                        <p>Yanıt: <a href="{% url 'question_detail' most_downvoted_entry.question.id %}">{{ most_downvoted_entry.question.question_text }}</a> ({{ most_downvoted_entry.downvotes }} downvotes)</p>
-                    {% endif %}
-                {% else %}
-                    <p>Henüz downvote alan bir girdi yok.</p>
-                {% endif %}
-
-                <h6>En Çok Kaydedilen Girdi:</h6>
-                {% if most_saved_entry %}
-                    {% if most_saved_entry|instance_of:'Question' %}
-                        <p>Soru: <a href="{% url 'question_detail' most_saved_entry.id %}">{{ most_saved_entry.question_text }}</a></p>
-                    {% elif most_saved_entry|instance_of:'Answer' %}
-                        <p>Yanıt: <a href="{% url 'question_detail' most_saved_entry.question.id %}">{{ most_saved_entry.question.question_text }}</a></p>
-                    {% endif %}
-                {% else %}
-                    <p>Henüz kaydedilen bir girdi yok.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.read-more').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var answerId = this.getAttribute('data-answer-id');
+            var summary = document.getElementById('answer-summary-' + answerId);
+            var fullText = document.getElementById('answer-full-' + answerId);
+            if (summary && fullText) {
+                summary.style.display = 'none';
+                fullText.style.display = 'block';
+                this.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

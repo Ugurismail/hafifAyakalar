@@ -55,7 +55,11 @@ a:hover {
 }
 
 /* Buttons */
-.btn-primary {
+.btn1 {
+    background-color: #003153 !important;
+    color: var(--button-text-color, #ffffff);
+}
+/* .btn-primary {
     background-color: var(--button-background-color, #007bff);
     border-color: var(--button-background-color, #007bff);
     color: var(--button-text-color, #ffffff);
@@ -65,7 +69,7 @@ a:hover {
     background-color: var(--button-hover-background-color, #0056b3);
     border-color: var(--button-hover-background-color, #0056b3);
     color: var(--button-text-color, #ffffff);
-}
+} */
 
 /* Content Styles */
 .question,
