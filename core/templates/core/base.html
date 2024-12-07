@@ -71,7 +71,7 @@
                 {% if user.is_authenticated %}
                 <form id="search-form" class="d-flex mx-auto" style="width: 400px;">
                     {% csrf_token %}
-                    <input type="text" id="search-input" class="form-control" placeholder="Ara...">
+                    <input type="text" autocomplete="off" id="search-input" class="form-control" placeholder="Başlık/Soru ya da Kullanıcı Ara">
                     <div id="search-results"></div>
                 </form>
                 {% endif %}

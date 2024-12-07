@@ -357,9 +357,6 @@ def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     answers = question.answers.all()
 
-    all_questions = Question.objects.annotate(
-        answers_count=Count('answers')
-    ).order_by('-created_at') 
     
     # **Form Oluşturma ve İşleme Bölümü**
     if request.method == 'POST':
@@ -414,7 +411,10 @@ def question_detail(request, question_id):
         object_id__in=answers.values_list('id', flat=True)
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
-    
+
+    all_questions = get_today_questions(request)
+
+
     context = {
         'question': question,
         'answers': answers,
@@ -1032,13 +1032,14 @@ def user_homepage(request):
         return redirect('signup')
     
     today = timezone.now().date()
-    
+
     # Tüm soruları al
-    all_questions = Question.objects.annotate(
-        answers_count=Count('answers'),
-        latest_answer_date=Max('answers__created_at')
-    ).order_by(F('latest_answer_date').desc(nulls_last=True))
-    
+    all_questions = get_today_questions(request)
+
+    # Rastgele yanıtlar (Örnek)
+    random_items = Answer.objects.all().order_by('?')[:10]
+
+
     # Başlangıç sorularını al
     starting_questions = StartingQuestion.objects.filter(user=request.user).annotate(
         total_subquestions=Count('question__subquestions'),
@@ -1379,7 +1380,7 @@ def message_list(request):
     messages = Message.objects.filter(
         Q(sender=request.user) | Q(recipient=request.user)
     )
-
+    all_questions = get_today_questions(request)
     # Annotate each conversation with the latest message timestamp
     conversations = messages.values(
         'sender', 'recipient'
@@ -1416,12 +1417,15 @@ def message_list(request):
             conversation_dict[other_user] = {
                 'messages': messages_with_user,
                 'unread_count': unread_count,
+                'all_questions': all_questions,
             }
 
             conversation_users.append(other_user_id)
 
+
     context = {
-        'conversations': conversation_dict
+        'conversations': conversation_dict,
+        'all_questions': all_questions,
     }
     return render(request, 'core/message_list.html', context)
 
@@ -1430,7 +1434,7 @@ def message_list(request):
 def message_detail(request, username):
     other_user = get_object_or_404(User, username=username)
     Message.objects.filter(sender=other_user, recipient=request.user, is_read=False).update(is_read=True)
-    
+
     # Mesajları doğru şekilde sıralayın: en eski önce, en yeni sonra
     messages = Message.objects.filter(
         Q(sender=request.user, recipient=other_user) |
@@ -1450,10 +1454,12 @@ def message_detail(request, username):
             # Diğer kullanıcının mesajlarını okunmuş olarak işaretlemek isteğe bağlıdır
             Message.objects.filter(sender=other_user, recipient=request.user).update(is_read=True)
             return redirect('message_detail', username=username)
-    
+    all_questions = get_today_questions(request)
+
     context = {
         'other_user': other_user,
-        'messages': messages
+        'messages': messages,
+        'all_questions': all_questions,
     }
     return render(request, 'core/message_detail.html', context)
 
@@ -1486,3 +1492,32 @@ def check_new_messages(request):
     # Kullanıcının okunmamış mesajlarını say
     unread_count = Message.objects.filter(recipient=request.user, is_read=False).count()
     return JsonResponse({'unread_count': unread_count})
+
+
+def get_today_questions(request, per_page=25):
+    """Bugün oluşturulan veya bugün yanıt alan soruları döndürür (sayfalandırılmış), 
+    en son yanıtlananlar en üste gelecek şekilde sıralar."""
+
+    today = timezone.now().date()
+    queryset = Question.objects.annotate(
+        answers_count=Count('answers', distinct=True),  # distinct=True eklendi
+        latest_answer_date=Max('answers__created_at')
+    ).filter(
+        Q(created_at__date=today) | Q(answers__created_at__date=today)
+    ).distinct()
+
+    # sort_date için Coalesce kullanımı
+    queryset = queryset.annotate(
+        sort_date=Coalesce('latest_answer_date', 'created_at')
+    ).order_by(F('sort_date').desc())
+
+    page = request.GET.get('page', 1)
+    paginator = Paginator(queryset, per_page)
+    try:
+        all_questions = paginator.page(page)
+    except PageNotAnInteger:
+        all_questions = paginator.page(1)
+    except EmptyPage:
+        all_questions = paginator.page(paginator.num_pages)
+
+    return all_questions

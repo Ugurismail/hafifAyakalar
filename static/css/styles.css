@@ -327,6 +327,9 @@ a:hover {
     background-color: rgba(173, 216, 230, 0.3) !important;
 }
 
+.baslik:hover{
+    background-color: var(--nav-link-hover-bg, #495057);
+}
 
 @media (max-width: 600px) {
     .message-card {

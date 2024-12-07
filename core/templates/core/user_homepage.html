@@ -11,11 +11,12 @@
             <h4>Tüm Sorular</h4>
             <ul class="list-unstyled">
                 {% for question in all_questions %}
-                <li class="d-flex justify-content-between align-items-center mt-2">
-                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none">
-                        {{ question.question_text }}
+                <li class="d-flex justify-content-between align-items-center mt-2 baslik">
+                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                        <span>{{ question.question_text }}</span> 
+                        <small class="">{{ question.answers_count }}</small>
                     </a>
-                    <small class="">{{ question.answers_count }}</small>
+                    
                 </li>
                 {% endfor %}
             </ul>
@@ -23,7 +24,7 @@
         </div>
         <!-- Middle Column: Random Questions and Answers -->
         <div class="col-md-8">
-            <h4>Rastgele Sorular ve Yanıtlar</h4>
+            <h4>Rastgele</h4>
             {% for answer in random_items %}
             <div class="card mb-3 random-item-card">
                 <!-- Question Title -->
@@ -135,11 +136,12 @@
             {% if starting_questions %}
                 <ul class="list-unstyled">
                     {% for item in starting_questions %}
-                    <li class="d-flex justify-content-between align-items-center">
-                        <a href="{% url 'question_detail' item.question.id %}" class="text-dark text-decoration-none">
-                            {{ item.question.question_text }}
+                    <li class="text-dark text-decoration-none d-flex justify-content-between align-items-center mt-2 baslik">
+                        <a href="{% url 'question_detail' item.question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                            <span>{{ item.question.question_text }}</span> 
+                            <small>{{ item.total_subquestions }}</small>
                         </a>
-                        <span>{{ item.total_subquestions }}</span>
+                        
                     </li>
                     {% endfor %}
                 </ul>
