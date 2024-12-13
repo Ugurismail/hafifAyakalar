@@ -171,7 +171,7 @@ def user_profile(request, username):
 
     # Sorular sayfalama
     question_page = request.GET.get('question_page', 1)
-    question_paginator = Paginator(questions_list, 50)
+    question_paginator = Paginator(questions_list, 10)
     try:
         questions = question_paginator.page(question_page)
     except PageNotAnInteger:
@@ -181,7 +181,7 @@ def user_profile(request, username):
 
     # Yanıtlar sayfalama
     answer_page = request.GET.get('answer_page', 1)
-    answer_paginator = Paginator(answers_list, 50)
+    answer_paginator = Paginator(answers_list, 10)
     try:
         answers = answer_paginator.page(answer_page)
     except PageNotAnInteger:
@@ -218,7 +218,7 @@ def user_profile(request, username):
 
     # Kelime sıklıkları
     word_counts = Counter(filtered_words)
-    top_words = word_counts.most_common(10)
+    top_words = word_counts.most_common(20)
 
     # Kelime arama
     search_word = request.GET.get('search_word', '').strip().lower()
@@ -538,6 +538,7 @@ def search(request):
         return render(request, 'core/search_results.html', {})
 @login_required
 def add_question_from_search(request):
+    all_questions = get_today_questions(request)
     query = request.GET.get('q', '').strip()
     if request.method == 'POST':
         answer_form = AnswerForm(request.POST)
@@ -550,6 +551,7 @@ def add_question_from_search(request):
             )
             # Kullanıcıyı soru ile ilişkilendir
             question.users.add(request.user)
+            
             # Yeni yanıt oluştur
             answer = answer_form.save(commit=False)
             answer.user = request.user
@@ -560,7 +562,8 @@ def add_question_from_search(request):
         answer_form = AnswerForm()
     return render(request, 'core/add_question_from_search.html', {
         'query': query,
-        'answer_form': answer_form
+        'answer_form': answer_form,
+        'all_questions': all_questions,
     })
 
 def get_user_id(request, username):
@@ -1351,15 +1354,37 @@ def unpin_entry(request):
 
 @login_required
 def update_profile_photo(request):
+    profile_user = request.user
+    user_profile = profile_user.userprofile
+
     if request.method == 'POST':
-        form = ProfilePhotoForm(request.POST, request.FILES, instance=request.user.userprofile)
+        form = ProfilePhotoForm(request.POST, request.FILES, instance=user_profile)
+        remove_photo = (request.POST.get('remove_photo') == 'true')
+
+        if remove_photo:
+            if user_profile.photo:
+                user_profile.photo.delete(save=False)
+            user_profile.photo = None
+            user_profile.save()
+            messages.success(request, 'Fotoğrafınız kaldırıldı.')
+            return redirect('user_profile', username=profile_user.username)
+
         if form.is_valid():
             form.save()
             messages.success(request, 'Profil fotoğrafınız güncellendi.')
-            return redirect('profile')
+            return redirect('user_profile', username=profile_user.username)
+        else:
+            # Form hatalıysa modal tekrar açılsın diye user_profile.html'i tekrar render ediyoruz.
+            return render(request, 'core/user_profile.html', {
+                'profile_user': profile_user,
+                'user_profile': user_profile,
+                'form': form,
+                'is_own_profile': True,  # Kendi profilimiz olduğunu varsayıyoruz
+            })
     else:
-        form = ProfilePhotoForm(instance=request.user.userprofile)
-    return render(request, 'core/update_profile_photo.html', {'form': form})
+        # GET isteğinde direkt profiline yönlendir
+        return redirect('user_profile', username=profile_user.username)
+
 
 def get_top_words(user):
     answers = Answer.objects.filter(user=user)

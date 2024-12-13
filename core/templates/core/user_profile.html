@@ -26,7 +26,10 @@
 
                 <!-- Butonlar -->
                 {% if is_own_profile %}
-                    <a href="{% url 'update_profile_photo' %}" class="btn btn-secondary btn-sm mb-1">Profil Fotosunu Güncelle</a>
+                    <!-- Profil Fotoğrafını Güncelle Butonu (Modal'ı açacak) -->
+                    <button type="button" class="btn btn-secondary btn-sm mb-1" data-bs-toggle="modal" data-bs-target="#profilePhotoModal">
+                        Profil Fotosunu Güncelle
+                    </button>
                     <a href="{% url 'password_change' %}" class="btn btn-secondary btn-sm mb-1">Şifreyi Değiştir</a>
                     <a href="{% url 'user_settings' %}" class="btn btn-secondary btn-sm mb-1">Ayarlar</a>
                 {% else %}
@@ -168,7 +171,6 @@
                     {% empty %}
                         <p>Henüz soru yok.</p>
                     {% endfor %}
-
                     <!-- Sorular Sayfalandırma -->
                     <nav aria-label="Sorular Sayfaları">
                         <ul class="pagination">
@@ -245,11 +247,11 @@
                     <div class="col-md-6">
                         <h5>En Çok Kullandığınız Kelimeler</h5>
                         {% if top_words %}
-                            <ul>
+                            <ol>
                                 {% for word, count in top_words %}
                                     <li>{{ word }}: {{ count }}</li>
                                 {% endfor %}
-                            </ul>
+                            </ol>
                         {% else %}
                             <p>Gösterilecek kelime yok.</p>
                         {% endif %}
@@ -346,25 +348,99 @@
             </div>
         </div>
     </div>
+
+  <!-- Profil Fotoğrafı Güncelleme Modal -->
+<div class="modal fade" id="profilePhotoModal" tabindex="-1" aria-labelledby="profilePhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" enctype="multipart/form-data" action="{% url 'update_profile_photo' %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="profilePhotoModalLabel">Profil Fotoğrafını Güncelle</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+          </div>
+          <div class="modal-body">
+  
+            <!-- Mevcut fotoğraf önizlemesi -->
+            <div class="text-center mb-3">
+                {% if user_profile.photo %}
+                    <img id="current-profile-pic" src="{{ user_profile.photo.url }}" alt="Mevcut Fotoğraf" class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
+                {% else %}
+                    <img id="current-profile-pic" src="{% static 'imgs/default_profile.jpg' %}" alt="Varsayılan Fotoğraf" class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
+                {% endif %}
+            </div>
+  
+            <!-- Yeni fotoğraf seçimi -->
+            <div class="mb-3">
+              <label for="id_photo" class="form-label">Yeni Fotoğraf Seç (opsiyonel):</label>
+              <input type="file" name="photo" id="id_photo" class="form-control">
+              <!-- form.photo normalde bir file input oluşturur.
+                   Bu input'a tıklayınca "Dosya Seç" penceresi açılır,
+                   kullanıcı yeni bir fotoğraf seçebilir. -->
+            </div>
+  
+            <!-- Mevcut fotoğrafı kaldır -->
+            {% if user_profile.photo %}
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" name="remove_photo" value="true" id="removePhotoCheck">
+              <label class="form-check-label" for="removePhotoCheck">
+                Mevcut fotoğrafı kaldır (Varsayılan fotoğraf kullanılacak)
+              </label>
+            </div>
+            {% endif %}
+  
+            <!-- Yeni seçilen fotoğrafın önizlemesi -->
+            <div class="text-center" id="new-photo-preview-container" style="display:none;">
+                <p>Yeni Seçilen Fotoğraf Önizlemesi:</p>
+                <img id="new-photo-preview" src="#" alt="Önizleme" class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
+            </div>
+  
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+            <button type="submit" class="btn btn-primary">Güncelle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  {% if form and form.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var modal = new bootstrap.Modal(document.getElementById('profilePhotoModal'));
+      modal.show();
+    });
+  </script>
+  {% endif %}
+  
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.read-more').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            var answerId = this.getAttribute('data-answer-id');
-            var summary = document.getElementById('answer-summary-' + answerId);
-            var fullText = document.getElementById('answer-full-' + answerId);
-            if (summary && fullText) {
-                summary.style.display = 'none';
-                fullText.style.display = 'block';
-                this.style.display = 'none';
+    var fileInput = document.getElementById('id_photo');
+    var previewContainer = document.getElementById('new-photo-preview-container');
+    var previewImage = document.getElementById('new-photo-preview');
+
+    if(fileInput) {
+        fileInput.addEventListener('change', function() {
+            var file = this.files[0];
+            if(file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.style.display = 'block';
+                    previewImage.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                // Dosya seçilmezse önizlemeyi gizleyin
+                previewContainer.style.display = 'none';
+                previewImage.src = '#';
             }
         });
-    });
+    }
 });
 </script>
 {% endblock %}
