@@ -11,7 +11,7 @@
             <ul class="list-unstyled">
                 {% for question in all_questions %}
                 <li class="d-flex justify-content-between align-items-center mt-2 baslik">
-                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none">
+                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
                         {{ question.question_text }}
                     </a>
                     <small class="">{{ question.answers_count }}</small>
@@ -67,14 +67,14 @@
                     <!-- Yanıt Metni -->
                     {% if answer.answer_text|length > 500 %}
                         <!-- Kısaltılmış Yanıt -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500" }}...</p>
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500" }}...</p>
                         <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|markdownify:"default" }}</p>
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|markdownify:"default" }}</p>
                         <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|bkz_link|markdownify:"default" }}</p>
+                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default" }}</p>
                     {% endif %}
                     
                     <!-- Alt Kısım: Oylar, Butonlar, Kullanıcı Bilgisi -->

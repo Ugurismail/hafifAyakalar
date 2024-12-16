@@ -19,7 +19,8 @@ urlpatterns = [
     path('profile/<str:username>/follow/', views.follow_user, name='follow_user'),
     path('profile/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
     path('profile/<str:username>/', views.user_profile, name='user_profile'),
-
+    
+    
     # Soru İşlemleri
     path('add-question/', views.add_question, name='add_question'),
     path('question/<int:question_id>/', views.question_detail, name='question_detail'),
@@ -37,6 +38,8 @@ urlpatterns = [
     path('messages/<str:username>/', views.message_detail, name='message_detail'),
     path('send_message/answer/<int:answer_id>/', views.send_message_from_answer, name='send_message_from_answer'),
     path('check_new_messages/', views.check_new_messages, name='check_new_messages'),
+    path('send_message/user/<int:user_id>/', views.send_message_from_user, name='send_message_from_user'),
+
     
     # Arama
     path('search/', views.search, name='search'),
@@ -65,4 +68,9 @@ urlpatterns = [
     
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='core/password_change.html'), name='password_change'),
     path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='core/password_change_done.html'), name='password_change_done'),
+
+    path('random_sentence/', views.get_random_sentence, name='get_random_sentence'),
+    path('add_random_sentence/', views.add_random_sentence, name='add_random_sentence'),
 ]
+
+handler404 = 'core.views.custom_404_view'

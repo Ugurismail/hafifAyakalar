@@ -41,13 +41,12 @@
             --nav-link-hover-color: {{ user.userprofile.nav_link_hover_color }};
             --nav-link-hover-bg: {{ user.userprofile.nav_link_hover_bg }};
             --pagination-background-color: {{ user.userprofile.pagination_background_color }};
-            --pagination-text-color: {{ user.userprofile.pagination_text_color }};
+            --pagination-text_color: {{ user.userprofile.pagination_text_color }};
             --pagination-active-background-color: {{ user.userprofile.pagination_active_background_color }};
             --pagination-active-text-color: {{ user.userprofile.pagination_active_text_color }};
             /* Diğer renk değişkenleri */
         }
     </style>
-
     {% endif %}
     <link rel="icon" href="{% static 'imgs/favicon.ico' %}" type="image/x-icon">
     <meta name="csrf-token" content="{{ csrf_token }}">
@@ -98,7 +97,7 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'user_settings' %}">
-                                    <i class="bi bi-gear"></i>Ayarlar
+                                    <i class="bi bi-gear"></i>Renk Ayarları
                                 </a>
                             </li>
                             <li>
@@ -161,6 +160,67 @@
         {% endblock %}
     </div>
 
+    <!-- Yardım Butonu -->
+    <style>
+    .floating-help-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #007bff;
+        color: #fff;
+        font-size: 24px;
+        text-align: center;
+        line-height: 50px;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .floating-help-btn:hover {
+        background: #0056b3;
+    }
+    </style>
+
+    <div class="floating-help-btn" id="help-btn">?</div>
+
+    <!-- Toast -->
+    <div class="position-fixed bottom-0 end-2 p-3" style="z-index: 9999;">
+        <div id="randomToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" 
+             data-bs-autohide="true" data-bs-delay="3000" style="min-width: 300px;">
+          <div class="toast-header">
+            <strong class="me-auto">Random Kutusu</strong>
+            <!-- "+" butonu modal açacak -->
+            <button type="button" class="btn btn-sm btn-success me-2" id="addSentenceBtn"><i class="bi bi-plus-lg"></i></button>
+            <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+            <div id="randomSentenceText">Cümle buraya gelecek...</div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="addSentenceModal" tabindex="-1" aria-labelledby="addSentenceModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addSentenceModalLabel">Yeni Random Cümle Ekle</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+          </div>
+          <div class="modal-body">
+            <form id="addRandomSentenceForm">
+              <div class="mb-3">
+                <textarea name="sentence" class="form-control" rows="2" placeholder="Yeni random cümlenizi girin (max 280 karakter)"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Ekle</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- jQuery'yi Bootstrap JS'den ÖNCE Dahil Edin -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap JS -->
@@ -183,6 +243,63 @@
                     navbar.classList.remove('navbar-shrink');
                     navbar.classList.remove('navbar-transparent');
                 }
+            });
+        });
+
+        $(document).ready(function() {
+            var toastEl = document.getElementById('randomToast');
+            var toast = new bootstrap.Toast(toastEl);
+            var csrftoken = $('meta[name="csrf-token"]').attr('content');
+
+            $('#help-btn').click(function() {
+                // help btn basılınca random cümle çek
+                $.ajax({
+                    url: "{% url 'get_random_sentence' %}",
+                    method: "GET",
+                    success: function(data) {
+                        $('#randomSentenceText').text(data.sentence);
+                        toast.show();
+                    }
+                });
+            });
+
+            // "+" butonuna basıldığında modal aç
+            $('#addSentenceBtn').click(function() {
+                var addModal = new bootstrap.Modal(document.getElementById('addSentenceModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                addModal.show();
+            });
+
+            $('#addRandomSentenceForm').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: "{% url 'add_random_sentence' %}",
+                    method: "POST",
+                    data: $(this).serialize(),
+                    headers: {'X-CSRFToken': csrftoken},
+                    success: function(data) {
+                        if(data.status == 'success') {
+                            alert(data.message);
+                            // Yeni cümle eklendi, formu temizleyelim
+                            $('#addRandomSentenceForm textarea[name="sentence"]').val('');
+                            // Modal kapat
+                            var addModalEl = document.getElementById('addSentenceModal');
+                            var addModal = bootstrap.Modal.getInstance(addModalEl);
+                            addModal.hide();
+                        } else {
+                            // Hatalar varsa gösterelim
+                            let errorMsg = "Hata:\n";
+                            for (let field in data.errors) {
+                                data.errors[field].forEach((err) => {
+                                    errorMsg += err.message + "\n";
+                                });
+                            }
+                            alert(errorMsg);
+                        }
+                    }
+                });
             });
         });
     </script>

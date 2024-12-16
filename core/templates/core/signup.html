@@ -1,21 +1,70 @@
-<!-- templates/core/signup.html -->
 {% extends 'core/base.html' %}
 {% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Kayıt Ol</h2>
-    
-    <!-- İstediğiniz mesajı buraya ekleyin -->
-    <div class="alert alert-info">
-        Burası kapalı bir sitedir ve sadece davetiye ile girilebilir. Lütfen bir davetiye bulunuz ya da davetiyenizi kullanarak kayıt olunuz.
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div class="toast-container">
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-danger border-0 mt-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Kapat"></button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+  toastElList.forEach(function (toastEl) {
+    var toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  });
+});
+</script>
+{% endif %}
+
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="card shadow-sm" style="max-width: 400px; width: 100%;">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Kayıt Ol</h2>
+            <div class="alert alert-info text-center mb-4">
+                Burası kapalı bir site. Kayıt olmak için geçerli bir davetiye koduna ihtiyacınız var.
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Kullanıcı Adı</label>
+                    {{ form.username }}
+                    <small class="form-text text-muted d-block mt-2" style="font-size: 0.85em;">
+                        <ul class="mb-0" style="padding-left: 20px; list-style: disc;">
+                            <li>150 karakter ya da daha az</li>
+                            <li>Sadece harfler, rakamlar ve @/./+/-/_ karakterleri kullanılabilir</li>
+                        </ul>
+                    </small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Şifre</label>
+                    {{ form.password }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.invitation_code.id_for_label }}" class="form-label">Davetiye Kodu</label>
+                    {{ form.invitation_code }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Kayıt Ol</button>
+            </form>
+            <hr>
+            <p class="text-center mb-0">
+                Zaten hesabınız var mı? <a href="{% url 'login' %}">Giriş Yapın</a>
+            </p>
+        </div>
     </div>
-    
-    <!-- Kayıt formu -->
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Kayıt Ol</button>
-    </form>
 </div>
 {% endblock %}

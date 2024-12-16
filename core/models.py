@@ -160,7 +160,6 @@ class SavedItem(models.Model):
                 self.object_id = self.answer.id
         super(SavedItem, self).save(*args, **kwargs)
 
-
 class Vote(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     value = models.IntegerField()  # +1 or -1
@@ -184,9 +183,14 @@ class PinnedEntry(models.Model):
     def __str__(self):
         return f"PinnedEntry of {self.user.username}"
 
-
 class Entry(models.Model):
     # Soru ve yanıtları temsil eden soyut bir model
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
+
+class RandomSentence(models.Model):
+    sentence = models.CharField(max_length=280)
+
+    def __str__(self):
+        return self.sentence[:50]

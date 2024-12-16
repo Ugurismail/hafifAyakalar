@@ -1,9 +1,9 @@
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect,get_object_or_404, reverse
+from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.contrib.auth.decorators import login_required
-from .forms import InvitationForm, User, AnswerForm, StartingQuestionForm,SignupForm, LoginForm,QuestionForm,ProfilePhotoForm,MessageForm
-from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem,PinnedEntry
+from .forms import InvitationForm, AnswerForm, StartingQuestionForm, SignupForm, LoginForm, QuestionForm, ProfilePhotoForm, MessageForm
+from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem, PinnedEntry
 from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
@@ -14,7 +14,7 @@ from django.core.paginator import Paginator
 from collections import defaultdict, Counter
 import colorsys, re, json
 from django.db.models.functions import Coalesce
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User  # User buradan import edilmeli
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.serializers import serialize
@@ -22,6 +22,10 @@ from django.views.decorators.http import require_POST
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from .models import RandomSentence
+from .forms import RandomSentenceForm
+
+
 
 
 
@@ -41,6 +45,7 @@ def home(request):
         'following_questions': following_questions,
     })
 
+
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
@@ -53,25 +58,30 @@ def signup(request):
                 messages.error(request, 'Geçersiz veya kullanılmış davet kodu.')
                 return render(request, 'core/signup.html', {'form': form})
 
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-
-            # Davetiye kodunu kullanılmış olarak işaretle ve kullanıcıya bağla
+            user = form.save()  # Artık ModelForm yerine normal Form kullanıyoruz.
+            
+            # Davetiye kodunu kullanılmış olarak işaretle
             invitation.is_used = True
             invitation.used_by = user
             invitation.save()
 
             # Kullanıcının profilindeki davetiye kotasını güncelle
-            user_profile = user.userprofile  # Otomatik olarak oluşturulmuş olmalı
+            user_profile = user.userprofile
             user_profile.invitation_quota += invitation.quota_granted
             user_profile.save()
 
             login(request, user)
             return redirect('user_homepage')
+        else:
+            # Form geçersizse hataları göster
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = SignupForm()
+
     return render(request, 'core/signup.html', {'form': form})
+
 
 def user_login(request):
     if request.method == 'POST':
@@ -460,6 +470,7 @@ def view_message(request, message_id):
 @login_required
 def user_list(request):
     users = User.objects.exclude(id=request.user.id)  # Exclude the current user
+    User.objects.exclude(id=request.user.id).order_by('username')
     return render(request, 'core/user_list.html', {'users': users})
 
 @login_required
@@ -602,6 +613,7 @@ def add_question(request):
 @login_required
 def add_subquestion(request, question_id):
     parent_question = get_object_or_404(Question, id=question_id)
+    all_questions = get_today_questions(request)
     if request.method == 'POST':
         form = QuestionForm(request.POST)
         if form.is_valid():
@@ -627,6 +639,7 @@ def add_subquestion(request, question_id):
     context = {
         'form': form,
         'parent_question': parent_question,
+        'all_questions': all_questions,
     }
     return render(request, 'core/add_subquestion.html', context)
 
@@ -1518,6 +1531,27 @@ def check_new_messages(request):
     unread_count = Message.objects.filter(recipient=request.user, is_read=False).count()
     return JsonResponse({'unread_count': unread_count})
 
+@login_required
+def send_message_from_user(request, user_id):
+    recipient = get_object_or_404(User, id=user_id)
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.recipient = recipient
+            message.save()
+            return redirect('message_detail', username=recipient.username)
+    else:
+        form = MessageForm()
+
+    context = {
+        'form': form,
+        'recipient': recipient,
+    }
+    return render(request, 'core/send_message_from_answer.html', context)
+
 
 def get_today_questions(request, per_page=25):
     """Bugün oluşturulan veya bugün yanıt alan soruları döndürür (sayfalandırılmış), 
@@ -1546,3 +1580,33 @@ def get_today_questions(request, per_page=25):
         all_questions = paginator.page(paginator.num_pages)
 
     return all_questions
+
+
+
+def custom_404_view(request, exception):
+    # 404 sayfası için özel view
+    # Status kodunu 404 olarak ayarlamayı unutmayın.
+    response = render(request, 'core/404.html')
+    response.status_code = 404
+    return response
+
+def get_random_sentence(request):
+    # Veritabanından rastgele bir cümle çek
+    sentences_count = RandomSentence.objects.count()
+    if sentences_count == 0:
+        # Hiç cümle yoksa sabit bir mesaj dön
+        return JsonResponse({'sentence': 'Henüz eklenmiş bir cümle yok.'})
+    random_index = random.randint(0, sentences_count - 1)
+    sentence = RandomSentence.objects.all()[random_index].sentence
+    return JsonResponse({'sentence': sentence})
+
+@require_POST
+def add_random_sentence(request):
+    form = RandomSentenceForm(request.POST)
+    if form.is_valid():
+        form.save()
+        return JsonResponse({'status': 'success', 'message': 'Cümle eklendi!'})
+    else:
+        # Form geçersiz ise hata mesajını döndür
+        errors = form.errors.get_json_data()
+        return JsonResponse({'status': 'error', 'errors': errors})

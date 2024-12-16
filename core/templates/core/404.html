@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sayfa Bulunamadı</title>
+    <!-- 3 saniye sonra ana sayfaya yönlendirme -->
+    <meta http-equiv="refresh" content="3;url={{ request.scheme }}://{{ request.get_host }}{% url 'user_homepage' %}" />
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .error-container {
+            display: inline-block;
+            text-align: left;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            margin-bottom: 1.5rem;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>Böyle bir sayfa bulamadık.</h1>
+        <p>Aradığınız sayfa yok ya da kaldırılmış olabilir.</p>
+        <p>3 saniye içinde ana sayfaya yönlendirileceksiniz. Beklemek istemezseniz:</p>
+        <p><a href="{% url 'user_homepage' %}">Ana Sayfa'ya Dön</a></p>
+    </div>
+</body>
+</html>
