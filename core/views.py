@@ -18,7 +18,7 @@ from django.contrib.auth.models import User  # User buradan import edilmeli
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.serializers import serialize
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST 
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -26,6 +26,8 @@ from .models import RandomSentence
 from .forms import RandomSentenceForm
 from .models import Poll, PollOption, PollVote
 from .forms import PollForm
+from datetime import timedelta
+from django.utils.timezone import now
 
 
 
@@ -1587,15 +1589,16 @@ def send_message_from_user(request, user_id):
 
 
 def get_today_questions(request, per_page=25):
-    """Bugün oluşturulan veya bugün yanıt alan soruları döndürür (sayfalandırılmış), 
-    en son yanıtlananlar en üste gelecek şekilde sıralar."""
-
-    today = timezone.now().date()
+    """
+    Son 7 gün içinde oluşturulan veya yanıt alan soruları döndürür (sayfalandırılmış),
+    en son yanıtlananlar en üste gelecek şekilde sıralar.
+    """
+    seven_days_ago = now() - timedelta(days=7)
     queryset = Question.objects.annotate(
-        answers_count=Count('answers', distinct=True),  # distinct=True eklendi
-        latest_answer_date=Max('answers__created_at')
+        answers_count=Count('answers', distinct=True),  # Yanıt sayısı
+        latest_answer_date=Max('answers__created_at')   # En son yanıt tarihi
     ).filter(
-        Q(created_at__date=today) | Q(answers__created_at__date=today)
+        Q(created_at__gte=seven_days_ago) | Q(answers__created_at__gte=seven_days_ago)
     ).distinct()
 
     # sort_date için Coalesce kullanımı
@@ -1603,6 +1606,7 @@ def get_today_questions(request, per_page=25):
         sort_date=Coalesce('latest_answer_date', 'created_at')
     ).order_by(F('sort_date').desc())
 
+    # Sayfalandırma
     page = request.GET.get('page', 1)
     paginator = Paginator(queryset, per_page)
     try:
@@ -1613,7 +1617,6 @@ def get_today_questions(request, per_page=25):
         all_questions = paginator.page(paginator.num_pages)
 
     return all_questions
-
 
 
 def custom_404_view(request, exception):
