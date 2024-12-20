@@ -7,73 +7,111 @@
     <!-- Yeni anket oluşturma butonu -->
     <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createPollModal">Yeni Anket Oluştur</button>
 
-    <div class="row">
-        {% for poll in polls %}
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5>{{ poll.question_text }}</h5>
-                    <p>Bitiş tarihi: {{ poll.end_date|date:"Y-m-d H:i" }}</p>
-                    {% if poll.related_question %}
-                        <a href="{% url 'poll_question_redirect' poll.id %}" class="btn btn-link p-0">Anket Başlığına Git</a>
-                    {% else %}
-                        <a href="{% url 'poll_question_redirect' poll.id %}" class="btn btn-link p-0">Anket Başlığı Oluştur</a>
-                    {% endif %}
+    <!-- Sekmeler -->
+    <ul class="nav nav-tabs" id="pollTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="active-polls-tab" data-bs-toggle="tab" data-bs-target="#active-polls" type="button" role="tab" aria-controls="active-polls" aria-selected="true">Aktif Anketler</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="expired-polls-tab" data-bs-toggle="tab" data-bs-target="#expired-polls" type="button" role="tab" aria-controls="expired-polls" aria-selected="false">Süresi Geçmiş Anketler</button>
+      </li>
+    </ul>
 
-                    <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#poll-details-{{ poll.id }}" aria-expanded="false" aria-controls="poll-details-{{ poll.id }}">
-                        Detayları Göster
-                    </button>
+    <div class="tab-content mt-3" id="pollTabsContent">
+      <!-- Aktif Anketler Sekmesi -->
+      <div class="tab-pane fade show active" id="active-polls" role="tabpanel" aria-labelledby="active-polls-tab">
+          <div class="row">
+              {% for poll in active_polls %}
+              <div class="col-md-4 mb-3">
+                  <div class="card">
+                      <div class="card-body">
+                          <h5>{{ poll.question_text }}</h5>
+                          <p>Bitiş tarihi: {{ poll.end_date|date:"Y-m-d H:i" }}</p>
+                          {% if poll.related_question %}
+                              <a href="{% url 'poll_question_redirect' poll.id %}" class="btn btn-link p-0">Anket Başlığına Git</a>
+                          {% else %}
+                              <a href="{% url 'poll_question_redirect' poll.id %}" class="btn btn-link p-0">Anket Başlığı Oluştur</a>
+                          {% endif %}
 
-                    <div class="collapse mt-2" id="poll-details-{{ poll.id }}">
-                        <h6>Seçenekler:</h6>
-                        <ul class="list-group list-group-flush">
-                            {% for opt in poll.options.all %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ opt.option_text }}
-                                {% if poll.is_active and not poll.options.all|user_has_voted:request.user %}
-                                    <a href="{% url 'vote_poll' poll.id opt.id %}" class="btn btn-sm btn-success">Oy Ver</a>
-                                {% endif %}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        <div class="mt-3">
-                            <!-- Chart.js ile Donut Grafik -->
-                            <canvas id="pollChart-{{ poll.id }}" width="200" height="200"></canvas>
-                            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                            <script>
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    var ctx = document.getElementById('pollChart-{{ poll.id }}').getContext('2d');
-                                    var data = {
-                                        labels: [{% for opt in poll.options.all %}"{{ opt.option_text|escapejs }}",{% endfor %}],
-                                        datasets: [{
-                                            data: [{% for opt in poll.options.all %}{{ opt.votes.count }},{% endfor %}],
-                                            backgroundColor: ['#007bff','#6c757d','#28a745','#dc3545','#ffc107','#17a2b8','#f8f9fa','#343a40','#fd7e14','#e83e8c']
-                                        }]
-                                    };
-                                    var myDonut = new Chart(ctx, {
-                                        type: 'doughnut',
-                                        data: data,
-                                    });
-                                });
-                            </script>
-                        </div>
-                        {% if not poll.is_anonymous %}
-                            <h6 class="mt-3">Oy Kullananlar:</h6>
-                            <ul>
-                                {% for opt in poll.options.all %}
-                                    {% for v in opt.votes.all %}
-                                        <li>{{ v.user.username }} -> {{ opt.option_text }}</li>
-                                    {% endfor %}
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <p>Henüz anket yok. İlk anketi siz oluşturun!</p>
-        {% endfor %}
+                          <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#poll-details-{{ poll.id }}" aria-expanded="false" aria-controls="poll-details-{{ poll.id }}">
+                              Detayları Göster
+                          </button>
+
+                          <div class="collapse mt-2" id="poll-details-{{ poll.id }}">
+                              <h6>Seçenekler:</h6>
+                              <ul class="list-group list-group-flush">
+                                  {% for opt in poll.options.all %}
+                                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                                      {{ opt.option_text }}
+                                      {% if poll.is_active and not poll.options.all|user_has_voted:request.user %}
+                                          <a href="{% url 'vote_poll' poll.id opt.id %}" class="btn btn-sm btn-success">Oy Ver</a>
+                                      {% endif %}
+                                  </li>
+                                  {% endfor %}
+                              </ul>
+                              <div class="mt-3">
+                                  <!-- Chart.js ile Donut Grafik -->
+                                  <canvas id="pollChart-{{ poll.id }}" width="200" height="200"></canvas>
+                                  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                                  <script>
+                                      document.addEventListener('DOMContentLoaded', function() {
+                                          var ctx = document.getElementById('pollChart-{{ poll.id }}').getContext('2d');
+                                          var data = {
+                                              labels: [{% for opt in poll.options.all %}"{{ opt.option_text|escapejs }}",{% endfor %}],
+                                              datasets: [{
+                                                  data: [{% for opt in poll.options.all %}{{ opt.votes.count }},{% endfor %}],
+                                                  backgroundColor: ['#007bff','#6c757d','#28a745','#dc3545','#ffc107','#17a2b8','#f8f9fa','#343a40','#fd7e14','#e83e8c']
+                                              }]
+                                          };
+                                          var myDonut = new Chart(ctx, {
+                                              type: 'doughnut',
+                                              data: data,
+                                          });
+                                      });
+                                  </script>
+                              </div>
+                              {% if not poll.is_anonymous %}
+                                  <h6 class="mt-3">Oy Kullananlar:</h6>
+                                  <ul>
+                                      {% for opt in poll.options.all %}
+                                          {% for v in opt.votes.all %}
+                                              <li>{{ v.user.username }} -> {{ opt.option_text }}</li>
+                                          {% endfor %}
+                                      {% endfor %}
+                                  </ul>
+                              {% endif %}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              {% empty %}
+              <p>Henüz aktif anket yok. İlk anketi siz oluşturun!</p>
+              {% endfor %}
+          </div>
+      </div>
+
+      <!-- Süresi Geçmiş Anketler Sekmesi -->
+      <div class="tab-pane fade" id="expired-polls" role="tabpanel" aria-labelledby="expired-polls-tab">
+          {% if expired_polls_data %}
+              <ul class="list-group">
+                  {% for epoll in expired_polls_data %}
+                  <li class="list-group-item">
+                      <strong>{{ epoll.poll.question_text }}</strong><br>
+                      {% if epoll.options_data %}
+                          {% for opt_data in epoll.options_data %}
+                              {{ opt_data.text }} %{{ opt_data.percentage }} 
+                              {% if not forloop.last %} - {% endif %}
+                          {% endfor %}
+                      {% else %}
+                          Hiç oy yok
+                      {% endif %}
+                  </li>
+                  {% endfor %}
+              </ul>
+          {% else %}
+              <p>Henüz süresi geçmiş anket yok.</p>
+          {% endif %}
+      </div>
     </div>
 </div>
 
@@ -104,16 +142,15 @@
             <hr>
             <h6>Seçenekler:</h6>
             {% for i in "1,2,3,4,5,6,7,8,9,10"|split:"," %}
-            {% with field_name="option_"|add:i %}
-                {% with field=form|field_by_name:field_name %}
-                <div class="mb-2">
-                    {{ field.label_tag }}
-                    {{ field }}
-                </div>
+                {% with field_name="option_"|add:i %}
+                    {% with field=form|field_by_name:field_name %}
+                    <div class="mb-2">
+                        {{ field.label_tag }}
+                        {{ field }}
+                    </div>
+                    {% endwith %}
                 {% endwith %}
-            {% endwith %}
-        {% endfor %}
-        
+            {% endfor %}
             <small class="text-muted">En az 2, en fazla 10 seçenek girebilirsiniz.</small>
         </div>        
         <div class="modal-footer">

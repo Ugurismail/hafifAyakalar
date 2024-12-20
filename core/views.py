@@ -1640,10 +1640,36 @@ def add_random_sentence(request):
 #POLLS
 @login_required
 def polls_home(request):
-    polls = Poll.objects.all().order_by('-created_at')
-    form = PollForm()  # Burada form nesnesini oluşturuyoruz
-    return render(request, 'core/polls.html', {'polls': polls, 'form': form})
+    # Aktif anketler (end_date > şu an)
+    active_polls = Poll.objects.filter(end_date__gt=timezone.now()).order_by('-created_at')
+    # Süresi geçmiş anketler (end_date <= şu an)
+    expired_polls = Poll.objects.filter(end_date__lte=timezone.now()).order_by('-created_at')
 
+    # Süresi geçmiş anketler için yüzdeleri hesaplayalım
+    expired_polls_data = []
+    for poll in expired_polls:
+        options_data = []
+        total_votes = sum([opt.votes.count() for opt in poll.options.all()])
+        for opt in poll.options.all():
+            if total_votes > 0:
+                percentage = (opt.votes.count() / total_votes) * 100
+            else:
+                percentage = 0
+            options_data.append({
+                'text': opt.option_text,
+                'percentage': f"{percentage:.2f}"
+            })
+        expired_polls_data.append({
+            'poll': poll,
+            'options_data': options_data
+        })
+
+    form = PollForm()
+    return render(request, 'core/polls.html', {
+        'active_polls': active_polls,
+        'expired_polls_data': expired_polls_data,
+        'form': form
+    })
 
 @login_required
 def create_poll(request):
