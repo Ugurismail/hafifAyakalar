@@ -1199,39 +1199,61 @@ def delete_question_and_subquestions(question):
 @login_required
 def single_answer(request, question_id, answer_id):
     question = get_object_or_404(Question, id=question_id)
-    answer = get_object_or_404(Answer, id=answer_id, question=question)
+    focused_answer = get_object_or_404(Answer, id=answer_id, question=question)
+    all_questions = get_today_questions(request)
 
-    # SavedItem sorgusunu düzeltin
+    # Tüm yanıtlar
+    all_answers = Answer.objects.filter(question=question).select_related('user')
+
+    # Kullanıcının kaydettiği yanıtlar
     saved_answer_ids = SavedItem.objects.filter(
         user=request.user,
         content_type=ContentType.objects.get_for_model(Answer),
-        object_id=answer.id
+        object_id__in=all_answers.values_list('id', flat=True)
     ).values_list('object_id', flat=True)
 
-    # Yanıtın kaydedilme sayısını al
+    # Yanıtların kaydedilme sayısı
     content_type_answer = ContentType.objects.get_for_model(Answer)
     answer_save_counts = SavedItem.objects.filter(
         content_type=content_type_answer,
-        object_id=answer.id
+        object_id__in=all_answers.values_list('id', flat=True)
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
 
-    # Kullanıcının oylarını al
+    # Kullanıcının oyları
     user_votes = Vote.objects.filter(
         user=request.user,
         content_type=content_type_answer,
-        object_id=answer.id
+        object_id__in=all_answers.values_list('id', flat=True)
     ).values('object_id', 'value')
     user_vote_dict = {vote['object_id']: vote['value'] for vote in user_votes}
-    answer.user_vote_value = user_vote_dict.get(answer.id, 0)
+
+    # Oy değerlerini her yanıta ekle
+    for ans in all_answers:
+        ans.user_vote_value = user_vote_dict.get(ans.id, 0)
+
+    # Yanıt ekleme formu
+    if request.method == "POST":
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            new_answer = form.save(commit=False)
+            new_answer.question = question
+            new_answer.user = request.user
+            new_answer.save()
+            return redirect('single_answer', question_id=question.id, answer_id=new_answer.id)
+    else:
+        form = AnswerForm()
 
     context = {
         'question': question,
-        'answers': [answer],  # Tek bir yanıt
+        'focused_answer': focused_answer,
+        'all_answers': all_answers,
         'saved_answer_ids': saved_answer_ids,
         'answer_save_dict': answer_save_dict,
+        'form': form,  # Yanıt ekleme formu
+        'all_questions': all_questions,
     }
-    return render(request, 'core/question_detail.html', context)
+    return render(request, 'core/single_answer.html', context)
 
 def user_search(request):
     query = request.GET.get('q', '').strip()

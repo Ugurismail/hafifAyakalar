@@ -3,144 +3,352 @@
 {% load custom_tags %}
 {% load markdownify %}
 
-
 {% block content %}
-<div class="container">
-    <h2>{{ question.question_text }}</h2>
+<div class="container mt-5">
+    <div class="row">
+        <!-- Soldaki Sütun: Tüm Sorular -->
+        <div class="col-md-2" style="border-right: 1px solid #ccc;">
+            <h4>Tüm Sorular</h4>
+            <ul class="list-unstyled">
+                {% for question_item in all_questions %}
+                <li class="d-flex justify-content-between align-items-center mt-2 baslik">
+                    <a href="{% url 'question_detail' question_item.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                        {{ question_item.question_text }}
+                    </a>
+                    <small class="">{{ question_item.answers_count }}</small>
+                </li>
+                {% endfor %}
+            </ul>
+            {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
+        </div>
 
-    {% for answer in answers %}
-    <div class="card mb-3">
-        <div class="card-body">
-            <!-- Yanıt İçeriği -->
-            <p class="answer-text">{{ answer.answer_text|bkz_link|markdownify|safe }}</p>
-
-            <!-- İşlemler ve Kullanıcı Bilgisi -->
+        <!-- Orta Sütun: Soru Detayı ve Yanıtlar -->
+        <div class="col-md-7">
+            <!-- Soru Başlığı ve Harita İkonu -->
             <div class="d-flex justify-content-between align-items-center">
+                <h2>{{ question.question_text }}
+                    <a href="{% url 'question_map' %}?question_id={{ question.id }}" title="Haritada Gör">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </a>
+                </h2>
+            </div>
+
+            <!-- Soruya Oy Verme ve Kaydetme -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <!-- Sol Kısım: Oy Verme ve Kaydetme -->
                 <div>
-                    <!-- Upvote Butonu ve Sayısı -->
-                    <a href="#" class="vote-btn me-1" data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
+                    <a href="#" class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
+                    data-content-type="question" data-object-id="{{ question.id }}" data-value="1" title="Beğen">
                         <i class="bi-chevron-up"></i>
                     </a>
-                    <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
-                    <!-- Downvote Butonu ve Sayısı -->
-                    <a href="#" class="vote-btn ms-1 me-1" data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
-                        <i class="bi-chevron-down"></i>
+                    <span id="question-upvotes">{{ question.upvotes }}</span>
+                    <a href="#" class="vote-btn ms-1 me-1 {% if question.user_vote_value == -1 %}voted-down{% endif %}"
+                    data-content-type="question" data-object-id="{{ question.id }}" data-value="-1" title="Beğenme">
+                     <i class="bi-chevron-down"></i>
+                 </a>
+                 <span id="question-downvotes">{{ question.downvotes }}</span>
+                    <a href="#" class="save-btn icon-black-white" data-content-type="question" data-object-id="{{ question.id }}" title="Kaydet">
+                        <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                     </a>
-                    <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
-                    <!-- Kaydetme Butonu -->
-                    <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
-                        <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
-                    </a>
-                    <span>{{ answer_save_dict|get_item:answer.id }}</span>
-                    <!-- Düzenle ve Sil Butonları (Sadece İçerik Sahibi İçin) -->
-                    {% if answer.user == request.user %}
-                        <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
-                            <i class="bi bi-pencil-square icon-black-white"></i>
-                        </a>
-                        <!-- Silme Butonu -->
-                        <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
-                            <i class="bi bi-trash icon-black-white"></i>
-                        </a>
-                    {% endif %}
+                    <span class="save-count">{{ question_save_count }}</span>
                 </div>
                 <!-- Sağ Kısım: Kullanıcı Bilgisi ve Tarih -->
                 <div class="text-end">
-                    <small class="text-muted me-2">
-                        <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
-                        | {{ answer.created_at|date:"Y-m-d H:i" }}
-                        {% if answer.updated_at and answer.updated_at != answer.created_at %}
-                            {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
-                                ~ {{ answer.updated_at|date:"H:i" }}
-                            {% else %}
-                                ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
-                            {% endif %}
-                        {% endif %}
+                    <small class="text-muted">
+                        <a href="{% url 'user_profile' question.user.username %}">{{ question.user.username }}</a>
+                        | {{ question.created_at|date:"Y-m-d H:i" }}
                     </small>
-                    <!-- Üç Nokta Menüsü -->
-                    <div class="dropdown d-inline">
-                        <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                            &#8226;&#8226;&#8226;
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
-                            <li>
-                                <a class="dropdown-item copy-link" href="#" data-question-id="{{ question.id }}" data-answer-id="{{ answer.id }}"><i class="bi bi-link-45deg"></i> Linki Kopyala</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item share-link" href="#" data-question-id="{{ question.id }}" data-answer-id="{{ answer.id }}"><i class="bi bi-share"></i> Paylaş</a>
-                            </li>
-                        </ul>
+                </div>
+            </div>
+
+            <!-- Odaklanılan Yanıt -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="answer-text">{{ focused_answer.answer_text|linebreaksbr|bkz_link|markdownify:"default" }}</p>
+                    <!-- Oylar, Kaydet, vs. -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="#" class="vote-btn me-1 {% if focused_answer.user_vote_value == 1 %}voted-up{% endif %}"
+                            data-content-type="answer" data-object-id="{{ focused_answer.id }}" data-value="1" title="Beğen">
+                                <i class="bi-chevron-up"></i>
+                            </a>
+                            <span id="answer-upvotes-{{ focused_answer.id }}">{{ focused_answer.upvotes }}</span>
+                            <a href="#" class="vote-btn ms-1 me-1 {% if focused_answer.user_vote_value == -1 %}voted-down{% endif %}"
+                            data-content-type="answer" data-object-id="{{ focused_answer.id }}" data-value="-1" title="Beğenme">
+                                <i class="bi-chevron-down"></i>
+                            </a>
+                            <span id="answer-downvotes-{{ focused_answer.id }}">{{ focused_answer.downvotes }}</span>
+                            <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ focused_answer.id }}" title="Kaydet">
+                                <i class="{% if focused_answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
+                            </a>
+                            <span class="save-count">{{ answer_save_dict|get_item:focused_answer.id|default:"0" }}</span>
+                            {% if focused_answer.user == request.user %}
+                                <a href="{% url 'edit_answer' focused_answer.id %}" class="ms-2" title="Düzenle">
+                                    <i class="bi bi-pencil-square icon-black-white"></i>
+                                </a>
+                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ focused_answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                    <i class="bi bi-trash icon-black-white"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted me-2">
+                                <a href="{% url 'user_profile' focused_answer.user.username %}">{{ focused_answer.user.username }}</a>
+                                | {{ focused_answer.created_at|date:"Y-m-d H:i" }}
+                                {% if focused_answer.updated_at|date:"Y-m-d H:i:s" > focused_answer.created_at|date:"Y-m-d H:i:s" %}
+                                    {% if focused_answer.updated_at|date:"Y-m-d" == focused_answer.created_at|date:"Y-m-d" %}
+                                        ~ {{ focused_answer.updated_at|date:"H:i" }}
+                                    {% else %}
+                                        ~ {{ focused_answer.updated_at|date:"Y-m-d H:i" }}
+                                    {% endif %}
+                                {% endif %}
+                            </small>
+                            <div class="dropdown d-inline">
+                                <a href="#" class="text-decoration-none" id="dropdownMenu{{ focused_answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    &#8226;&#8226;&#8226;
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ focused_answer.id }}">
+                                    <li>
+                                        <button class="dropdown-item copy-link-btn" data-url="{% url 'single_answer' question.id focused_answer.id %}">
+                                            <i class="bi bi-link-45deg"></i> Linki Kopyala
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item share-link" href="#" data-answer-id="{{ focused_answer.id }}"><i class="bi bi-share"></i> Paylaş</a>
+                                    </li>
+                                    <li>
+                                        <form action="{% url 'pin_entry' answer_id=focused_answer.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-pin-angle"></i> Profil Sabitle
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'send_message_from_answer' focused_answer.id %}">
+                                            <i class="bi bi-envelope"></i> Mesaj Gönder
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- "Tüm Yanıtları Göster" Butonu -->
+            <!-- Eğer başka yanıtlar varsa göster -->
+            {% if all_answers|length > 1 %}
+                <button id="show-all-answers" class="btn btn-primary mb-3">Tüm yanıtları göster</button>
+            {% endif %}
+
+            <!-- Tüm Yanıtlar (Odaklanılan hariç) -->
+            <div id="all-answers" style="display: none;">
+                {% for answer in all_answers %}
+                    {% if answer.id != focused_answer.id %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default" }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
+                                    data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
+                                        <i class="bi-chevron-up"></i>
+                                    </a>
+                                    <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
+                                    <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
+                                    data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
+                                        <i class="bi-chevron-down"></i>
+                                    </a>
+                                    <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
+                                    <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
+                                        <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
+                                    </a>
+                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0" }}</span>
+                                    {% if answer.user == request.user %}
+                                        <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
+                                            <i class="bi bi-pencil-square icon-black-white"></i>
+                                        </a>
+                                        <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                            <i class="bi bi-trash icon-black-white"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-end">
+                                    <small class="text-muted me-2">
+                                        <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                                        | {{ answer.created_at|date:"Y-m-d H:i" }}
+                                        {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
+                                            {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
+                                                ~ {{ answer.updated_at|date:"H:i" }}
+                                            {% else %}
+                                                ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </small>
+
+                                    <div class="dropdown d-inline">
+                                        <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            &#8226;&#8226;&#8226;
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
+                                            <li>
+                                                <button class="dropdown-item copy-link-btn" data-url="{% url 'single_answer' question.id answer.id %}">
+                                                    <i class="bi bi-link-45deg"></i> Linki Kopyala
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}"><i class="bi bi-share"></i> Paylaş</a>
+                                            </li>
+                                            <li>
+                                                <form action="{% url 'pin_entry' answer_id=answer.id %}" method="post">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="bi bi-pin-angle"></i> Profil Sabitle
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'send_message_from_answer' answer.id %}">
+                                                    <i class="bi bi-envelope"></i> Mesaj Gönder
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Yanıt Ekleme Formu -->
+            <div class="card mt-4">
+                <div class="card-body answer-arkaRenk">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="btn-toolbar mb-2" role="toolbar">
+                            <div class="btn-group me-2" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="bold">
+                                    <i class="bi bi-type-bold"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="italic">
+                                    <i class="bi bi-type-italic"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn">
+                                <i class="bi bi-link-45deg"></i> Link Ekle
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn">
+                                (bkz:soru)
+                            </button>
+                        </div>
+                        {{ form.answer_text }}
+                        <button type="submit" class="btn btn-primary mt-2">Yanıtla</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Sütun: Alt Sorular -->
+        <div class="col-md-3">
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <a href="{% url 'add_subquestion' question.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-chevron-double-down" title="Alt Soru Ekle"> Alt Soru Ekle</i>
+                        </a>
+                        {% if question.parent_questions.count == 1 %}
+                            {% with parent=question.parent_questions.first %}
+                                <a href="{% url 'question_detail' parent.id %}" class="btn btn-outline-secondary btn-sm ms-2">
+                                    <i class="bi bi-chevron-double-up" title="Üst Soruya Git"> Üst Soruya Git</i>
+                                </a>
+                            {% endwith %}
+                        {% elif question.parent_questions.count > 1 %}
+                            <button type="button" class="btn btn-outline-secondary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#parentQuestionsModal">
+                                <i class="bi bi-chevron-double-up" title="Üst Soruya Git"> Üst Soruya Git</i>
+                            </button>
+                            <div class="modal fade" id="parentQuestionsModal" tabindex="-1" aria-labelledby="parentQuestionsModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Üst Sorular</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <ul class="list-group">
+                                                {% for parent in question.parent_questions.all %}
+                                                    <li class="list-group-item">
+                                                        <a href="{% url 'question_detail' parent.id %}">{{ parent.question_text }}</a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <ul class="list-group">
+                    {% if question.subquestions.all %}
+                        {% for subquestion in question.subquestions.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{% url 'question_detail' subquestion.id %}">
+                                        {{ subquestion.question_text }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">
+                                        <a href="{% url 'user_profile' subquestion.user.username %}">{{ subquestion.user.username }}</a>
+                                    </small>
+                                </div>
+                                <a href="{% url 'question_map' %}?question_id={{ subquestion.id }}" title="Haritada Gör">
+                                    <i class="bi bi-geo-alt"></i>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item">Bu sorunun henüz alt sorusu yok.</li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </div>
-    {% endfor %}
-
-    <!-- "Tüm yanıtları göster" Butonu -->
-    <a href="{% url 'question_detail' question.id %}" class="btn btn-primary">Tüm yanıtları göster</a>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'core/js/vote_save.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // "Linki Kopyala" Fonksiyonu
-    document.querySelectorAll('.copy-link').forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            var questionId = this.getAttribute('data-question-id');
-            var answerId = this.getAttribute('data-answer-id');
-            var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
-            var absoluteLink = window.location.origin + linkUrl;
-            // Linki panoya kopyala
-            var tempInput = document.createElement('input');
-            document.body.appendChild(tempInput);
-            tempInput.value = absoluteLink;
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            alert('Link kopyalandı!');
-        });
-    });
+<!-- Paylaşım Modal'ı -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Paylaş</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group">
+            <li class="list-group-item">
+                <a href="#" id="shareTwitter" target="_blank">
+                    <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
+                </a>
+            </li>
+            <li class="list-group-item">
+                <a href="#" id="shareFacebook" target="_blank">
+                    <i class="bi bi-facebook"></i> Facebook ile Paylaş
+                </a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // "Paylaş" Fonksiyonu
-    document.querySelectorAll('.share-link').forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            var questionId = this.getAttribute('data-question-id');
-            var answerId = this.getAttribute('data-answer-id');
-            var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
-            var absoluteLink = window.location.origin + linkUrl;
-            // Paylaşım linklerini güncelle
-            var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
-            var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
-            document.getElementById('shareTwitter').setAttribute('href', twitterUrl);
-            document.getElementById('shareFacebook').setAttribute('href', facebookUrl);
-            // Modalı göster
-            var shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
-            shareModal.show();
-        });
-    });
+{% include 'core/link_modal.html' %}
+{% include 'core/reference_modal.html' %}
 
-    // Silme İşlevi
-    var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-    var deleteAnswerForm = document.getElementById('delete-answer-form');
-
-    deleteAnswerBtns.forEach(function(btn) {
-        btn.addEventListener('click', function(event) {
-            var answerId = this.getAttribute('data-answer-id');
-            // Formun action özelliğini güncelle
-            deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
-        });
-    });
-});
-</script>
-{% endblock %}
-
-<!-- Modalları Dahil Et -->
-<!-- Yanıt Silme Modali -->
+<!-- Delete Answer Modal -->
 <div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -162,29 +370,81 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Paylaşım Modali -->
-<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Başlığı ve İçeriği -->
-      <div class="modal-header">
-        <h5 class="modal-title" id="shareModalLabel">Paylaş</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="list-group">
-          <li class="list-group-item">
-            <a href="#" id="shareTwitter" target="_blank">
-              <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
-            </a>
-          </li>
-          <li class="list-group-item">
-            <a href="#" id="shareFacebook" target="_blank">
-              <i class="bi bi-facebook"></i> Facebook ile Paylaş
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/answer_form.js' %}"></script>
+<script src="{% static 'js/vote_save.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const readMoreLinks = document.querySelectorAll('.read-more');
+        readMoreLinks.forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const answerId = this.getAttribute('data-answer-id');
+                const summary = document.getElementById('answer-summary-' + answerId);
+                const fullText = document.getElementById('answer-full-' + answerId);
+                if (summary.style.display === 'none') {
+                    summary.style.display = 'block';
+                    fullText.style.display = 'none';
+                    this.textContent = 'Tamamını oku';
+                } else {
+                    summary.style.display = 'none';
+                    fullText.style.display = 'block';
+                    this.textContent = 'Daha az göster';
+                }
+            });
+        });
+
+        // "Linki Kopyala"
+        $('.copy-link-btn').click(function(e) {
+            e.preventDefault();
+            var url = $(this).data('url');
+            var tempInput = $("<input>");
+            $("body").append(tempInput);
+            var absoluteLink = window.location.origin + url;
+            tempInput.val(absoluteLink).select();
+            document.execCommand("copy");
+            tempInput.remove();
+            alert("Link kopyalandı!");
+        });
+
+        // "Paylaş"
+        var currentAnswerId;
+        $('.share-link').click(function(e) {
+            e.preventDefault();
+            currentAnswerId = $(this).data('answer-id');
+            $('#shareModal').modal('show');
+        });
+
+        $('#shareModal').on('shown.bs.modal', function () {
+            var link = "{% url 'single_answer' question.id 0 %}".replace('/0/', '/' + currentAnswerId + '/');
+            var absoluteLink = window.location.origin + link;
+            var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
+            var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
+            $('#shareTwitter').attr('href', twitterUrl);
+            $('#shareFacebook').attr('href', facebookUrl);
+        });
+
+        // "Tüm Yanıtları Göster"
+        const showAllBtn = document.getElementById('show-all-answers');
+        if (showAllBtn) {
+            showAllBtn.addEventListener('click', function() {
+                document.getElementById('all-answers').style.display = 'block';
+                this.style.display = 'none';
+            });
+        }
+
+        // Yanıt Silme
+        var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
+        var deleteAnswerForm = document.getElementById('delete-answer-form');
+        deleteAnswerBtns.forEach(function(btn) {
+            btn.addEventListener('click', function(event) {
+                var answerId = this.getAttribute('data-answer-id');
+                deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
+            });
+        });
+    });
+</script>
+{% endblock %}
