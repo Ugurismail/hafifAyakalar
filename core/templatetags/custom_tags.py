@@ -2,17 +2,13 @@ import re
 from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from core.models import Question
-
+from core.models import Question, PollVote
 
 register = template.Library()
 
 @register.filter
 def get_item(dictionary, key):
-    """
-    Sözlükten (dictionary) verilen anahtara (key) göre bir öğeyi alır.
-    """
-    return dictionary.get(key, 0)  # Varsayılan değer olarak 0 döndürüyoruz
+    return dictionary.get(key, 0)
 
 @register.filter
 def dict_get(dictionary, key):
@@ -26,7 +22,6 @@ def bkz_link(text):
     def replace(match):
         query = match.group(1).strip()
         url = reverse('bkz', args=[query])
-        # Generate HTML link
         return f'(bkz: <a href="{url}">{query}</a>)'
     return mark_safe(re.sub(pattern, replace, text))
 
@@ -40,8 +35,19 @@ def ref_link(text):
             url = reverse('question_detail', args=[q.id])
             return f'<a href="{url}" style="color: #0d6efd; text-decoration: none;">{ref_text}</a>'
         except Question.DoesNotExist:
-            # Soru yoksa yeni başlık oluşturma linki verelim
             create_url = reverse('add_question_from_search') + f'?q={ref_text}'
             return f'<a href="{create_url}" style="color: #0d6efd; text-decoration: none;">{ref_text}</a>'
 
     return re.sub(pattern, replace_ref, text)
+
+@register.filter
+def user_has_voted(options, user):
+    return PollVote.objects.filter(option__in=options, user=user).exists()
+
+@register.filter
+def field_by_name(form, name):
+    return form[name]
+
+@register.filter
+def split(value, separator=' '):
+    return value.split(separator)

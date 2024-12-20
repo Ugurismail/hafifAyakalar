@@ -71,6 +71,15 @@ urlpatterns = [
 
     path('random_sentence/', views.get_random_sentence, name='get_random_sentence'),
     path('add_random_sentence/', views.add_random_sentence, name='add_random_sentence'),
+
+    # Anket ana sayfası
+    path('polls/', views.polls_home, name='polls_home'),
+    # Yeni anket oluştur
+    path('polls/create/', views.create_poll, name='create_poll'),
+    # Oy verme
+    path('polls/<int:poll_id>/vote/<int:option_id>/', views.vote_poll, name='vote_poll'),
+    # Anket başlığına git/oluştur
+    path('polls/<int:poll_id>/question/', views.poll_question_redirect, name='poll_question_redirect')
 ]
 
 handler404 = 'core.views.custom_404_view'

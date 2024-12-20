@@ -3,6 +3,10 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Invitation, UserProfile, Question, Answer, Message, RandomSentence
 from django.core.validators import RegexValidator
+from .models import Poll, PollOption
+from django.utils import timezone
+import datetime
+
 
 
 username_with_spaces_validator = RegexValidator(
@@ -135,3 +139,52 @@ class ProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['photo']
+
+
+class PollForm(forms.Form):
+    question_text = forms.CharField(
+        max_length=255, 
+        label="Anket Sorusu",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Anket sorusunu giriniz'})
+    )
+    end_date = forms.DateTimeField(
+        label="Bitiş Tarihi (YYYY-MM-DD HH:MM)",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+    )
+    is_anonymous = forms.BooleanField(
+        required=False, 
+        initial=True, 
+        label="Anonim Oy",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+    # 10 seçenek alanı
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for i in range(1,11):
+            self.fields[f'option_{i}'] = forms.CharField(
+                required=False, 
+                max_length=255, 
+                label=f"Seçenek {i}",
+                widget=forms.TextInput(attrs={'class': 'form-control mb-2', 'placeholder': f'Seçenek {i}'})
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        end_date = cleaned_data.get('end_date')
+        if end_date <= timezone.now():
+            self.add_error('end_date', 'Bitiş tarihi gelecekte bir zaman olmalıdır.')
+        # 1 yıldan uzun mu
+        if end_date and end_date > (timezone.now() + datetime.timedelta(days=365)):
+            self.add_error('end_date', 'Bitiş tarihi 1 yıldan fazla olmamalıdır.')
+
+        # En az 2 seçenek kontrolü
+        options = []
+        for i in range(1,11):
+            opt = cleaned_data.get(f'option_{i}', '').strip()
+            if opt:
+                options.append(opt)
+        if len(options) < 2:
+            self.add_error('option_1', 'En az 2 seçenek girmelisiniz.')
+        cleaned_data['options'] = options
+        return cleaned_data

@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+import datetime
 
 
 
@@ -194,3 +195,47 @@ class RandomSentence(models.Model):
 
     def __str__(self):
         return self.sentence[:50]
+    
+
+
+
+class Poll(models.Model):
+    question_text = models.CharField(max_length=255)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    is_anonymous = models.BooleanField(default=True)
+    # İlgili başlık soru modeliyle ilişki (eğer önceden Question modeli tanımlandıysa)
+    related_question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True, blank=True)
+
+    def is_active(self):
+        return timezone.now() < self.end_date
+
+    def duration_ok(self):
+        # 1 yıldan uzun mu kontrol et
+        return self.end_date <= (self.created_at + datetime.timedelta(days=365))
+
+    def __str__(self):
+        return self.question_text
+
+class PollOption(models.Model):
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='options')
+    option_text = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.poll.question_text} - {self.option_text}"
+
+    @property
+    def votes_count(self):
+        return self.votes.count()
+
+class PollVote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    option = models.ForeignKey(PollOption, on_delete=models.CASCADE, related_name='votes')
+    voted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'option')
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.option.option_text}"

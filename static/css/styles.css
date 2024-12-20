@@ -11,6 +11,7 @@ a {
     text-decoration: none;
 }
 
+
 a:hover {
     color: var(--link-hover-color, #0056b3);
     text-decoration: underline;

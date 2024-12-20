@@ -24,6 +24,9 @@ from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import RandomSentence
 from .forms import RandomSentenceForm
+from .models import Poll, PollOption, PollVote
+from .forms import PollForm
+
 
 
 
@@ -1632,3 +1635,75 @@ def add_random_sentence(request):
         # Form geçersiz ise hata mesajını döndür
         errors = form.errors.get_json_data()
         return JsonResponse({'status': 'error', 'errors': errors})
+    
+
+#POLLS
+@login_required
+def polls_home(request):
+    polls = Poll.objects.all().order_by('-created_at')
+    form = PollForm()  # Burada form nesnesini oluşturuyoruz
+    return render(request, 'core/polls.html', {'polls': polls, 'form': form})
+
+
+@login_required
+def create_poll(request):
+    if request.method == 'POST':
+        form = PollForm(request.POST)
+        if form.is_valid():
+            question_text = form.cleaned_data['question_text']
+            end_date = form.cleaned_data['end_date']
+            is_anonymous = form.cleaned_data['is_anonymous']
+            options = form.cleaned_data['options']
+
+            poll = Poll.objects.create(
+                question_text=question_text,
+                created_by=request.user,
+                end_date=end_date,
+                is_anonymous=is_anonymous
+            )
+            for opt_text in options:
+                PollOption.objects.create(poll=poll, option_text=opt_text)
+            
+            messages.success(request, 'Anket başarıyla oluşturuldu.')
+            return redirect('polls_home')
+        else:
+            # Form geçersizse hata mesajlarını göster
+            return render(request, 'core/create_poll.html', {'form': form})
+    else:
+        form = PollForm()
+        return render(request, 'core/create_poll.html', {'form': form})
+
+@login_required
+def vote_poll(request, poll_id, option_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    option = get_object_or_404(PollOption, id=option_id, poll=poll)
+
+    # Kullanıcı daha önce bu ankette oy vermiş mi?
+    # Aynı ankete birden fazla oy vermesin.
+    if PollVote.objects.filter(user=request.user, option__poll=poll).exists():
+        messages.error(request, 'Bu ankete daha önce oy verdiniz.')
+        return redirect('polls_home')
+
+    if poll.is_active():
+        PollVote.objects.create(user=request.user, option=option)
+        messages.success(request, 'Oyunuz kaydedildi.')
+    else:
+        messages.error(request, 'Bu anket süresi dolmuş.')
+    return redirect('polls_home')
+
+@login_required
+def poll_question_redirect(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    if poll.related_question:
+        # Soru mevcutsa direkt oraya git
+        return redirect('question_detail', question_id=poll.related_question.id)
+    else:
+        # Yeni başlık oluştur
+        q = Question.objects.create(
+            question_text=f"anket:{poll.question_text}",
+            user=request.user
+        )
+        q.users.add(request.user)
+        poll.related_question = q
+        poll.save()
+        return redirect('question_detail', question_id=q.id)

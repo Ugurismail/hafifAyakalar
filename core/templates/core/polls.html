@@ -1,0 +1,126 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load custom_tags %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Anketler</h2>
+    <!-- Yeni anket oluşturma butonu -->
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createPollModal">Yeni Anket Oluştur</button>
+
+    <div class="row">
+        {% for poll in polls %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5>{{ poll.question_text }}</h5>
+                    <p>Bitiş tarihi: {{ poll.end_date|date:"Y-m-d H:i" }}</p>
+                    {% if poll.related_question %}
+                        <a href="{% url 'poll_question_redirect' poll.id %}" class="btn btn-link p-0">Anket Başlığına Git</a>
+                    {% else %}
+                        <a href="{% url 'poll_question_redirect' poll.id %}" class="btn btn-link p-0">Anket Başlığı Oluştur</a>
+                    {% endif %}
+
+                    <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#poll-details-{{ poll.id }}" aria-expanded="false" aria-controls="poll-details-{{ poll.id }}">
+                        Detayları Göster
+                    </button>
+
+                    <div class="collapse mt-2" id="poll-details-{{ poll.id }}">
+                        <h6>Seçenekler:</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for opt in poll.options.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ opt.option_text }}
+                                {% if poll.is_active and not poll.options.all|user_has_voted:request.user %}
+                                    <a href="{% url 'vote_poll' poll.id opt.id %}" class="btn btn-sm btn-success">Oy Ver</a>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="mt-3">
+                            <!-- Chart.js ile Donut Grafik -->
+                            <canvas id="pollChart-{{ poll.id }}" width="200" height="200"></canvas>
+                            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var ctx = document.getElementById('pollChart-{{ poll.id }}').getContext('2d');
+                                    var data = {
+                                        labels: [{% for opt in poll.options.all %}"{{ opt.option_text|escapejs }}",{% endfor %}],
+                                        datasets: [{
+                                            data: [{% for opt in poll.options.all %}{{ opt.votes.count }},{% endfor %}],
+                                            backgroundColor: ['#007bff','#6c757d','#28a745','#dc3545','#ffc107','#17a2b8','#f8f9fa','#343a40','#fd7e14','#e83e8c']
+                                        }]
+                                    };
+                                    var myDonut = new Chart(ctx, {
+                                        type: 'doughnut',
+                                        data: data,
+                                    });
+                                });
+                            </script>
+                        </div>
+                        {% if not poll.is_anonymous %}
+                            <h6 class="mt-3">Oy Kullananlar:</h6>
+                            <ul>
+                                {% for opt in poll.options.all %}
+                                    {% for v in opt.votes.all %}
+                                        <li>{{ v.user.username }} -> {{ opt.option_text }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>Henüz anket yok. İlk anketi siz oluşturun!</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Anket Oluşturma Modal -->
+<div class="modal fade" id="createPollModal" tabindex="-1" aria-labelledby="createPollModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{% url 'create_poll' %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="createPollModalLabel">Yeni Anket Oluştur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body">
+            {{ form.non_field_errors }}
+            <div class="mb-3">
+                {{ form.question_text.label_tag }}
+                {{ form.question_text }}
+            </div>
+            <div class="mb-3">
+                {{ form.end_date.label_tag }}
+                {{ form.end_date }}
+            </div>
+            <div class="form-check mb-3">
+                {{ form.is_anonymous }}
+                {{ form.is_anonymous.label_tag }}
+            </div>
+            <hr>
+            <h6>Seçenekler:</h6>
+            {% for i in "1,2,3,4,5,6,7,8,9,10"|split:"," %}
+            {% with field_name="option_"|add:i %}
+                {% with field=form|field_by_name:field_name %}
+                <div class="mb-2">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+                {% endwith %}
+            {% endwith %}
+        {% endfor %}
+        
+            <small class="text-muted">En az 2, en fazla 10 seçenek girebilirsiniz.</small>
+        </div>        
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Oluştur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
