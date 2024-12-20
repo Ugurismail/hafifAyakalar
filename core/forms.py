@@ -10,8 +10,10 @@ import datetime
 
 
 username_with_spaces_validator = RegexValidator(
-    regex=r'^[\w.@+\-_/ ]+$',  # Boşluk karakteri de eklendi
-    message='Kullanıcı adı harf, rakam, @, ., +, -, _, / ve boşluk karakterleri içerebilir.'
+    # Burada \w (harf, rakam, altçizgi) haricinde Türkçe karakterleri de ekleyebilirsiniz.
+    # Örnek olarak, Latin-1 Supplement ve Latin Extended-A bloklarını ekledik:
+    regex=r'^[\w.@+\-_/ \u00C0-\u017F]+$',
+    message='Kullanıcı adı harf, rakam, @, ., +, -, _, /, boşluk ve Türkçe karakterleri içerebilir.'
 )
 
 class RandomSentenceForm(forms.ModelForm):

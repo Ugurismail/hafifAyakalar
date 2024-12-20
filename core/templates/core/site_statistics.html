@@ -37,7 +37,7 @@
             </div>
             <div class="col-md-8">
                 <label for="exclude_words">Hariç Tutulacak Kelimeler (virgülle ayırın):</label>
-                <input type="text" id="exclude_words" name="exclude_words" class="form-control" value="{{ exclude_words_input }}">
+                <input type="text" id="exclude_words" placeholder="kelimeleri girdikten sonra enter tuşuna basın" name="exclude_words" class="form-control" value="{{ exclude_words_input }}">
             </div>
         </div>
         <button type="submit" class="btn btn-primary mt-2">Ara</button>
@@ -52,11 +52,11 @@
     {% endif %}
 
     <h3>En Sık Geçen Kelimeler</h3>
-    <ul>
+    <ol>
         {% for word, count in top_words %}
             <li>{{ word }}: {{ count }}</li>
         {% endfor %}
-    </ul>
+    </ol>
             {% if search_word %}
                 <p>"{{ search_word }}" kelimesi toplam {{ search_word_count }} kez kullanılmış.</p>
             {% endif %}
