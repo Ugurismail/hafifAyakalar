@@ -140,3 +140,36 @@ document.addEventListener('DOMContentLoaded', function() {
         textarea.selectionEnd = start + referenceText.length;
     }
 });
+
+document.addEventListener('DOMContentLoaded', function(){
+    const insertRefLinkBtn = document.querySelector('.insert-ref-link-btn');
+    const answerTextArea = document.querySelector('#id_answer_text'); // Formdaki textarea'nın id'si
+
+    if (insertRefLinkBtn && answerTextArea) {
+        insertRefLinkBtn.addEventListener('click', function() {
+            const selectedText = getSelectedText(answerTextArea);
+            if (selectedText) {
+                const refMarkup = `(ref:${selectedText})`;
+                insertTextAtCursor(answerTextArea, refMarkup);
+            } else {
+                alert('Lütfen renkli bağlantı yapmak istediğiniz metni seçiniz.');
+            }
+        });
+    }
+
+    function getSelectedText(textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        return textarea.value.substring(start, end);
+    }
+
+    function insertTextAtCursor(textarea, text) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        textarea.value = before + text + after;
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.focus();
+    }
+});

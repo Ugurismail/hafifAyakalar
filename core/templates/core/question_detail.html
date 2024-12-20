@@ -74,7 +74,7 @@
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default" }}</p>
+                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default" }}</p>
                     {% endif %}
                     
                     <!-- Alt Kısım: Oylar, Butonlar, Kullanıcı Bilgisi -->
@@ -172,6 +172,9 @@
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn">
                                 (bkz:soru)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn">
+                                <i class="bi bi-link-45deg"></i> Renkli Link
                             </button>
                         </div>
                         {{ form.answer_text }}
