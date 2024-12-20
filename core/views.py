@@ -649,7 +649,13 @@ def add_subquestion(request, question_id):
 @login_required
 def question_map(request):
     question_id = request.GET.get('question_id', None)
-    questions = Question.objects.filter(from_search=False)
+    # Başlangıç soruları
+    starting_question_ids = StartingQuestion.objects.values_list('question_id', flat=True)
+    # Sadece başlangıç soruları veya alt soruları getir
+    questions = Question.objects.filter(
+        Q(id__in=starting_question_ids) | Q(parent_questions__isnull=False)
+    )
+
     nodes = {}
     links = []
     question_text_to_ids = defaultdict(list)
@@ -1264,23 +1270,25 @@ def user_search(request):
     results = [{'id': user.id, 'username': user.username} for user in users]
     return JsonResponse({'results': results})
 
-@login_required
 def map_data(request):
     filter_param = request.GET.get('filter')
     user_ids = request.GET.getlist('user_id')
 
+    # Başlangıç soruları
+    starting_question_ids = StartingQuestion.objects.values_list('question_id', flat=True)
+
+    base_query = Question.objects.filter(
+        Q(id__in=starting_question_ids) | Q(parent_questions__isnull=False)
+    )
+
     if filter_param == 'me':
-        # Giriş yapan kullanıcının soruları
-        questions = Question.objects.filter(users=request.user, from_search=False)
+        questions = base_query.filter(users=request.user)
     elif user_ids:
-        # Seçili kullanıcıların soruları
-        questions = Question.objects.filter(users__id__in=user_ids, from_search=False).distinct()
+        questions = base_query.filter(users__id__in=user_ids).distinct()
     else:
-        # Tüm sorular
-        questions = Question.objects.filter(from_search=False)
+        questions = base_query
 
     question_nodes = generate_question_nodes(questions)
-
     return JsonResponse(question_nodes, safe=False)
 
 def generate_question_nodes(questions):
