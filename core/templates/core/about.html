@@ -2,7 +2,46 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1>Hakkında</h1>
-    <p>Felsefeciler tarafından felsefeciler için.</p>
+    <div class="text-center">
+        <h1 class="display-4">Hakkımızda</h1>
+        <p class="lead text-muted">"Felsefeciler tarafından, felsefeciler için" ilkesinden yola çıkarak, düşünce dünyasına yeni ufuklar açıyoruz.</p>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <img src="/static/imgs/philosophy.jpg" class="img-fluid rounded shadow" alt="Felsefe dünyası">
+        </div>
+        <div class="col-md-6 d-flex align-items-center ms-5">
+            <p class="text-justify">
+                Hafif Ayakalar, felsefeyi herkesin erişebileceği bir hale getirmeyi amaçlayan bir platformdur. 
+                Modern teknolojinin gücünü kullanarak, kullanıcılarımıza yalnızca bilgi sunmayı değil, aynı zamanda 
+                interaktif bir öğrenme deneyimi sağlamayı hedefliyoruz.
+            </p>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4 text-center">
+            <i class="bi bi-chat-quote-fill display-1 text-primary"></i>
+            <h3 class="mt-3">Düşünce</h3>
+            <p>Felsefi tartışmalar ve analizlerle dünyaya farklı bir bakış açısı katıyoruz.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <i class="bi bi-people-fill display-1 text-success"></i>
+            <h3 class="mt-3">Topluluk</h3>
+            <p>Felsefeye ilgi duyan bireyleri bir araya getirerek zengin bir tartışma ortamı yaratıyoruz.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <i class="bi bi-lightbulb-fill display-1 text-warning"></i>
+            <h3 class="mt-3">İlham</h3>
+            <p>Hayata dair yeni sorular sorarak insanlara ilham kaynağı olmayı hedefliyoruz.</p>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="{% url 'user_homepage' %}" class="btn btn-primary btn-lg">Keşfetmeye Başla</a>
+    </div>
 </div>
 {% endblock %}

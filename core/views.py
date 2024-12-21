@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
 import json, random
-from django.db.models import Q, Count, Max, F, ExpressionWrapper, IntegerField, Sum
+from django.db.models import Q, Count, Max, F, ExpressionWrapper, IntegerField, Sum, Value
 from django.utils import timezone
 from django.core.paginator import Paginator
 from collections import defaultdict, Counter
@@ -174,124 +174,141 @@ def profile(request):
     return redirect('user_profile', username=request.user.username)
 
 
+
+from django.db.models import Sum, Count
+from django.db.models.functions import Coalesce
+from django.shortcuts import get_object_or_404, render
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import re
+from collections import Counter
+from django.contrib.contenttypes.models import ContentType
+
+@login_required
 def user_profile(request, username):
-    profile_user = get_object_or_404(User, username=username)
+    profile_user = get_object_or_404(User.objects.select_related('userprofile'), username=username)
     user_profile = profile_user.userprofile
     active_tab = request.GET.get('tab', 'sorular') 
-    is_own_profile = request.user.is_authenticated and request.user == profile_user
+    is_own_profile = request.user == profile_user
 
     # Soru ve yanıt listeleri
     questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
     answers_list = Answer.objects.filter(user=profile_user).order_by('-created_at')
 
-    # Sorular sayfalama
-    question_page = request.GET.get('question_page', 1)
-    question_paginator = Paginator(questions_list, 10)
-    try:
-        questions = question_paginator.page(question_page)
-    except PageNotAnInteger:
-        questions = question_paginator.page(1)
-    except EmptyPage:
-        questions = question_paginator.page(question_paginator.num_pages)
+    # Sayfalama yardımcı fonksiyonu
+    def paginate(queryset, page_number, per_page=10):
+        paginator = Paginator(queryset, per_page)
+        try:
+            return paginator.page(page_number)
+        except PageNotAnInteger:
+            return paginator.page(1)
+        except EmptyPage:
+            return paginator.page(paginator.num_pages)
 
-    # Yanıtlar sayfalama
-    answer_page = request.GET.get('answer_page', 1)
-    answer_paginator = Paginator(answers_list, 10)
-    try:
-        answers = answer_paginator.page(answer_page)
-    except PageNotAnInteger:
-        answers = answer_paginator.page(1)
-    except EmptyPage:
-        answers = answer_paginator.page(answer_paginator.num_pages)
+    questions = paginate(questions_list, request.GET.get('question_page', 1))
+    answers = paginate(answers_list, request.GET.get('answer_page', 1))
 
-    # Kelimeler sekmesi
+    # Kelime analizi
     question_texts = questions_list.values_list('question_text', flat=True)
     answer_texts = answers_list.values_list('answer_text', flat=True)
-    all_texts = (' '.join(question_texts) + ' ' + ' '.join(answer_texts)).lower()
+    all_texts = f"{' '.join(question_texts)} {' '.join(answer_texts)}".lower()
     words = re.findall(r'\b\w+\b', all_texts)
 
-    # Hariç tutulacak kelimeler virgüllerle ayrılmış tek bir parametreden alınır.
+    # Hariç tutma ve dahil etme kelimeleri
     exclude_words_str = request.GET.get('exclude_words', '')
-    exclude_words_list = [w.strip() for w in exclude_words_str.split(',') if w.strip()]
-    exclude_words_set = set(exclude_words_list)
+    exclude_words_set = set(word.strip().lower() for word in exclude_words_str.split(',') if word.strip())
 
     exclude_word = request.GET.get('exclude_word', '').strip().lower()
     if exclude_word:
         exclude_words_set.add(exclude_word)
 
     include_word = request.GET.get('include_word', '').strip().lower()
-    if include_word and include_word in exclude_words_set:
-        exclude_words_set.remove(include_word)
+    if include_word:
+        exclude_words_set.discard(include_word)
 
-    # Güncellenen set'i tekrar stringe çevir
-    exclude_words_list = list(exclude_words_set)
-    exclude_words_list.sort()
+    exclude_words_list = sorted(exclude_words_set)
     exclude_words_str = ', '.join(exclude_words_list)
 
-    # Kelimeleri filtrele
+    # Filtrelenmiş kelimeler ve sayımları
     filtered_words = [word for word in words if word not in exclude_words_set]
-
-    # Kelime sıklıkları
     word_counts = Counter(filtered_words)
     top_words = word_counts.most_common(20)
 
     # Kelime arama
     search_word = request.GET.get('search_word', '').strip().lower()
-    search_word_count = None
-    if search_word:
-        search_word_count = word_counts.get(search_word, 0)
+    search_word_count = word_counts.get(search_word, 0) if search_word else None
 
-    # İstatistikler sekmesi
-    total_upvotes = (Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total'] +
-                     Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('upvotes'), 0))['total'])
-    total_downvotes = (Question.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total'] +
-                       Answer.objects.filter(user=profile_user).aggregate(total=Coalesce(Sum('downvotes'), 0))['total'])
+    # İstatistikler
+    # Toplam Upvotes
+    questions_upvotes = questions_list.aggregate(total=Coalesce(Sum('upvotes'), Value(0)))['total']
+    answers_upvotes = answers_list.aggregate(total=Coalesce(Sum('upvotes'), Value(0)))['total']
+    total_upvotes = questions_upvotes + answers_upvotes
 
-    content_type_question = ContentType.objects.get_for_model(Question)
-    content_type_answer = ContentType.objects.get_for_model(Answer)
-    total_saves_questions = SavedItem.objects.filter(content_type=content_type_question, object_id__in=questions_list).count()
-    total_saves_answers = SavedItem.objects.filter(content_type=content_type_answer, object_id__in=answers_list).count()
+    # Toplam Downvotes
+    questions_downvotes = questions_list.aggregate(total=Coalesce(Sum('downvotes'), Value(0)))['total']
+    answers_downvotes = answers_list.aggregate(total=Coalesce(Sum('downvotes'), Value(0)))['total']
+    total_downvotes = questions_downvotes + answers_downvotes
+
+    # Toplam kaydetmeler
+    total_saves_questions = SavedItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(Question),
+        object_id__in=questions_list.values_list('id', flat=True)
+    ).count()
+
+    total_saves_answers = SavedItem.objects.filter(
+        content_type=ContentType.objects.get_for_model(Answer),
+        object_id__in=answers_list.values_list('id', flat=True)
+    ).count()
+
     total_saves = total_saves_questions + total_saves_answers
 
-    # En çok upvote alan girdi
-    most_upvoted_question = questions_list.order_by('-upvotes').first()
-    most_upvoted_answer = answers_list.order_by('-upvotes').first()
+    # En çok upvote, downvote ve kaydedilen girdiler
     most_upvoted_entry = max(
-        (e for e in [most_upvoted_question, most_upvoted_answer] if e),
-        key=lambda x: x.upvotes,
+        list(questions_list.order_by('-upvotes')[:1]) + list(answers_list.order_by('-upvotes')[:1]),
+        key=lambda x: x.upvotes if hasattr(x, 'upvotes') else 0,
         default=None
     )
 
-    # En çok downvote alan girdi
-    most_downvoted_question = questions_list.order_by('-downvotes').first()
-    most_downvoted_answer = answers_list.order_by('-downvotes').first()
     most_downvoted_entry = max(
-        (e for e in [most_downvoted_question, most_downvoted_answer] if e),
-        key=lambda x: x.downvotes,
+        list(questions_list.order_by('-downvotes')[:1]) + list(answers_list.order_by('-downvotes')[:1]),
+        key=lambda x: x.downvotes if hasattr(x, 'downvotes') else 0,
         default=None
     )
 
-    # En çok kaydedilen girdi
-    most_saved_question = questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
-    most_saved_answer = answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
     most_saved_entry = max(
-        (e for e in [most_saved_question, most_saved_answer] if e),
-        key=lambda x: x.save_count,
+        list(questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count')[:1]) +
+        list(answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count')[:1]),
+        key=lambda x: getattr(x, 'save_count', 0),
         default=None
     )
 
+    # Takipçi ve takip edilen sayıları
     follower_count = user_profile.followers.count()
     following_count = user_profile.following.count()
 
+    # Kaydedilen öğeler
+    saved_questions = SavedItem.objects.filter(
+        user=profile_user,
+        content_type=ContentType.objects.get_for_model(Question)
+    ).select_related('content_type')
+    
+    saved_answers = SavedItem.objects.filter(
+        user=profile_user,
+        content_type=ContentType.objects.get_for_model(Answer)
+    ).select_related('content_type')
+
+    # Takip durumu
     is_following = False
     if request.user.is_authenticated and request.user != profile_user:
         is_following = request.user.userprofile.following.filter(user=profile_user).exists()
 
+    # Sabitlenmiş giriş
     try:
         pinned_entry = PinnedEntry.objects.get(user=profile_user)
     except PinnedEntry.DoesNotExist:
         pinned_entry = None
 
+    # Davetler (sadece kendi profilinizse)
     if is_own_profile:
         invitations = Invitation.objects.filter(sender=request.user).order_by('-created_at')
         total_invitations = invitations.count()
@@ -329,9 +346,13 @@ def user_profile(request, username):
         'total_invitations': total_invitations,
         'used_invitations': used_invitations,
         'remaining_invitations': remaining_invitations,
+        'saved_questions': saved_questions,
+        'saved_answers': saved_answers,
     }
 
     return render(request, 'core/user_profile.html', context)
+
+
 
 @login_required
 def create_invitation(request):
