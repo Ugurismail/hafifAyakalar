@@ -556,6 +556,7 @@ def search(request):
 def add_question_from_search(request):
     all_questions = get_today_questions(request)
     query = request.GET.get('q', '').strip()
+
     if request.method == 'POST':
         answer_form = AnswerForm(request.POST)
         if answer_form.is_valid():

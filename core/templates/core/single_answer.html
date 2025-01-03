@@ -23,7 +23,7 @@
         </div>
 
         <!-- Orta Sütun: Soru Detayı ve Yanıtlar -->
-        <div class="col-md-7">
+        <div class="col-md-8">
             <!-- Soru Başlığı ve Harita İkonu -->
             <div class="d-flex justify-content-between align-items-center">
                 <h2>{{ question.question_text }}
@@ -230,19 +230,20 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="btn-toolbar mb-2" role="toolbar">
-                            <div class="btn-group me-2" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="bold">
-                                    <i class="bi bi-type-bold"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="italic">
-                                    <i class="bi bi-type-italic"></i>
-                                </button>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn">
+                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2" data-format="bold">
+                                <i class="bi bi-type-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2" data-format="italic">
+                                <i class="bi bi-type-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn me-2">
                                 <i class="bi bi-link-45deg"></i> Link Ekle
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn">
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2">
                                 (bkz:soru)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2">
+                                <i class="bi bi-box-arrow-in-up-right"></i> hede
                             </button>
                         </div>
                         {{ form.answer_text }}
@@ -253,7 +254,7 @@
         </div>
 
         <!-- Sağ Sütun: Alt Sorular -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>

@@ -29,19 +29,20 @@
                     {{ answer_form.answer_text.label_tag }}
                     <!-- Araç Çubuğu -->
                     <div class="btn-toolbar mb-2" role="toolbar">
-                        <div class="btn-group me-2" role="group">
-                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="bold">
-                                <i class="bi bi-type-bold"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="italic">
-                                <i class="bi bi-type-italic"></i>
-                            </button>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn">
+                        <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2" data-format="bold">
+                            <i class="bi bi-type-bold"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2" data-format="italic">
+                            <i class="bi bi-type-italic"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn me-2">
                             <i class="bi bi-link-45deg"></i> Link Ekle
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn">
+                        <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2">
                             (bkz:soru)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2">
+                            <i class="bi bi-box-arrow-in-up-right"></i> hede
                         </button>
                     </div>
                     {{ answer_form.answer_text }}
@@ -49,6 +50,7 @@
                 <button type="submit" class="btn btn-primary">Yanıtı Gönder</button>
             </form>
         </div>
+
     </div>
 </div>
 

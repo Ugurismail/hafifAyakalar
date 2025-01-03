@@ -159,22 +159,20 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="btn-toolbar mb-2" role="toolbar">
-                            <div class="btn-group me-2" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="bold">
-                                    <i class="bi bi-type-bold"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary format-btn" data-format="italic">
-                                    <i class="bi bi-type-italic"></i>
-                                </button>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn">
+                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2" title="Kalınlaştır" data-format="bold">
+                                <i class="bi bi-type-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"  title="İtalikleştir" data-format="italic">
+                                <i class="bi bi-type-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn me-2" title="Harici WEB Linki Ekleyin">
                                 <i class="bi bi-link-45deg"></i> Link Ekle
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn">
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2" title="Bir diğer Soru/başlığa referans ver">
                                 (bkz:soru)
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn">
-                                <i class="bi bi-link-45deg"></i> Renkli Link
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2" title="Renklendir/Yönlendir">
+                                <i class="bi bi-box-arrow-in-up-right"></i> hede
                             </button>
                         </div>
                         {{ form.answer_text }}
