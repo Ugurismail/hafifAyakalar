@@ -2,38 +2,79 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card">
-        <div class="card-header">
-            <h3>Yanıtı Düzenle</h3>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group mt-3">
-                <!-- Araç Çubuğu -->
-                <div class="btn-toolbar mb-2" role="toolbar">
-                    <div class="btn-group me-2" role="group">
-                        <button type="button" class="btn btn-outline-secondary format-btn" data-format="bold">
-                            <i class="bi bi-type-bold"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary format-btn" data-format="italic">
-                            <i class="bi bi-type-italic"></i>
-                        </button>
-                    </div>
-                    <button type="button" class="btn btn-outline-secondary insert-link-btn">
-                        <i class="bi bi-link-45deg"></i> Link Ekle
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary insert-reference-btn">
-                        (bkz:soru)
-                    </button>
-                </div>
-                {{ form.answer_text }}
-                </div>
 
-                
-                <button type="submit" class="btn btn-primary mt-2">Güncelle</button>
-            </form>
+<div class="container">
+    <div class="row mt-5">
+        <div class="col-md-2" style="border-right: 1px solid #ccc;">
+            <h4>Tüm Sorular</h4>
+            <ul class="list-unstyled">
+                {% for question in all_questions %}
+                <li class="d-flex justify-content-between align-items-center mt-2 baslik">
+                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                        <span>{{ question.question_text }}</span> 
+                        <small class="">{{ question.answers_count }}</small>
+                    </a>
+                    
+                </li>
+                {% endfor %}
+            </ul>
+            {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
+        </div>
+        <div class="col-md-8" style="border-right: 1px solid #ccc;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Yanıtı Düzenle</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group mt-3">
+                        <!-- Araç Çubuğu -->
+                        <div class="btn-toolbar mb-2" role="toolbar">
+                            <div class="btn-group me-2" role="group">
+                                <button type="button" class="btn btn-outline-secondary format-btn" data-format="bold">
+                                    <i class="bi bi-type-bold"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary format-btn" data-format="italic">
+                                    <i class="bi bi-type-italic"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary insert-link-btn">
+                                <i class="bi bi-link-45deg"></i> Link Ekle
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary insert-reference-btn">
+                                (bkz:soru)
+                            </button>
+                        </div>
+                        {{ form.answer_text }}
+                        </div>
+        
+                        
+                        <button type="submit" class="btn btn-primary mt-2">Güncelle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2" style="border-left: 1px solid #ccc;">
+            <h5>Başlangıç Sorularınız</h5>
+            {% if starting_questions %}
+                <ul class="list-unstyled">
+                    {% for item in starting_questions %}
+                    <li class="text-dark text-decoration-none d-flex justify-content-between align-items-center mt-2 baslik">
+                        <a href="{% url 'question_detail' item.question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                            <span>{{ item.question.question_text }}</span> 
+                            <small>{{ item.total_subquestions }}</small>
+                        </a>
+                        
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Henüz başlangıç sorunuz yok.</p>
+            {% endif %}
+            <!-- "Başlangıç Sorusu Ekle" Butonu -->
+            <a href="{% url 'add_starting_question' %}" class="btn btn-primary mt-2 col-12">Başlangıç Sorusu Ekle</a>
+            {% include 'core/pagination.html' with page_obj=starting_questions page_param='starting_page' %}
         </div>
     </div>
 </div>

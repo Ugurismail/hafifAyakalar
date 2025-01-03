@@ -1125,7 +1125,14 @@ def user_homepage(request):
 
 @login_required
 def edit_answer(request, answer_id):
+    all_questions = get_today_questions(request)
     answer = get_object_or_404(Answer, id=answer_id, user=request.user)
+        # Başlangıç sorularını al
+    starting_questions = StartingQuestion.objects.filter(user=request.user).annotate(
+        total_subquestions=Count('question__subquestions'),
+        latest_subquestion_date=Max('question__subquestions__created_at')
+    ).order_by(F('latest_subquestion_date').desc(nulls_last=True))
+
     if request.method == 'POST':
         form = AnswerForm(request.POST, instance=answer)
         if form.is_valid():
@@ -1134,7 +1141,8 @@ def edit_answer(request, answer_id):
             return redirect('question_detail', question_id=answer.question.id)
     else:
         form = AnswerForm(instance=answer)
-    return render(request, 'core/edit_answer.html', {'form': form, 'answer': answer})
+
+    return render(request, 'core/edit_answer.html', {'form': form, 'answer': answer,'all_questions': all_questions,'starting_questions': starting_questions,})
 
 
 @login_required
