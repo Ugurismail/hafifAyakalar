@@ -64,7 +64,7 @@
             <!-- Odaklanılan Yanıt -->
             <div class="card mb-3">
                 <div class="card-body">
-                    <p class="answer-text">{{ focused_answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default" }}</p>
+                    <p class="answer-text">{{ focused_answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
                     <!-- Oylar, Kaydet, vs. -->
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -148,7 +148,7 @@
                     {% if answer.id != focused_answer.id %}
                     <div class="card mb-3">
                         <div class="card-body">
-                            <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default" }}</p>
+                            <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
@@ -164,7 +164,7 @@
                                     <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
                                         <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                                     </a>
-                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0" }}</span>
+                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0"|ref_link|tanim_link }}</span>
                                     {% if answer.user == request.user %}
                                         <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                             <i class="bi bi-pencil-square icon-black-white"></i>
@@ -244,6 +244,9 @@
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2">
                                 <i class="bi bi-box-arrow-in-up-right"></i> hede
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn" title="Tanım">
+                                <i class="bi bi-book"></i> Tanım
                             </button>
                         </div>
                         {{ form.answer_text }}
@@ -370,7 +373,55 @@
         </div>
     </div>
 </div>
-
+<!-- Tanım Modal -->
+<div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- Modal header -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="definitionModalLabel">Tanım</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+  
+        <!-- Modal body with tabs -->
+        <div class="modal-body">
+          <ul class="nav nav-tabs" id="definitionTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab" data-bs-target="#tanim-yap" type="button" role="tab" aria-controls="tanim-yap" aria-selected="true">Tanım Yap</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab" data-bs-target="#tanim-bul" type="button" role="tab" aria-controls="tanim-bul" aria-selected="false">Tanım Bul</button>
+            </li>
+          </ul>
+          <div class="tab-content mt-3" id="definitionTabContent">
+            <!-- TAB 1: TANIM YAP -->
+            <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
+              <form id="createDefinitionForm">
+                <div class="mb-3">
+                  <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
+                  <textarea class="form-control" id="definitionText" name="definition_text" rows="3" maxlength="1000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+              </form>
+            </div>
+  
+            <!-- TAB 2: TANIM BUL -->
+            <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
+              <div class="mb-3">
+                <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
+                <select id="definitionSelect" class="form-select">
+                  <option value="">Bir tanım seçiniz...</option>
+                  <!-- JavaScript ile doldurulacak -->
+                </select>
+              </div>
+              <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
+            </div>
+          </div>
+        </div>
+  
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}

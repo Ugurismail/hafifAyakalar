@@ -1,10 +1,15 @@
 <!-- templates/core/add_question_from_search.html -->
 {% extends 'core/base.html' %}
 {% load static %}
+{% load custom_tags %}
 {% load instance_of %}
+{% load markdownify %}
+
 
 {% block content %}
 <div class="container mt-5">
+    <!-- <input type="hidden" id="answer_form_question_id" value="{{ question.id }}"> -->
+    <input type="hidden" id="answer_form_question_id">
     <div class="row">
         <div class="col-md-2">
             <h4>Tüm Sorular</h4>
@@ -58,6 +63,7 @@
 <!-- Modals -->
 {% include 'core/link_modal.html' %}
 {% include 'core/reference_modal.html' %}
+
 
 {% endblock %}
 
