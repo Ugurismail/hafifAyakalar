@@ -79,7 +79,9 @@ urlpatterns = [
     # Oy verme
     path('polls/<int:poll_id>/vote/<int:option_id>/', views.vote_poll, name='vote_poll'),
     # Anket başlığına git/oluştur
-    path('polls/<int:poll_id>/question/', views.poll_question_redirect, name='poll_question_redirect')
+    path('polls/<int:poll_id>/question/', views.poll_question_redirect, name='poll_question_redirect'),
+    path('create-definition/<int:question_id>/', views.create_definition, name='create_definition'),
+    path('get-user-definitions/', views.get_user_definitions, name='get_user_definitions'),
 ]
 
 handler404 = 'core.views.custom_404_view'

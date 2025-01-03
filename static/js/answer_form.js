@@ -173,3 +173,88 @@ document.addEventListener('DOMContentLoaded', function(){
         textarea.focus();
     }
 });
+
+// 1) Tanım butonuna tıklayınca modal aç
+document.addEventListener('DOMContentLoaded', function() {
+    var defModal = new bootstrap.Modal(document.getElementById('definitionModal'));
+    document.getElementById('showDefinitionModalBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      defModal.show();
+    });
+  
+    // 2) TANIM YAP: formu submit edince createDefinition endpoint’ine POST
+    var createDefinitionForm = document.getElementById('createDefinitionForm');
+    createDefinitionForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var definitionText = document.getElementById('definitionText').value;
+      // question_id'yi "page"de bir hidden input ya da data-attribute ile tut
+      var questionId = document.getElementById('answer_form_question_id').value; 
+      // Yukarıda question.id'yi hidden olarak formda ya da sayfada bulunduruyor olmalısın
+  
+      fetch(`/create-definition/${questionId}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ definition_text: definitionText })
+      })
+      .then(res => res.json())
+      .then(data => {
+         if(data.status === 'success') {
+           alert("Tanım kaydedildi!");
+           let modalInstance = bootstrap.Modal.getInstance(defModal._element);
+           if (modalInstance) {
+             modalInstance.hide();
+           }
+           location.reload();
+           // modalda bu sekmeden çık istersen
+           document.getElementById('definitionText').value = "";
+         } else {
+           alert("Hata oluştu");
+         }
+      });
+    });
+  
+    // 3) TANIM BUL sekmesine geçince user_definitions’ı çek
+    document.getElementById('tanim-bul-tab').addEventListener('show.bs.tab', function(e) {
+      fetch('/get-user-definitions/', {
+        method: 'GET'
+      })
+      .then(res => res.json())
+      .then(data => {
+        var selectEl = document.getElementById('definitionSelect');
+        selectEl.innerHTML = '<option value="">Bir tanım seçiniz...</option>';
+        data.definitions.forEach(function(item) {
+           // question_text + definition_text istersen
+           var opt = document.createElement('option');
+           opt.value = JSON.stringify(item); // item objesini stringe çevirip tut
+           opt.textContent = item.question_text; 
+           selectEl.appendChild(opt);
+        });
+      });
+    });
+  
+    // 4) “Tamam” butonuna basınca => Seçili tanımı alıp yanıt textarea’sına ekle
+    document.getElementById('insertDefinitionBtn').addEventListener('click', function(e) {
+      var selectEl = document.getElementById('definitionSelect');
+      if(!selectEl.value) return;
+      var item = JSON.parse(selectEl.value);
+      var questionWord = item.question_text;     // "özgürlük"
+      var definitionTxt = item.definition_text;  // "kısıtsızlıktır"
+  
+      // Şimdi answer_text alanına eklemek:
+      var answerTextarea = document.querySelector('textarea[name="answer_text"]');
+      if(!answerTextarea) return; // safety
+  
+      // Metin içine "(tanim:özgürlük)" ekleriz. 
+      // Sonra template’te parse edip popover yapacağız.
+      var insertStr = `(tanim:${questionWord})`; 
+      answerTextarea.value += " " + insertStr; 
+  
+      // Sonra modal kapanır
+      defModal.hide();
+    });
+  
+  });
+  

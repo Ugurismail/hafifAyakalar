@@ -2,8 +2,8 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.contrib.auth.decorators import login_required
-from .forms import InvitationForm, AnswerForm, StartingQuestionForm, SignupForm, LoginForm, QuestionForm, ProfilePhotoForm, MessageForm
-from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem, PinnedEntry
+from .forms import InvitationForm, AnswerForm, StartingQuestionForm, SignupForm, LoginForm, QuestionForm, ProfilePhotoForm, MessageForm, DefinitionForm
+from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem, PinnedEntry, Definition
 from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
@@ -1753,3 +1753,54 @@ def poll_question_redirect(request, poll_id):
         poll.related_question = q
         poll.save()
         return redirect('question_detail', question_id=q.id)
+    
+
+def create_definition(request, question_id):
+    question = get_object_or_404(Question, id=question_id)
+
+    if request.method == 'POST':
+        body = request.body.decode('utf-8')
+        data = json.loads(body)
+        form = DefinitionForm(data)
+        if form.is_valid():
+            definition_obj = form.save(commit=False)
+            definition_obj.user = request.user
+            definition_obj.question = question
+            definition_obj.save()
+
+            # TANIMI AYNI ZAMANDA ANSWER OLARAK DA KAYDET
+            Answer.objects.create(
+                question=question,
+                user=request.user,
+                answer_text=definition_obj.definition_text
+            )
+
+            return JsonResponse({
+                'status': 'success',
+                'definition_text': definition_obj.definition_text,
+                'question_text': question.question_text
+            }, status=200)
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+    return JsonResponse({'status': 'invalid_method'}, status=405)
+
+@login_required
+def get_user_definitions(request):
+    """Kullanıcının yaptığı tanımların listesini JSON döndürür."""
+    if request.method == 'GET':
+        user_defs = Definition.objects.filter(user=request.user).select_related('question')
+        # Aynı question_text tekrar tekrar gelmesin istersen distinct() yapabilirsin
+        # ama question_text tam olarak unique değil, user birden fazla tanım eklemiş olabilir. 
+        # Yine de genelde 1 başlık=1 tanım diyorsan, double-check.
+        
+        data = []
+        for d in user_defs:
+            data.append({
+                'id': d.id,
+                'question_id': d.question.id,
+                'question_text': d.question.question_text,
+                'definition_text': d.definition_text[:100]  # Dropdown’da sadece 100 char göster? 
+            })
+        return JsonResponse({'definitions': data}, status=200)
+    else:
+        return JsonResponse({'error': 'invalid method'}, status=405)

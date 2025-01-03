@@ -20,6 +20,7 @@
             </ul>
             {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
         </div>
+        <input type="hidden" id="answer_form_question_id" value="{{ question.id }}">
         <!-- Soru Detayı -->
         <div class="col-md-7">
             <!-- Soru Başlığı ve Harita İkonu -->
@@ -67,14 +68,14 @@
                     <!-- Yanıt Metni -->
                     {% if answer.answer_text|length > 500 %}
                         <!-- Kısaltılmış Yanıt -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500" }}...</p>
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|tanim_link }}...</p>
                         <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|markdownify:"default:0" }}</p>
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link }}</p>
                         <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default" }}</p>
+                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
                     {% endif %}
                     
                     <!-- Alt Kısım: Oylar, Butonlar, Kullanıcı Bilgisi -->
@@ -173,6 +174,9 @@
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2" title="Renklendir/Yönlendir">
                                 <i class="bi bi-box-arrow-in-up-right"></i> hede
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn" title="Tanım">
+                                <i class="bi bi-book"></i> Tanım
                             </button>
                         </div>
                         {{ form.answer_text }}
@@ -300,6 +304,60 @@
         </div>
     </div>
 </div>
+
+<!-- Tanım Modal -->
+<div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- Modal header -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="definitionModalLabel">Tanım</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+  
+        <!-- Modal body with tabs -->
+        <div class="modal-body">
+          <ul class="nav nav-tabs" id="definitionTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab" data-bs-target="#tanim-yap" type="button" role="tab" aria-controls="tanim-yap" aria-selected="true">Tanım Yap</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab" data-bs-target="#tanim-bul" type="button" role="tab" aria-controls="tanim-bul" aria-selected="false">Tanım Bul</button>
+            </li>
+          </ul>
+          <div class="tab-content mt-3" id="definitionTabContent">
+            <!-- TAB 1: TANIM YAP -->
+            <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
+              <form id="createDefinitionForm">
+                <div class="mb-3">
+                  <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
+                  <textarea class="form-control" id="definitionText" name="definition_text" rows="3" maxlength="1000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+              </form>
+            </div>
+  
+            <!-- TAB 2: TANIM BUL -->
+            <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
+              <div class="mb-3">
+                <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
+                <select id="definitionSelect" class="form-select">
+                  <option value="">Bir tanım seçiniz...</option>
+                  <!-- JavaScript ile doldurulacak -->
+                </select>
+              </div>
+              <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
+            </div>
+          </div>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+
+
+
 
 {% endblock %}
 

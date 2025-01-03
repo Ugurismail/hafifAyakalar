@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Invitation, UserProfile, Question, Answer, Message, RandomSentence
+from .models import Invitation, UserProfile, Question, Answer, Message, RandomSentence, Definition
 from django.core.validators import RegexValidator
 from .models import Poll, PollOption
 from django.utils import timezone
@@ -190,3 +190,25 @@ class PollForm(forms.Form):
             self.add_error('option_1', 'En az 2 seçenek girmelisiniz.')
         cleaned_data['options'] = options
         return cleaned_data
+
+
+class DefinitionForm(forms.ModelForm):
+    class Meta:
+        model = Definition
+        fields = ['definition_text']
+        widgets = {
+            'definition_text': forms.Textarea(attrs={
+                'rows': 4,
+                'maxlength': '1000',  # HTML tarafında da bir kontrol
+                'placeholder': 'En fazla 1000 karakterlik tanımınızı girin...'
+            })
+        }
+        labels = {
+            'definition_text': 'Tanım'
+        }
+
+    def clean_definition_text(self):
+        data = self.cleaned_data['definition_text']
+        if len(data) > 1000:
+            raise forms.ValidationError("Tanım 1000 karakterden uzun olamaz.")
+        return data
