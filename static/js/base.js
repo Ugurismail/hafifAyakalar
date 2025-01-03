@@ -1,3 +1,8 @@
+/* base.js */
+
+/**
+ * CSRF Token alma fonksiyonu (eski kodunuzdan)
+ */
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -12,12 +17,18 @@ function getCookie(name) {
       }
     }
     return cookieValue;
-  }
+}
+
+/**
+ * Arama özelliğini tek bir dosyada toplayan kod
+ */
 document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('search-input');
     var searchResults = document.getElementById('search-results');
 
     var query = '';
+    // Ok tuşları ile hangi öğe seçili olduğunu tutmak için:
+    var currentFocus = -1;  
 
     searchInput.addEventListener('input', function() {
         query = this.value;
@@ -35,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.results.forEach(function(item) {
                         var div = document.createElement('div');
                         div.classList.add('list-group-item');
+                        // list-group-item-action eklemek istersen, highlight için
+                        // div.classList.add('list-group-item-action');
+                        
                         div.textContent = item.text;
                         div.dataset.type = item.type;
                         if (item.type === 'question') {
@@ -63,12 +77,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     searchResults.appendChild(div);
                 }
                 searchResults.style.display = 'block';
+                currentFocus = -1;  // her yeni sonuç geldiğinde sıfırla
             });
         } else {
             searchResults.style.display = 'none';
         }
     });
 
+    // Fare tıklamasıyla bir öğe seçme
     searchResults.addEventListener('click', function(event) {
         var target = event.target;
 
@@ -94,5 +110,56 @@ document.addEventListener('DOMContentLoaded', function() {
             searchResults.style.display = 'none';
         }
     });
-});
 
+    /**
+     * ======== OK TUŞLARI VE ENTER DESTEĞİ ========
+     */
+    searchInput.addEventListener('keydown', function(e) {
+        // Mevcut list-group-item'ları al
+        var items = searchResults.querySelectorAll('.list-group-item');
+        if (!items.length) return;
+
+        if (e.keyCode === 40) {
+            // Aşağı ok (arrow down)
+            e.preventDefault();
+            currentFocus++;
+            if (currentFocus >= items.length) currentFocus = 0;
+            highlightItem(items);
+        }
+        else if (e.keyCode === 38) {
+            // Yukarı ok (arrow up)
+            e.preventDefault();
+            currentFocus--;
+            if (currentFocus < 0) currentFocus = items.length - 1;
+            highlightItem(items);
+        }
+        else if (e.keyCode === 13) {
+            // Enter
+            e.preventDefault();
+            if (currentFocus > -1) {
+                // Seçili item'a tıklamayı simüle et
+                items[currentFocus].click();
+            } else {
+                // Hiçbir item seçili değilse 
+                // (isterseniz normal tam arama sayfasına gidebilirsiniz):
+                /*
+                var q = this.value.trim();
+                if (q) {
+                  window.location.href = '/search/?q=' + encodeURIComponent(q);
+                }
+                */
+            }
+        }
+    });
+
+    // "highlightItem" fonksiyonu => tüm item'lardan .active kaldırır, seçiliye ekler
+    function highlightItem(items) {
+        // Hepsinden "active"i kaldır
+        for (var i = 0; i < items.length; i++) {
+            items[i].classList.remove('active');
+        }
+        if (currentFocus >= 0 && currentFocus < items.length) {
+            items[currentFocus].classList.add('active');
+        }
+    }
+});

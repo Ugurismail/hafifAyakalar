@@ -234,6 +234,7 @@ a:hover {
     border: 1px solid #ccc;
 }
 
+#navbarNav.show #search-results { display: block; }
 /* Message Notifications */
 .msg {
     color: blue;
@@ -340,4 +341,10 @@ a:hover {
     .chat-messages {
         height: 100%;
     }
+}
+
+.list-group-item-action.active,
+.list-group-item-action:active {
+  background-color: #0d6efd; /* ya da istediğiniz renk */
+  color: #ffffff; 
 }
