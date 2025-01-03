@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}
+Seçili Kullanıcılara Mesaj Gönder
+{% endblock %}
+
+{% block content %}
+<h2>Seçili Kullanıcılara Mesaj Gönder</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <input type="submit" value="Gönder" class="button default"/>
+    <a href="{{ request.META.HTTP_REFERER }}" class="button">İptal</a>
+</form>
+
+<hr/>
+<p><strong>Seçili Kullanıcılar:</strong></p>
+<ul>
+{% for u in selected_users %}
+    <li>{{ u.username }}</li>
+{% endfor %}
+</ul>
+{% endblock %}
