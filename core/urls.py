@@ -82,6 +82,8 @@ urlpatterns = [
     path('polls/<int:poll_id>/question/', views.poll_question_redirect, name='poll_question_redirect'),
     path('create-definition/<int:question_id>/', views.create_definition, name='create_definition'),
     path('get-user-definitions/', views.get_user_definitions, name='get_user_definitions'),
+    path('definition/<int:definition_id>/edit/', views.edit_definition, name='edit_definition'),
+    path('definition/<int:definition_id>/delete/', views.delete_definition, name='delete_definition'),
 ]
 
 handler404 = 'core.views.custom_404_view'

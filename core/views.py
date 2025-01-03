@@ -179,6 +179,7 @@ def user_profile(request, username):
     user_profile = profile_user.userprofile
     active_tab = request.GET.get('tab', 'sorular') 
     is_own_profile = request.user.is_authenticated and request.user == profile_user
+    definitions = Definition.objects.filter(user=profile_user).select_related('question')
 
     # Soru ve yanıt listeleri
     questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
@@ -329,6 +330,7 @@ def user_profile(request, username):
         'total_invitations': total_invitations,
         'used_invitations': used_invitations,
         'remaining_invitations': remaining_invitations,
+        'definitions': definitions,
     }
 
     return render(request, 'core/user_profile.html', context)
@@ -1804,3 +1806,37 @@ def get_user_definitions(request):
         return JsonResponse({'definitions': data}, status=200)
     else:
         return JsonResponse({'error': 'invalid method'}, status=405)
+
+@login_required
+def edit_definition(request, definition_id):
+    definition = get_object_or_404(Definition, id=definition_id, user=request.user)
+    if request.method == 'POST':
+        body = request.body.decode('utf-8')
+        data = json.loads(body) if request.headers.get('Content-Type') == 'application/json' else request.POST
+        # Veya form-encoded gönderecekseniz normal request.POST kullanabilirsiniz.
+
+        form = DefinitionForm(data, instance=definition)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Tanım güncellendi.')
+            return redirect(f"{reverse('user_profile', args=[request.user.username])}?tab=tanimlar")
+        else:
+            messages.error(request, 'Form hataları: %s' % form.errors)
+    else:
+        form = DefinitionForm(instance=definition)
+    
+    # Burada bir template (edit_definition.html) ile formu gösterelim:
+    return render(request, 'core/edit_definition.html', {
+        'form': form,
+        'definition': definition,
+    })
+
+@login_required
+def delete_definition(request, definition_id):
+    definition = get_object_or_404(Definition, id=definition_id, user=request.user)
+    if request.method == 'POST':
+        definition.delete()
+        messages.success(request, 'Tanım silindi.')
+        return redirect(f"{reverse('user_profile', args=[request.user.username])}?tab=tanimlar")
+    # “GET” istek geldiğinde doğrulama penceresi (confirm) gösterebilirsiniz.
+    return render(request, 'core/confirm_delete_definition.html', {'definition': definition})

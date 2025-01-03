@@ -6,6 +6,7 @@ from django.core.validators import RegexValidator
 from .models import Poll, PollOption
 from django.utils import timezone
 import datetime
+from django.core.exceptions import ValidationError
 
 
 
@@ -193,22 +194,37 @@ class PollForm(forms.Form):
 
 
 class DefinitionForm(forms.ModelForm):
+    """
+    Kullanıcının 1000 karakteri aşmayacak şekilde tanım girmesini sağlayan form.
+    """
+
     class Meta:
         model = Definition
         fields = ['definition_text']
+        labels = {
+            'definition_text': 'Tanım',
+        }
         widgets = {
             'definition_text': forms.Textarea(attrs={
                 'rows': 4,
                 'maxlength': '1000',  # HTML tarafında da bir kontrol
-                'placeholder': 'En fazla 1000 karakterlik tanımınızı girin...'
-            })
-        }
-        labels = {
-            'definition_text': 'Tanım'
+                'placeholder': 'En fazla 1000 karakterlik tanımınızı girin...',
+            }),
         }
 
     def clean_definition_text(self):
-        data = self.cleaned_data['definition_text']
+        """
+        Tanımın sunucu tarafında da 1000 karakteri geçmediğinden emin olmak için
+        Django'nun form temizleme (clean) metodunu kullanır.
+        """
+        data = self.cleaned_data.get('definition_text', '').strip()
+
+        # Sunucu tarafında da 1000 karakter limitini koruyoruz.
         if len(data) > 1000:
-            raise forms.ValidationError("Tanım 1000 karakterden uzun olamaz.")
+            raise ValidationError("Tanım 1000 karakterden uzun olamaz.")
+
+        # Örnek olarak, boşluk veya geçersiz karakterler varsa bunları da engelleyebilirsiniz:
+        if not data:
+            raise ValidationError("Tanım alanı boş olamaz.")
+
         return data

@@ -106,6 +106,9 @@
             <li class="nav-item" role="presentation">
                 <a class="nav-link {% if active_tab == 'istatistikler' %}active{% endif %}" href="?tab=istatistikler">İstatistikler</a>
             </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if active_tab == 'tanimlar' %}active{% endif %}" href="?tab=tanimlar">Tanımlarım</a>
+            </li>
         </ul>
 
         <div class="tab-content" id="profileTabContent">
@@ -344,6 +347,56 @@
                     {% else %}
                         <p>Henüz kaydedilen bir girdi yok.</p>
                     {% endif %}
+                </div>
+            </div>
+            <!-- Tanımlarım Tab -->
+            <div class="tab-pane fade {% if active_tab == 'tanimlar' %}show active{% endif %}" id="tanimlar" role="tabpanel">
+                <div class="mt-4">
+                    <h5>Tanımlarım</h5>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Kelime (Başlık/Soru)</th>
+                                <th>Tanım İçeriği</th>
+                                <th style="width: 180px;">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for definition in definitions %}
+                            <tr>
+                                <td>
+                                    <!-- question_text -->
+                                    <a href="{% url 'question_detail' definition.question.id %}">
+                                        {{ definition.question.question_text }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <!-- Tanımın ilk 25 kelimesi gibi kısaltma -->
+                                    {{ definition.definition_text|truncatewords:25 }}
+                                </td>
+                                <td>
+                                    <!-- Düzenle Butonu -->
+                                    <a href="{% url 'edit_definition' definition.id %}?tab=tanimlar" class="btn btn-sm btn-primary">
+                                        Düzenle
+                                    </a>
+                                    <!-- Silme Formu -->
+                                    <form action="{% url 'delete_definition' definition.id %}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Bu tanımı silmek istediğinize emin misiniz?');">
+                                            Sil
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3">Henüz tanımınız bulunmuyor.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

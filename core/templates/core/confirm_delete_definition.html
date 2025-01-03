@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h3>Tanımı Sil</h3>
+    <p>{{ definition.question.question_text }}: {{ definition.definition_text|truncatewords:20 }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Evet, Sil</button>
+        <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-secondary">Vazgeç</a>
+    </form>
+</div>
+{% endblock %}
