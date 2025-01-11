@@ -1,12 +1,14 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Invitation, UserProfile, Question, Answer, Message, RandomSentence, Definition
+from .models import Invitation, UserProfile, Question, Answer, Message, RandomSentence, Definition, Reference
 from django.core.validators import RegexValidator
 from .models import Poll, PollOption
 from django.utils import timezone
 import datetime
 from django.core.exceptions import ValidationError
+# core/forms.py
+# Diğer importların altına ekliyoruz
 
 
 
@@ -228,3 +230,39 @@ class DefinitionForm(forms.ModelForm):
             raise ValidationError("Tanım alanı boş olamaz.")
 
         return data
+
+
+
+class ReferenceForm(forms.ModelForm):
+    """
+    Kaynak eklerken kullanılan form.
+    """
+    class Meta:
+        model = Reference
+        fields = [
+            'author_surname',
+            'author_name',
+            'year',
+            'rest',
+            'abbreviation'
+        ]
+        labels = {
+            'author_surname': 'Yazar Soyadı',
+            'author_name': 'Yazar Adı',
+            'year': 'Yıl',
+            'rest': 'Künyenin Kalanı',
+            'abbreviation': 'Kısaltma (Opsiyonel)',
+        }
+        widgets = {
+            'author_surname': forms.TextInput(attrs={'class': 'form-control'}),
+            'author_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'rest': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'maxlength': '2000'}),
+            'abbreviation': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def clean_year(self):
+        year = self.cleaned_data.get('year')
+        if year and (year < 1 or year > 9999):
+            raise forms.ValidationError("Yıl 1 ile 9999 arasında olmalıdır.")
+        return year

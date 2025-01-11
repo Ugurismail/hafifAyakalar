@@ -6,26 +6,30 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row">
+        <!-- SOL SÜTUN: TÜM SORULAR -->
         <div class="col-md-2" style="border-right: 1px solid #ccc;">
             <h4>Tüm Sorular</h4>
             <ul class="list-unstyled">
                 {% for question in all_questions %}
                 <li class="d-flex justify-content-between align-items-center mt-2 baslik">
-                    <a href="{% url 'question_detail' question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                    <a href="{% url 'question_detail' question.id %}"
+                       class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
                         {{ question.question_text }}
                     </a>
-                    <small class="">{{ question.answers_count }}</small>
+                    <small>{{ question.answers_count }}</small>
                 </li>
                 {% endfor %}
             </ul>
             {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
         </div>
+
+        <!-- SORU DETAYI (ORTA) -->
         <input type="hidden" id="answer_form_question_id" value="{{ question.id }}">
-        <!-- Soru Detayı -->
         <div class="col-md-7">
-            <!-- Soru Başlığı ve Harita İkonu -->
+            <!-- SORU BAŞLIK + HARİTA LİNKİ -->
             <div class="d-flex justify-content-between align-items-center">
-                <h2>{{ question.question_text }}
+                <h2>
+                    {{ question.question_text }}
                     <a href="{% url 'question_map' %}?question_id={{ question.id }}" title="Haritada Gör">
                         <i class="bi bi-geo-alt-fill"></i>
                     </a>
@@ -33,26 +37,28 @@
                 {% include 'core/pagination.html' with page_obj=answers page_param='page' %}
             </div>
 
-            <!-- Soruya Oy Verme ve Kaydetme -->
+            <!-- SORUYA OY ve KAYDET -->
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <!-- Sol Kısım: Oy Verme ve Kaydetme -->
                 <div>
-                    <a href="#" class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
-                    data-content-type="question" data-object-id="{{ question.id }}" data-value="1" title="Beğen">
+                    <a href="#"
+                       class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
+                       data-content-type="question" data-object-id="{{ question.id }}" data-value="1" title="Beğen">
                         <i class="bi-chevron-up"></i>
                     </a>
                     <span id="question-upvotes">{{ question.upvotes }}</span>
-                    <a href="#" class="vote-btn ms-1 me-1 {% if question.user_vote_value == -1 %}voted-down{% endif %}"
-                    data-content-type="question" data-object-id="{{ question.id }}" data-value="-1" title="Beğenme">
-                     <i class="bi-chevron-down"></i>
-                 </a>
-                 <span id="question-downvotes">{{ question.downvotes }}</span>
-                    <a href="#" class="save-btn icon-black-white" data-content-type="question" data-object-id="{{ question.id }}" title="Kaydet">
-                        <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
+                    <a href="#"
+                       class="vote-btn ms-1 me-1 {% if question.user_vote_value == -1 %}voted-down{% endif %}"
+                       data-content-type="question" data-object-id="{{ question.id }}" data-value="-1" title="Beğenme">
+                       <i class="bi-chevron-down"></i>
+                    </a>
+                    <span id="question-downvotes">{{ question.downvotes }}</span>
+                    <a href="#"
+                       class="save-btn icon-black-white"
+                       data-content-type="question" data-object-id="{{ question.id }}" title="Kaydet">
+                       <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                     </a>
                     <span class="save-count">{{ question_save_count }}</span>
                 </div>
-                <!-- Sağ Kısım: Kullanıcı Bilgisi ve Tarih -->
                 <div class="text-end">
                     <small class="text-muted">
                         <a href="{% url 'user_profile' question.user.username %}">{{ question.user.username }}</a>
@@ -61,33 +67,36 @@
                 </div>
             </div>
 
-            <!-- Yanıtlar -->
+            <!-- YANITLAR LİSTESİ -->
             {% for answer in answers %}
             <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
                 <div class="card-body">
-                    <!-- Yanıt Metni -->
                     {% if answer.answer_text|length > 500 %}
-                        <!-- Kısaltılmış Yanıt -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|tanim_link }}...</p>
-                        <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link }}</p>
-                        <!-- "Tamamını oku" Linki -->
+                        <!-- KISALTILMIŞ YANIT -->
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">
+                            {{ answer.answer_text|linebreaksbr|slice:":500"|tanim_link|reference_link }}...
+                        </p>
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
+                            {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link|reference_link }}
+                        </p>
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
-                        <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
+                        <!-- KISA YANIT -->
+                        <p class="answer-text">
+                            {{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}
+                        </p>
                     {% endif %}
                     
-                    <!-- Alt Kısım: Oylar, Butonlar, Kullanıcı Bilgisi -->
+                    <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
-                            data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
+                               data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
                                 <i class="bi-chevron-up"></i>
                             </a>
                             <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
                             <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
-                            data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
+                               data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
                                 <i class="bi-chevron-down"></i>
                             </a>
                             <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
@@ -99,12 +108,13 @@
                                 <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                     <i class="bi bi-pencil-square icon-black-white"></i>
                                 </a>
-                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                <a href="#" class="ms-2 text-danger delete-answer-btn"
+                                   data-answer-id="{{ answer.id }}" title="Sil"
+                                   data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
                                     <i class="bi bi-trash icon-black-white"></i>
                                 </a>
                             {% endif %}
                         </div>
-                        
                         <div class="text-end">
                             <small class="text-muted me-2">
                                 <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
@@ -117,19 +127,22 @@
                                     {% endif %}
                                 {% endif %}
                             </small>
-
                             <div class="dropdown d-inline">
-                                <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
                                     &#8226;&#8226;&#8226;
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
                                     <li>
-                                        <button class="dropdown-item copy-link-btn" data-url="{% url 'single_answer' question.id answer.id %}">
+                                        <button class="dropdown-item copy-link-btn"
+                                                data-url="{% url 'single_answer' question.id answer.id %}">
                                             <i class="bi bi-link-45deg"></i> Linki Kopyala
                                         </button>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}"><i class="bi bi-share"></i> Paylaş</a>
+                                        <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}">
+                                            <i class="bi bi-share"></i> Paylaş
+                                        </a>
                                     </li>
                                     <li>
                                         <form action="{% url 'pin_entry' answer_id=answer.id %}" method="post">
@@ -147,36 +160,57 @@
                                 </ul>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </div> <!-- d-flex -->
+                </div> <!-- card-body -->
+            </div> <!-- card -->
             {% empty %}
             <p>Henüz yanıt yok. İlk yanıtı siz verin!</p>
             {% endfor %}
 
-            <!-- Yanıt Ekleme Formu -->
+            <!-- YANIT EKLEME FORMU -->
             <div class="card mt-4">
                 <div class="card-body answer-arkaRenk">
                     <form method="post">
                         {% csrf_token %}
                         <div class="btn-toolbar mb-2" role="toolbar">
-                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2" title="Kalınlaştır" data-format="bold">
+
+                            <!-- Bold/Italic -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
+                                    data-format="bold" title="Kalınlaştır">
                                 <i class="bi bi-type-bold"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"  title="İtalikleştir" data-format="italic">
+                            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
+                                    data-format="italic" title="İtalikleştir">
                                 <i class="bi bi-type-italic"></i>
                             </button>
+
+                            <!-- Harici Link Ekle -->
                             <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn me-2" title="Harici WEB Linki Ekleyin">
                                 <i class="bi bi-link-45deg"></i> Link Ekle
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2" title="Bir diğer Soru/başlığa referans ver">
+
+                            <!-- (bkz:soru) -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2"
+                                    title="Bir diğer Soru/başlığa referans ver">
                                 (bkz:soru)
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2" title="Renklendir/Yönlendir">
+
+                            <!-- (ref:...) -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2"
+                                    title="Renklendir/Yönlendir">
                                 <i class="bi bi-box-arrow-in-up-right"></i> hede
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn" title="Tanım">
+
+                            <!-- TANIM MODAL BUTONU -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn"
+                                    title="Tanım">
                                 <i class="bi bi-book"></i> Tanım
+                            </button>
+
+                            <!-- KAYNAK MODAL BUTONU -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                                id="gosterKaynakModalButonu" title="Kaynak">
+                                <i class="bi bi-journal"></i> Kaynak
                             </button>
                         </div>
                         {{ form.answer_text }}
@@ -184,10 +218,10 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </div> <!-- col-md-7 -->
 
+        <!-- SAĞ SÜTUN: ALT SORULAR -->
         <div class="col-md-3">
-            <!-- Alt Sorular -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
@@ -201,21 +235,26 @@
                                 </a>
                             {% endwith %}
                         {% elif question.parent_questions.count > 1 %}
-                            <button type="button" class="btn btn-outline-secondary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#parentQuestionsModal">
+                            <button type="button" class="btn btn-outline-secondary btn-sm ms-2"
+                                    data-bs-toggle="modal" data-bs-target="#parentQuestionsModal">
                                 <i class="bi bi-chevron-double-up" title="Üst Soruya Git"> Üst Soruya Git</i>
                             </button>
-                            <div class="modal fade" id="parentQuestionsModal" tabindex="-1" aria-labelledby="parentQuestionsModalLabel" aria-hidden="true">
+                            <div class="modal fade" id="parentQuestionsModal" tabindex="-1"
+                                 aria-labelledby="parentQuestionsModalLabel" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title">Üst Sorular</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Kapat"></button>
                                         </div>
                                         <div class="modal-body">
                                             <ul class="list-group">
                                                 {% for parent in question.parent_questions.all %}
                                                     <li class="list-group-item">
-                                                        <a href="{% url 'question_detail' parent.id %}">{{ parent.question_text }}</a>
+                                                        <a href="{% url 'question_detail' parent.id %}">
+                                                            {{ parent.question_text }}
+                                                        </a>
                                                     </li>
                                                 {% endfor %}
                                             </ul>
@@ -226,6 +265,8 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Subquestions List -->
                 <ul class="list-group">
                     {% if question.subquestions.all %}
                         {% for subquestion in question.subquestions.all %}
@@ -236,7 +277,9 @@
                                     </a>
                                     <br>
                                     <small class="text-muted">
-                                        <a href="{% url 'user_profile' subquestion.user.username %}">{{ subquestion.user.username }}</a>
+                                        <a href="{% url 'user_profile' subquestion.user.username %}">
+                                            {{ subquestion.user.username }}
+                                        </a>
                                     </small>
                                 </div>
                                 <a href="{% url 'question_map' %}?question_id={{ subquestion.id }}" title="Haritada Gör">
@@ -253,7 +296,7 @@
     </div>
 </div>
 
-<!-- Paylaşım Modal'ı -->
+<!-- PAYLAŞIM MODAL -->
 <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -279,11 +322,13 @@
   </div>
 </div>
 
-<!-- Modals -->
+<!-- Eski link_modal -->
 {% include 'core/link_modal.html' %}
+{% include 'core/kaynak_ref.html' %}
+<!-- Eski reference_modal (kalsın, KAYNAK MODAL) -->
 {% include 'core/reference_modal.html' %}
 
-<!-- Delete Answer Modal -->
+<!-- Yanıt Silme Modal -->
 <div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -305,7 +350,7 @@
     </div>
 </div>
 
-<!-- Tanım Modal -->
+<!-- TANIM MODAL -->
 <div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -319,10 +364,18 @@
         <div class="modal-body">
           <ul class="nav nav-tabs" id="definitionTab" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab" data-bs-target="#tanim-yap" type="button" role="tab" aria-controls="tanim-yap" aria-selected="true">Tanım Yap</button>
+              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab"
+                      data-bs-target="#tanim-yap" type="button" role="tab"
+                      aria-controls="tanim-yap" aria-selected="true">
+                Tanım Yap
+              </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab" data-bs-target="#tanim-bul" type="button" role="tab" aria-controls="tanim-bul" aria-selected="false">Tanım Bul</button>
+              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab"
+                      data-bs-target="#tanim-bul" type="button" role="tab"
+                      aria-controls="tanim-bul" aria-selected="false">
+                Tanım Bul
+              </button>
             </li>
           </ul>
           <div class="tab-content mt-3" id="definitionTabContent">
@@ -331,7 +384,8 @@
               <form id="createDefinitionForm">
                 <div class="mb-3">
                   <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
-                  <textarea class="form-control" id="definitionText" name="definition_text" rows="3" maxlength="1000"></textarea>
+                  <textarea class="form-control" id="definitionText" name="definition_text"
+                            rows="3" maxlength="1000"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Kaydet</button>
               </form>
@@ -350,81 +404,188 @@
             </div>
           </div>
         </div>
-  
       </div>
     </div>
-  </div>
-  
-
-
-
-
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        // Hepsini Bootstrap Tooltip olarak başlat
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const readMoreLinks = document.querySelectorAll('.read-more');
-        readMoreLinks.forEach(function(link) {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const answerId = this.getAttribute('data-answer-id');
-                const summary = document.getElementById('answer-summary-' + answerId);
-                const fullText = document.getElementById('answer-full-' + answerId);
-                if (summary.style.display === 'none') {
-                    summary.style.display = 'block';
-                    fullText.style.display = 'none';
-                    this.textContent = 'Tamamını oku';
-                } else {
-                    summary.style.display = 'none';
-                    fullText.style.display = 'block';
-                    this.textContent = 'Daha az göster';
-                }
+      // (A) Kaynak Modal Elemanları
+      const gosterKaynakModalButonu = document.getElementById('gosterKaynakModalButonu');
+      const kaynakRefModalElem      = document.getElementById('kaynakRefModal');
+      const kaynakRefModal          = new bootstrap.Modal(kaynakRefModalElem);
+    
+      // (B) “Kaynak Ekle/Seç” sekmeleri
+      const kaynakEkleTab = document.getElementById('kaynak-ekle-tab');
+      const kaynakSecTab  = document.getElementById('kaynak-sec-tab');
+    
+      // (C) Kaynak Formu ve Listesi
+      const kaynakForm        = document.getElementById('kaynakForm');
+      const kaynakListesi     = document.getElementById('kaynakListesi');
+      const seciliKaynakEkleBtn = document.getElementById('seciliKaynakEkleBtn');
+    
+      // (1) Butona basınca modalı aç, “Kaynak Ekle” sekmesini göster
+      gosterKaynakModalButonu.addEventListener('click', function() {
+        kaynakRefModal.show();
+        kaynakEkleTab.click(); // Her açıldığında ilk sekmede başlasın
+      });
+    
+      // (2) Kaynak Formu: create_reference endpoint’ine POST
+      kaynakForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let formData = new FormData(kaynakForm);
+    
+        fetch("{% url 'create_reference' %}", {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': "{{ csrf_token }}",
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert("Kaynak başarıyla eklendi!");
+            kaynakForm.reset();
+            // Otomatik olarak "Kaynak Seç" sekmesine geç
+            kaynakSecTab.click();
+            kaynaklariListele();
+          } else {
+            console.log(data.errors);
+            alert("Form hatası: " + JSON.stringify(data.errors));
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Bir hata oluştu.");
+        });
+      });
+    
+      // (3) “Kaynak Seç” sekmesine tıklanınca mevcut kayıtlı kaynakları getir
+      kaynakSecTab.addEventListener('click', function() {
+        kaynaklariListele();
+      });
+    
+      function kaynaklariListele() {
+        fetch("{% url 'get_references' %}")
+          .then(response => response.json())
+          .then(data => {
+            kaynakListesi.innerHTML = '';
+            data.references.forEach(ref => {
+              let label = document.createElement('label');
+              label.classList.add('list-group-item');
+              label.innerHTML = `
+                <input type="radio" name="kaynakSecimi" value="${ref.id}" class="form-check-input me-2" />
+                <span>${ref.display}</span>
+              `;
+              kaynakListesi.appendChild(label);
             });
-        });
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Liste yüklenirken hata oluştu.");
+          });
+      }
+    
+      // (4) Seçilen Kaynağı “(kaynak:ID)” olarak textarea’ya ekle
+      seciliKaynakEkleBtn.addEventListener('click', function() {
+        const secili = document.querySelector('input[name="kaynakSecimi"]:checked');
+        if (!secili) {
+          alert("Lütfen bir kaynak seçin.");
+          return;
+        }
+        const refId = secili.value;
+        const answerTextArea = document.getElementById('id_answer_text');
+        if (!answerTextArea) {
+          alert("Yanıt textarea bulunamadı!");
+          return;
+        }
+        // Metin sonuna [ (kaynak:REF_ID) ] ekle
+        answerTextArea.value += ` (kaynak:${refId}) `;
+        kaynakRefModal.hide();
+      });
+    });
+</script>
 
-        // "Linki Kopyala"
-        $('.copy-link-btn').click(function(e) {
-            e.preventDefault();
-            var url = $(this).data('url');
-            var tempInput = $("<input>");
-            $("body").append(tempInput);
-            var absoluteLink = window.location.origin + url;
-            tempInput.val(absoluteLink).select();
-            document.execCommand("copy");
-            tempInput.remove();
-            alert("Link kopyalandı!");
-        });
+<!-- Geri Kalan (Okuma, Paylaş vs.) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tamamını Oku / Daha Az
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    readMoreLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const answerId = this.getAttribute('data-answer-id');
+            const summary = document.getElementById('answer-summary-' + answerId);
+            const fullText = document.getElementById('answer-full-' + answerId);
 
-        // "Paylaş"
-        var currentAnswerId;
-        $('.share-link').click(function(e) {
-            e.preventDefault();
-            currentAnswerId = $(this).data('answer-id');
-            $('#shareModal').modal('show');
-        });
-
-        $('#shareModal').on('shown.bs.modal', function () {
-            var link = "{% url 'single_answer' question.id 0 %}".replace('/0/', '/' + currentAnswerId + '/');
-            var absoluteLink = window.location.origin + link;
-            var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
-            var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
-            $('#shareTwitter').attr('href', twitterUrl);
-            $('#shareFacebook').attr('href', facebookUrl);
-        });
-
-        // Yanıt Silme
-        var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-        var deleteAnswerForm = document.getElementById('delete-answer-form');
-        deleteAnswerBtns.forEach(function(btn) {
-            btn.addEventListener('click', function(event) {
-                var answerId = this.getAttribute('data-answer-id');
-                deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
-            });
+            if (summary.style.display === 'none') {
+                summary.style.display = 'block';
+                fullText.style.display = 'none';
+                this.textContent = 'Tamamını oku';
+            } else {
+                summary.style.display = 'none';
+                fullText.style.display = 'block';
+                this.textContent = 'Daha az göster';
+            }
         });
     });
+
+    // Link Kopyala
+    $('.copy-link-btn').click(function(e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        var tempInput = $("<input>");
+        $("body").append(tempInput);
+        var absoluteLink = window.location.origin + url;
+        tempInput.val(absoluteLink).select();
+        document.execCommand("copy");
+        tempInput.remove();
+        alert("Link kopyalandı!");
+    });
+
+    // Paylaş
+    var currentAnswerId;
+    $('.share-link').click(function(e) {
+        e.preventDefault();
+        currentAnswerId = $(this).data('answer-id');
+        $('#shareModal').modal('show');
+    });
+
+    $('#shareModal').on('shown.bs.modal', function () {
+        var link = "{% url 'single_answer' question.id 0 %}".replace('/0/', '/' + currentAnswerId + '/');
+        var absoluteLink = window.location.origin + link;
+        var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
+        var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
+        $('#shareTwitter').attr('href', twitterUrl);
+        $('#shareFacebook').attr('href', facebookUrl);
+    });
+
+    // Yanıt Silme
+    var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
+    var deleteAnswerForm = document.getElementById('delete-answer-form');
+    deleteAnswerBtns.forEach(function(btn) {
+        btn.addEventListener('click', function(event) {
+            var answerId = this.getAttribute('data-answer-id');
+            deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
+        });
+    });
+});
 </script>
 {% endblock %}

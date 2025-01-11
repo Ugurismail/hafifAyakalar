@@ -84,6 +84,8 @@ urlpatterns = [
     path('get-user-definitions/', views.get_user_definitions, name='get_user_definitions'),
     path('definition/<int:definition_id>/edit/', views.edit_definition, name='edit_definition'),
     path('definition/<int:definition_id>/delete/', views.delete_definition, name='delete_definition'),
+    path('create-reference/', views.create_reference, name='create_reference'),
+    path('get-references/', views.get_references, name='get_references'),
 ]
 
 handler404 = 'core.views.custom_404_view'

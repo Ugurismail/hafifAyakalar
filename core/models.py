@@ -246,3 +246,27 @@ class Definition(models.Model):
 
     def __str__(self):
         return f"{self.question.question_text} / {self.user.username}"
+
+
+
+class Reference(models.Model):
+    """
+    Kullanıcıların eklediği kaynak bilgilerini tutar.
+    Tüm kullanıcılar tarafından evrensel olarak erişilebilir.
+    """
+    author_surname = models.CharField(max_length=100, verbose_name="Yazar Soyadı")
+    author_name = models.CharField(max_length=100, verbose_name="Yazar Adı")
+    year = models.PositiveIntegerField(verbose_name="Yıl")
+    rest = models.TextField(max_length=2000, verbose_name="Künyenin Kalanı")
+    abbreviation = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        verbose_name="Kısaltma (Opsiyonel)"
+    )
+
+    def __str__(self):
+        """ Örnek gösterim: Bellah, R. N. (2017) - 'bellah ve din' """
+        if self.abbreviation:
+            return f"{self.author_surname}, {self.author_name} ({self.year}) - {self.abbreviation}"
+        return f"{self.author_surname}, {self.author_name} ({self.year})"

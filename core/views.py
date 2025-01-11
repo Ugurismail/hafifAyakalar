@@ -2,8 +2,8 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.contrib.auth.decorators import login_required
-from .forms import InvitationForm, AnswerForm, StartingQuestionForm, SignupForm, LoginForm, QuestionForm, ProfilePhotoForm, MessageForm, DefinitionForm
-from .models import Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem, PinnedEntry, Definition
+from .forms import InvitationForm, AnswerForm, StartingQuestionForm, SignupForm, LoginForm, QuestionForm, ProfilePhotoForm, MessageForm, DefinitionForm, RandomSentenceForm, PollForm, ReferenceForm
+from .models import  Poll, Reference, PollOption,RandomSentence, PollVote, Invitation, UserProfile, Question, Answer, StartingQuestion, Vote, Message, SavedItem, PinnedEntry, Definition
 from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
@@ -22,10 +22,6 @@ from django.views.decorators.http import require_POST
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .models import RandomSentence
-from .forms import RandomSentenceForm
-from .models import Poll, PollOption, PollVote
-from .forms import PollForm
 from datetime import timedelta
 from django.utils.timezone import now
 
@@ -1840,3 +1836,43 @@ def delete_definition(request, definition_id):
         return redirect(f"{reverse('user_profile', args=[request.user.username])}?tab=tanimlar")
     # “GET” istek geldiğinde doğrulama penceresi (confirm) gösterebilirsiniz.
     return render(request, 'core/confirm_delete_definition.html', {'definition': definition})
+
+
+@require_POST
+def create_reference(request):
+    """
+    AJAX ile yeni bir Reference (Kaynak) oluşturmak için.
+    """
+    form = ReferenceForm(request.POST)
+    if form.is_valid():
+        reference_obj = form.save()  # DB'ye kaydet
+        # Döndüreceğimiz veri: ID, str hali, vs.
+        data = {
+            'status': 'success',
+            'reference': {
+                'id': reference_obj.id,
+                'display': str(reference_obj),  # __str__ metodu
+            }
+        }
+        return JsonResponse(data, status=200)
+    else:
+        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+def get_references(request):
+    """
+    Tüm referans kayıtlarını JSON olarak döndürür.
+    Böylece "Kaynak Seç" sekmesinde listelenebilir.
+    """
+    references = Reference.objects.all().order_by('author_surname', 'year')
+    data = []
+    for ref in references:
+        data.append({
+            'id': ref.id,
+            'author_surname': ref.author_surname,
+            'author_name': ref.author_name,
+            'year': ref.year,
+            'rest': ref.rest,
+            'abbreviation': ref.abbreviation or '',
+            'display': str(ref),  # Örn. Bellah, R. (2017) - bellah ve din
+        })
+    return JsonResponse({'references': data}, status=200)
