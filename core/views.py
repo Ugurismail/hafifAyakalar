@@ -1876,3 +1876,114 @@ def get_references(request):
             'display': str(ref),  # Örn. Bellah, R. (2017) - bellah ve din
         })
     return JsonResponse({'references': data}, status=200)
+
+from django.http import HttpResponse
+import json
+
+def download_entries_json(request, username):
+    user = get_object_or_404(User, username=username)
+    if request.user != user and not request.user.is_superuser:
+        return HttpResponse('Yetki yok', status=403)
+
+    questions = Question.objects.filter(user=user).order_by('created_at')
+    data = []
+    for q in questions:
+        answers_data = []
+        for ans in q.answers.all().order_by('created_at'):
+            answers_data.append({
+                'answer_text': ans.answer_text,
+                'answer_user': ans.user.username,
+                'answer_created_at': ans.created_at.isoformat()
+            })
+        data.append({
+            'question_text': q.question_text,
+            'question_created_at': q.created_at.isoformat(),
+            'answers': answers_data
+        })
+
+    final_data = {
+        'username': user.username,
+        'questions': data
+    }
+
+    # JSON’u stringe çevir
+    content = json.dumps(final_data, ensure_ascii=False, indent=2)
+
+    # "application/json" veya "application/octet-stream"
+    response = HttpResponse(content, content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="{user.username}_entries.json"'
+    return response
+
+
+# from django.http import JsonResponse
+# from django.shortcuts import get_object_or_404
+# from django.contrib.auth.models import User
+# from .models import Question, Answer
+# def download_entries_json(request, username):
+    """
+    Kullanıcının oluşturduğu tüm soruları, her sorunun altında
+    bulunan tüm yanıtları (tüm kullanıcılardan) JSON formatında döndürür.
+
+    Örnek JSON çıktısı:
+    {
+      "username": "ali",
+      "questions": [
+        {
+          "question_text": "Sizce özgürlük nedir?",
+          "question_created_at": "2025-01-11T12:34:56",
+          "answers": [
+            {
+              "answer_text": "Bence özgürlük sorumluluk demektir...",
+              "answer_created_at": "2025-01-12T10:00:00",
+              "answer_user": "veli"
+            },
+            ...
+          ]
+        },
+        ...
+      ]
+    }
+    """
+    # 1) Kullanıcı doğrulama
+    target_user = get_object_or_404(User, username=username)
+
+    # Sadece kendisi (veya istersek admin) indirebilsin
+    if request.user != target_user and not request.user.is_superuser:
+        return JsonResponse(
+            {'error': 'Bu işlemi yapmaya yetkiniz yok.'},
+            status=403
+        )
+
+    # 2) Kullanıcının yazdığı soruları çek
+    user_questions = Question.objects.filter(user=target_user).order_by('created_at')
+
+    # 3) JSON yapısı oluştur
+    questions_data = []
+    for q in user_questions:
+        # Her soru altındaki TÜM yanıtlar (kim yazmış olursa olsun)
+        q_answers = q.answers.filter(user=target_user).order_by('created_at')
+        answers_data = []
+        for ans in q_answers:
+            answers_data.append({
+                'answer_text': ans.answer_text,
+                'answer_created_at': ans.created_at.isoformat(),
+                'answer_user': ans.user.username,
+            })
+        questions_data.append({
+            'question_text': q.question_text,
+            'question_created_at': q.created_at.isoformat(),
+            'answers': answers_data
+        })
+
+    # 4) Final JSON sözlüğü
+    final_data = {
+        'username': target_user.username,
+        'questions': questions_data,
+    }
+
+    # 5) JsonResponse ile döndür (indent vererek görece okunaklı hale getirebilirsiniz)
+    return JsonResponse(
+        final_data, 
+        safe=True,
+        json_dumps_params={'ensure_ascii': False, 'indent': 2}  # Türkçe karakterleri koru, pretty-print
+    )

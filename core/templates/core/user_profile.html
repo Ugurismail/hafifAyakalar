@@ -32,6 +32,10 @@
                     </button>
                     <a href="{% url 'password_change' %}" class="btn btn-secondary btn-sm mb-1">Şifreyi Değiştir</a>
                     <a href="{% url 'user_settings' %}" class="btn btn-secondary btn-sm mb-1">Ayarlar</a>
+                    <a href="{% url 'download_entries_json' profile_user.username %}"
+                      class="btn btn-secondary btn-sm mb-1">
+                      Tüm Entry’lerimi (JSON) İndir
+                    </a>
                 {% else %}
                     {% if request.user.is_authenticated %}
                         {% if is_following %}
