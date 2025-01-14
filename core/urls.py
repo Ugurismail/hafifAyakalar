@@ -1,6 +1,8 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from django.db.models import Q
+
 
 urlpatterns = [
     # Ana Sayfa
@@ -87,7 +89,12 @@ urlpatterns = [
     path('create-reference/', views.create_reference, name='create_reference'),
     path('get-references/', views.get_references, name='get_references'),
     # path('profile/<str:username>/download_entries/', views.download_entries, name='download_entries'),
-    path('profile/<str:username>/download_entries_json/', views.download_entries_json, name='download_entries_json')
+    path('profile/<str:username>/download_entries_json/', views.download_entries_json, name='download_entries_json'),
+    path('get_all_definitions/', views.get_all_definitions, name='get_all_definitions'),
+    path('search_definitions/', views.search_definitions, name='search_definitions'),
+
+
+
 ]
 
 handler404 = 'core.views.custom_404_view'

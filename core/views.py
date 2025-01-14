@@ -24,6 +24,7 @@ from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import timedelta
 from django.utils.timezone import now
+from django.views.decorators.http import require_GET
 
 
 
@@ -1951,3 +1952,63 @@ def download_entries_json(request, username):
         safe=True,
         json_dumps_params={'ensure_ascii': False, 'indent': 2}  # Türkçe karakterleri koru, pretty-print
     )
+
+
+@require_GET
+def get_all_definitions(request):
+    """
+    ?word=Kelime parametresi ile, o Kelime'ye ait 
+    tüm (Definition) kayıtlarını JSON döndürür:
+      { 
+        "status": "success",
+        "definitions": [
+          {
+            "definition_text": "...",
+            "username": "...",
+            "user_id": 123,
+            "question_text": "Kelime"
+          },
+          ...
+        ]
+      }
+    """
+    word = request.GET.get('word', '').strip()
+    if not word:
+        return JsonResponse({'status': 'error', 'message': 'Kelime (word) parametresi gerekli.'}, status=400)
+
+    defs_qs = Definition.objects.filter(
+        question__question_text__iexact=word
+    ).select_related('user', 'question').order_by('-created_at')
+
+    data = []
+    for d in defs_qs:
+        data.append({
+            'definition_text': d.definition_text,
+            'username': d.user.username,
+            'user_id': d.user.id,
+            'question_text': d.question.question_text
+        })
+
+    return JsonResponse({'status': 'success', 'definitions': data}, status=200)
+    
+
+
+@require_GET
+def search_definitions(request):
+    query = request.GET.get('query', '').strip()
+    if len(query) < 2:
+        return JsonResponse({'status': 'error', 'message': 'En az 2 karakter girin'}, status=400)
+
+    defs_qs = Definition.objects.filter(
+        Q(question__question_text__icontains=query) | Q(definition_text__icontains=query)
+    ).select_related('user', 'question').order_by('-created_at')[:50]
+
+    results = []
+    for d in defs_qs:
+        results.append({
+            'definition_text': d.definition_text[:100],  # Kısaltma
+            'question_text': d.question.question_text,
+            'username': d.user.username,
+            'user_id': d.user.id
+        })
+    return JsonResponse({'status': 'success', 'results': results}, status=200)

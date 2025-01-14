@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load custom_tags %}
+{% load custom_filters %}
 {% load markdownify %}
 
 {% block content %}
@@ -72,19 +73,15 @@
             <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
-                        <!-- KISALTILMIŞ YANIT -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">
-                            {{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|ref_link|markdownify:"default"|tanim_link:answer.user|reference_link }}...
-                        </p>
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                            {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link:answer.user|reference_link }}
-                        </p>
+                        <!-- Kısaltılmış Yanıt -->
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link| tanim_link:answer.user|reference_link }}...</p>
+                        <!-- Tam Yanıt (Başlangıçta Gizli) -->
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
+                        <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
-                        <!-- KISA YANIT -->
-                        <p class="answer-text">
-                            {{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link:answer.user|reference_link }}
-                        </p>
+                        <!-- Kısa Yanıt -->
+                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
                     {% endif %}
                     
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
@@ -354,45 +351,85 @@
 <div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
-        <!-- Modal header -->
+        <!-- Modal Header -->
         <div class="modal-header">
           <h5 class="modal-title" id="definitionModalLabel">Tanım</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
         </div>
   
-        <!-- Modal body with tabs -->
+        <!-- Modal Body (Tabs) -->
         <div class="modal-body">
           <ul class="nav nav-tabs" id="definitionTab" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab"
-                      data-bs-target="#tanim-yap" type="button" role="tab"
-                      aria-controls="tanim-yap" aria-selected="true">
+              <button 
+                class="nav-link active" 
+                id="tanim-yap-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#tanim-yap" 
+                type="button" 
+                role="tab" 
+                aria-controls="tanim-yap" 
+                aria-selected="true">
                 Tanım Yap
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab"
-                      data-bs-target="#tanim-bul" type="button" role="tab"
-                      aria-controls="tanim-bul" aria-selected="false">
-                Tanım Bul
+              <button 
+                class="nav-link" 
+                id="tanim-bul-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#tanim-bul" 
+                type="button" 
+                role="tab" 
+                aria-controls="tanim-bul" 
+                aria-selected="false">
+                Kayıtlı Tanımlarım
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button 
+                class="nav-link" 
+                id="tanim-ara-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#tanim-ara"
+                type="button" 
+                role="tab" 
+                aria-controls="tanim-ara" 
+                aria-selected="false">
+                Tanım Ara
               </button>
             </li>
           </ul>
+  
           <div class="tab-content mt-3" id="definitionTabContent">
+            
             <!-- TAB 1: TANIM YAP -->
-            <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
+            <div 
+              class="tab-pane fade show active" 
+              id="tanim-yap" 
+              role="tabpanel" 
+              aria-labelledby="tanim-yap-tab">
               <form id="createDefinitionForm">
                 <div class="mb-3">
                   <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
-                  <textarea class="form-control" id="definitionText" name="definition_text"
-                            rows="3" maxlength="1000"></textarea>
+                  <textarea 
+                    class="form-control" 
+                    id="definitionText" 
+                    name="definition_text" 
+                    rows="3" 
+                    maxlength="1000">
+                  </textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Kaydet</button>
               </form>
             </div>
-  
-            <!-- TAB 2: TANIM BUL -->
-            <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
+            
+            <!-- TAB 2: KAYITLI TANIMLARIM -->
+            <div 
+              class="tab-pane fade" 
+              id="tanim-bul" 
+              role="tabpanel" 
+              aria-labelledby="tanim-bul-tab">
               <div class="mb-3">
                 <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
                 <select id="definitionSelect" class="form-select">
@@ -402,131 +439,50 @@
               </div>
               <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-</div>
+  
+            <!-- TAB 3: TANIM ARA (HERKESİN TANIMI) -->
+            <div 
+              class="tab-pane fade" 
+              id="tanim-ara" 
+              role="tabpanel" 
+              aria-labelledby="tanim-ara-tab">
+              <div class="mb-3">
+                <label for="definitionSearchInput" class="form-label">Başlık / Tanım Ara</label>
+                <input 
+                  type="text" 
+                  id="definitionSearchInput" 
+                  class="form-control" 
+                  placeholder="En az 2 karakter girin...">
+              </div>
+              <ul class="list-group" id="definitionSearchResults">
+                <!-- AJAX ile sonuçlar gelecek -->
+              </ul>
+            </div>
+          </div> <!-- /tab-content -->
+  
+        </div> <!-- /modal-body -->
+      </div> <!-- /modal-content -->
+    </div> <!-- /modal-dialog -->
+  </div> <!-- /modal fade -->
+  
+  
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        // Hepsini Bootstrap Tooltip olarak başlat
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-    </script>
+<!-- Önce gerekli bağımlılıkları (jQuery, JS dosyalarını) yüklüyoruz. -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // (A) Kaynak Modal Elemanları
-      const gosterKaynakModalButonu = document.getElementById('gosterKaynakModalButonu');
-      const kaynakRefModalElem      = document.getElementById('kaynakRefModal');
-      const kaynakRefModal          = new bootstrap.Modal(kaynakRefModalElem);
-    
-      // (B) “Kaynak Ekle/Seç” sekmeleri
-      const kaynakEkleTab = document.getElementById('kaynak-ekle-tab');
-      const kaynakSecTab  = document.getElementById('kaynak-sec-tab');
-    
-      // (C) Kaynak Formu ve Listesi
-      const kaynakForm        = document.getElementById('kaynakForm');
-      const kaynakListesi     = document.getElementById('kaynakListesi');
-      const seciliKaynakEkleBtn = document.getElementById('seciliKaynakEkleBtn');
-    
-      // (1) Butona basınca modalı aç, “Kaynak Ekle” sekmesini göster
-      gosterKaynakModalButonu.addEventListener('click', function() {
-        kaynakRefModal.show();
-        kaynakEkleTab.click(); // Her açıldığında ilk sekmede başlasın
-      });
-    
-      // (2) Kaynak Formu: create_reference endpoint’ine POST
-      kaynakForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        let formData = new FormData(kaynakForm);
-    
-        fetch("{% url 'create_reference' %}", {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-CSRFToken': "{{ csrf_token }}",
-          },
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success') {
-            alert("Kaynak başarıyla eklendi!");
-            kaynakForm.reset();
-            // Otomatik olarak "Kaynak Seç" sekmesine geç
-            kaynakSecTab.click();
-            kaynaklariListele();
-          } else {
-            console.log(data.errors);
-            alert("Form hatası: " + JSON.stringify(data.errors));
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Bir hata oluştu.");
-        });
-      });
-    
-      // (3) “Kaynak Seç” sekmesine tıklanınca mevcut kayıtlı kaynakları getir
-      kaynakSecTab.addEventListener('click', function() {
-        kaynaklariListele();
-      });
-    
-      function kaynaklariListele() {
-        fetch("{% url 'get_references' %}")
-          .then(response => response.json())
-          .then(data => {
-            kaynakListesi.innerHTML = '';
-            data.references.forEach(ref => {
-              let label = document.createElement('label');
-              label.classList.add('list-group-item');
-              label.innerHTML = `
-                <input type="radio" name="kaynakSecimi" value="${ref.id}" class="form-check-input me-2" />
-                <span>${ref.display}</span>
-              `;
-              kaynakListesi.appendChild(label);
-            });
-          })
-          .catch(err => {
-            console.error(err);
-            alert("Liste yüklenirken hata oluştu.");
-          });
-      }
-    
-      // (4) Seçilen Kaynağı “(kaynak:ID)” olarak textarea’ya ekle
-      seciliKaynakEkleBtn.addEventListener('click', function() {
-        const secili = document.querySelector('input[name="kaynakSecimi"]:checked');
-        if (!secili) {
-          alert("Lütfen bir kaynak seçin.");
-          return;
-        }
-        const refId = secili.value;
-        const answerTextArea = document.getElementById('id_answer_text');
-        if (!answerTextArea) {
-          alert("Yanıt textarea bulunamadı!");
-          return;
-        }
-        // Metin sonuna [ (kaynak:REF_ID) ] ekle
-        answerTextArea.value += ` (kaynak:${refId}) `;
-        kaynakRefModal.hide();
-      });
-    });
-</script>
-
-<!-- Geri Kalan (Okuma, Paylaş vs.) -->
-<script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tamamını Oku / Daha Az
+    // [1] TOOLTIP BAŞLATMA
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // [2] "TAMAMINI OKU" İşlevi
     const readMoreLinks = document.querySelectorAll('.read-more');
     readMoreLinks.forEach(function(link) {
         link.addEventListener('click', function(event) {
@@ -547,45 +503,312 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Link Kopyala
-    $('.copy-link-btn').click(function(e) {
-        e.preventDefault();
-        var url = $(this).data('url');
-        var tempInput = $("<input>");
-        $("body").append(tempInput);
-        var absoluteLink = window.location.origin + url;
-        tempInput.val(absoluteLink).select();
-        document.execCommand("copy");
-        tempInput.remove();
-        alert("Link kopyalandı!");
+    // [3] "LİNKİ KOPYALA" İşlevi
+    document.querySelectorAll('.copy-link').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            var questionId = this.getAttribute('data-question-id');
+            var answerId = this.getAttribute('data-answer-id');
+            var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
+            var absoluteLink = window.location.origin + linkUrl;
+
+            // Kopyalama
+            var tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = absoluteLink;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            alert('Link kopyalandı!');
+        });
     });
 
-    // Paylaş
-    var currentAnswerId;
-    $('.share-link').click(function(e) {
-        e.preventDefault();
-        currentAnswerId = $(this).data('answer-id');
-        $('#shareModal').modal('show');
+    // [4] "PAYLAŞ" İşlevi
+    document.querySelectorAll('.share-link').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            var questionId = this.getAttribute('data-question-id');
+            var answerId = this.getAttribute('data-answer-id');
+            var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
+            var absoluteLink = window.location.origin + linkUrl;
+
+            // Twitter/Facebook linklerini güncelle
+            var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
+            var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
+            document.getElementById('shareTwitter').setAttribute('href', twitterUrl);
+            document.getElementById('shareFacebook').setAttribute('href', facebookUrl);
+
+            // Modal göster
+            var shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+            shareModal.show();
+        });
     });
 
-    $('#shareModal').on('shown.bs.modal', function () {
-        var link = "{% url 'single_answer' question.id 0 %}".replace('/0/', '/' + currentAnswerId + '/');
-        var absoluteLink = window.location.origin + link;
-        var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
-        var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
-        $('#shareTwitter').attr('href', twitterUrl);
-        $('#shareFacebook').attr('href', facebookUrl);
-    });
-
-    // Yanıt Silme
+    // [5] "SİLME" İşlevi
     var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
     var deleteAnswerForm = document.getElementById('delete-answer-form');
     deleteAnswerBtns.forEach(function(btn) {
-        btn.addEventListener('click', function(event) {
-            var answerId = this.getAttribute('data-answer-id');
-            deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
+        btn.addEventListener('click', function() {
+            var deleteUrl = this.getAttribute('data-delete-url');
+            // Form action'ını güncelle
+            deleteAnswerForm.action = deleteUrl;
         });
     });
 });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const definitionSearchInput   = document.getElementById('definitionSearchInput');
+      const definitionSearchResults = document.getElementById('definitionSearchResults');
+      const answerTextArea          = document.getElementById('id_answer_text'); // Yanıt textarea (örnek)
+    
+      if (definitionSearchInput) {
+        definitionSearchInput.addEventListener('keyup', function() {
+          let query = this.value.trim();
+          if (query.length < 2) {
+            definitionSearchResults.innerHTML = '';
+            return;
+          }
+          // AJAX
+          fetch(`/search_definitions?query=${encodeURIComponent(query)}`)
+            .then(resp => resp.json())
+            .then(data => {
+              definitionSearchResults.innerHTML = '';
+              if (data.status === 'success') {
+                if (data.results.length === 0) {
+                  definitionSearchResults.innerHTML = `<li class="list-group-item">Hiç eşleşen tanım yok.</li>`;
+                } else {
+                  data.results.forEach(item => {
+                    // item = { definition_text, username, user_id, question_text }
+                    let li = document.createElement('li');
+                    li.classList.add('list-group-item');
+                    li.innerHTML = `
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>${item.question_text}</strong> 
+                          <small class="text-muted">(${item.username})</small><br>
+                          <span class="text-muted">${item.definition_text}</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary select-definition-btn"
+                                data-question-text="${item.question_text}"
+                                data-user-id="${item.user_id}">
+                          Seç
+                        </button>
+                      </div>
+                    `;
+                    definitionSearchResults.appendChild(li);
+                  });
+    
+                  // "Seç" butonlarına event ekle
+                  document.querySelectorAll('.select-definition-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                      const qText = this.getAttribute('data-question-text');
+                      const uId   = this.getAttribute('data-user-id');
+                      // Yanıt alanına (tanim:qText:uId) ekleyelim
+                      let tanimSyntax = `(tanim:${qText}:${uId}) `;
+                      if (answerTextArea) {
+                        answerTextArea.value += tanimSyntax;
+                      }
+                      // Modalı istersen kapatabilirsin, ya da yerinde bırak
+                      // let defModal = bootstrap.Modal.getInstance(document.getElementById('definitionModal'));
+                      // defModal.hide();
+                    });
+                  });
+                }
+              } else {
+                definitionSearchResults.innerHTML = `<li class="list-group-item text-danger">Hata: ${data.message}</li>`;
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              definitionSearchResults.innerHTML = `<li class="list-group-item text-danger">Sunucu hatası!</li>`;
+            });
+        });
+      }
+    });
+    </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // (A) TANIM YAP (createDefinitionForm)
+      const createDefinitionForm = document.getElementById('createDefinitionForm');
+      if (createDefinitionForm) {
+        createDefinitionForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          let formData = new FormData(createDefinitionForm);
+    
+          // /create_definition/<question_id>/ gibi bir endpoint'e POST atman gerekiyor
+          // ya da AJAX ile "definition_text" gönderiyorsan ayarla
+          let questionId = document.getElementById('answer_form_question_id')?.value || 0;
+          let url = `/create-definition/${questionId}/`;
+    
+          fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(Object.fromEntries(formData.entries())),
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': "{{ csrf_token }}",  // Django'ya özel
+            }
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data.status === 'success') {
+              alert("Tanım başarıyla eklendi!");
+              // formu sıfırla
+              createDefinitionForm.reset();
+              // Dilersen modal kapat veya "Tanım Bul" sekmesine geç
+            } else {
+              console.error(data.errors);
+              alert("Tanım eklerken hata oluştu: " + JSON.stringify(data.errors));
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Sunucu hatası!");
+          });
+        });
+      }
+    
+      // (B) KAYITLI TANIMLARIM (tanim-bul): "definitionSelect" doldurulması + "insertDefinitionBtn"
+      const definitionSelect     = document.getElementById('definitionSelect');
+      const insertDefinitionBtn  = document.getElementById('insertDefinitionBtn');
+      if (insertDefinitionBtn) {
+        // 1) Tıklanınca, seçili tanımı yanıt metnine ekle
+        insertDefinitionBtn.addEventListener('click', function() {
+          const selectedVal = definitionSelect.value;
+          if (!selectedVal) {
+            alert("Lütfen bir tanım seçin!");
+            return;
+          }
+          // selectedVal -> "Kelime|UserID" formatında olabilir, ya da ID'sinden fetch edebilirsin
+          // Kolay yol: backend'de "get_user_definitions" JSON data: question_text, user_id...
+          // buraya bir approach yazıyorum
+          let splitted = selectedVal.split('|'); // mesela: "rara|3"
+          if (splitted.length !== 2) {
+            alert("Geçersiz tanım formatı!");
+            return;
+          }
+          let qText  = splitted[0];
+          let userId = splitted[1];
+          // Yanıt textarea'sına ekleyelim
+          const answerTextArea = document.getElementById('id_answer_text');
+          if (answerTextArea) {
+            answerTextArea.value += `(tanim:${qText}:${userId}) `;
+          } else {
+            alert("Cevap metin alanı bulunamadı!");
+          }
+        });
+      }
+    
+      // 2) "Kayıtlı Tanımlarım" sekmesi açılınca "get_user_definitions" endpointinden doldur
+      const tanimBulTab = document.getElementById('tanim-bul-tab');
+      if (tanimBulTab) {
+        tanimBulTab.addEventListener('shown.bs.tab', function() {
+          // Sekmeye her geçildiğinde (veya 1 kez), Kayıtlı Tanımları al
+          fetch("/get-user-definitions/")
+            .then(resp => resp.json())
+            .then(data => {
+              if (data.definitions) {
+                definitionSelect.innerHTML = '<option value="">Bir tanım seçiniz...</option>';
+                data.definitions.forEach(item => {
+                  // item: {question_text, user_id?, definition_text?} 
+                  // Sende ne döndürdüğüne göre
+                  let val = `${item.question_text}|${item.question_id}`; // user id yoksa user field eklenmeli
+                  // Örneğin: question_text + user_id
+                  definitionSelect.innerHTML += `
+                    <option value="${item.question_text}|{{ request.user.id }}">
+                      ${item.question_text} - ${item.definition_text}
+                    </option>
+                  `;
+                });
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              alert("Tanımları getirirken hata!");
+            });
+        });
+      }
+    
+      // (C) TANIM ARA (Herkesin tanımı)
+      const definitionSearchInput   = document.getElementById('definitionSearchInput');
+      const definitionSearchResults = document.getElementById('definitionSearchResults');
+      const answerTextArea          = document.getElementById('id_answer_text'); // Yanıt textarea
+    
+      if (definitionSearchInput) {
+        definitionSearchInput.addEventListener('keyup', function() {
+          let query = this.value.trim();
+          if (query.length < 2) {
+            definitionSearchResults.innerHTML = '';
+            return;
+          }
+          fetch(`/search_definitions/?query=${encodeURIComponent(query)}`)
+            .then(resp => resp.json())
+            .then(data => {
+              definitionSearchResults.innerHTML = '';
+              if (data.status === 'success') {
+                if (data.results.length === 0) {
+                  definitionSearchResults.innerHTML = '<li class="list-group-item">Eşleşen tanım yok.</li>';
+                } else {
+                  data.results.forEach(item => {
+                    // item = { definition_text, username, user_id, question_text }
+                    let li = document.createElement('li');
+                    li.classList.add('list-group-item');
+                    li.innerHTML = `
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>${item.question_text}</strong>
+                          <small class="text-muted">(${item.username})</small><br>
+                          <span class="text-muted">${item.definition_text}</span>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm select-def-btn"
+                                data-qtext="${item.question_text}"
+                                data-uid="${item.user_id}">
+                          Seç
+                        </button>
+                      </div>
+                    `;
+                    definitionSearchResults.appendChild(li);
+                  });
+    
+                  // "Seç" butonlarına event
+                  document.querySelectorAll('.select-def-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                      const qText = this.getAttribute('data-qtext');
+                      const uId   = this.getAttribute('data-uid');
+                      // Metin ekle
+                      if (answerTextArea) {
+                        answerTextArea.value += `(tanim:${qText}:${uId}) `;
+                      } else {
+                        alert("Cevap metin alanı bulunamadı!");
+                      }
+                    });
+                  });
+                }
+              } else {
+                definitionSearchResults.innerHTML = `
+                  <li class="list-group-item text-danger">
+                    Hata: ${data.message || 'Bilinmeyen'}
+                  </li>
+                `;
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              definitionSearchResults.innerHTML = `
+                <li class="list-group-item text-danger">
+                  Sunucu hatası!
+                </li>
+              `;
+            });
+        });
+      }
+    
+    });
+    </script>
+    
+    
 {% endblock %}
+
+

@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load custom_filters %}
 {% load custom_tags %}
 {% load markdownify %}
 {% block title %}Ana Sayfa{% endblock %}
@@ -37,14 +38,14 @@
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
                         <!-- Kısaltılmış Yanıt -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|tanim_link:answer.user|reference_link }}...</p>
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link| tanim_link:answer.user|reference_link }}...</p>
                         <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"|tanim_link:answer.user|reference_link }}</p>
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
                         <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link:answer.user|reference_link }}</p>
+                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
                     {% endif %}
                     <!-- Actions and User Info -->
                     <div class="action d-flex justify-content-between align-items-center">
@@ -262,90 +263,94 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        // Hepsini Bootstrap Tooltip olarak başlat
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-    </script>
+<!-- Önce gerekli bağımlılıkları (jQuery, JS dosyalarını) yüklüyoruz. -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // "Tamamını oku" Function
-        const readMoreLinks = document.querySelectorAll('.read-more');
-        readMoreLinks.forEach(function(link) {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const answerId = this.getAttribute('data-answer-id');
-                const summary = document.getElementById('answer-summary-' + answerId);
-                const fullText = document.getElementById('answer-full-' + answerId);
-                if (summary.style.display === 'none') {
-                    summary.style.display = 'block';
-                    fullText.style.display = 'none';
-                    this.textContent = 'Tamamını oku';
-                } else {
-                    summary.style.display = 'none';
-                    fullText.style.display = 'block';
-                    this.textContent = 'Daha az göster';
-                }
-            });
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // [1] TOOLTIP BAŞLATMA
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 
-        // "Linki Kopyala" Function
-        document.querySelectorAll('.copy-link').forEach(function(link) {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                var questionId = this.getAttribute('data-question-id');
-                var answerId = this.getAttribute('data-answer-id');
-                var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
-                var absoluteLink = window.location.origin + linkUrl;
-                // Copy to clipboard
-                var tempInput = document.createElement('input');
-                document.body.appendChild(tempInput);
-                tempInput.value = absoluteLink;
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                alert('Link kopyalandı!');
-            });
-        });
+    // [2] "TAMAMINI OKU" İşlevi
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    readMoreLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const answerId = this.getAttribute('data-answer-id');
+            const summary = document.getElementById('answer-summary-' + answerId);
+            const fullText = document.getElementById('answer-full-' + answerId);
 
-        // "Paylaş" Function
-        document.querySelectorAll('.share-link').forEach(function(link) {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                var questionId = this.getAttribute('data-question-id');
-                var answerId = this.getAttribute('data-answer-id');
-                var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
-                var absoluteLink = window.location.origin + linkUrl;
-                // Update the share links
-                var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
-                var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
-                document.getElementById('shareTwitter').setAttribute('href', twitterUrl);
-                document.getElementById('shareFacebook').setAttribute('href', facebookUrl);
-                // Show the modal
-                var shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
-                shareModal.show();
-            });
+            if (summary.style.display === 'none') {
+                summary.style.display = 'block';
+                fullText.style.display = 'none';
+                this.textContent = 'Tamamını oku';
+            } else {
+                summary.style.display = 'none';
+                fullText.style.display = 'block';
+                this.textContent = 'Daha az göster';
+            }
         });
-            // Silme İşlevi
-            var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-            var deleteAnswerForm = document.getElementById('delete-answer-form');
+    });
 
-            deleteAnswerBtns.forEach(function(btn) {
-                btn.addEventListener('click', function(event) {
-                    var deleteUrl = this.getAttribute('data-delete-url');
-                    // Formun action özelliğini güncelleyin
-                    deleteAnswerForm.action = deleteUrl;
-                });
-            });
+    // [3] "LİNKİ KOPYALA" İşlevi
+    document.querySelectorAll('.copy-link').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            var questionId = this.getAttribute('data-question-id');
+            var answerId = this.getAttribute('data-answer-id');
+            var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
+            var absoluteLink = window.location.origin + linkUrl;
+
+            // Kopyalama
+            var tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = absoluteLink;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            alert('Link kopyalandı!');
         });
+    });
+
+    // [4] "PAYLAŞ" İşlevi
+    document.querySelectorAll('.share-link').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            var questionId = this.getAttribute('data-question-id');
+            var answerId = this.getAttribute('data-answer-id');
+            var linkUrl = '/question/' + questionId + '/answer/' + answerId + '/';
+            var absoluteLink = window.location.origin + linkUrl;
+
+            // Twitter/Facebook linklerini güncelle
+            var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
+            var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
+            document.getElementById('shareTwitter').setAttribute('href', twitterUrl);
+            document.getElementById('shareFacebook').setAttribute('href', facebookUrl);
+
+            // Modal göster
+            var shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+            shareModal.show();
+        });
+    });
+
+    // [5] "SİLME" İşlevi
+    var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
+    var deleteAnswerForm = document.getElementById('delete-answer-form');
+    deleteAnswerBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var deleteUrl = this.getAttribute('data-delete-url');
+            // Form action'ını güncelle
+            deleteAnswerForm.action = deleteUrl;
+        });
+    });
+});
 </script>
 {% endblock %}
+
 
