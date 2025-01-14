@@ -3,13 +3,14 @@ body {
     background-color: var(--background-color, #ffffff);
     color: var(--text-color, #000000);
     padding-top: 70px; /* Adjust according to your navbar height */
-    font-family: Arial, sans-serif;
+    font-family: "EB Garamond", serif;
 }
 
 a {
     color: var(--link-color, #007bff);
     text-decoration: none;
 }
+
 
 
 a:hover {
@@ -347,4 +348,22 @@ a:hover {
 .list-group-item-action:active {
   background-color: #0d6efd; /* ya da istediğiniz renk */
   color: #ffffff; 
+}
+
+.card{
+    border: #ffffff;
+    border-width: 10px;
+}
+.card-header a{
+    font-size: 20px !important;
+    font-weight: bold;
+}
+.action{
+    font-size: 0.9rem;
+}
+.action i{
+    font-size: 0.9rem;
+}
+.action-user{
+    font-size: 1.1rem;
 }

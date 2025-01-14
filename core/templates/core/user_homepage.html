@@ -37,17 +37,17 @@
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
                         <!-- Kısaltılmış Yanıt -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|tanim_link }}...</p>
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|tanim_link|reference_link }}...</p>
                         <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link }}</p>
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"|tanim_link|reference_link }}</p>
                         <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
+                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
                     {% endif %}
                     <!-- Actions and User Info -->
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="action d-flex justify-content-between align-items-center">
                         <!-- Left: Voting and Save -->
                         <div>
                             <!-- Upvote Button and Count -->
@@ -81,7 +81,7 @@
                         <!-- Right: User Info and Date -->
                         <div class="text-end">
                             <small class="text-muted me-2">
-                                <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                                <a class="action-user" href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                                 | {{ answer.created_at|date:"Y-m-d H:i" }}
                                 {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
                                     {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
@@ -257,10 +257,23 @@
 
 {% include 'core/link_modal.html' %}
 {% include 'core/reference_modal.html' %}
+{% include 'core/kaynak_ref.html' %}
 
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        // Hepsini Bootstrap Tooltip olarak başlat
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    </script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {

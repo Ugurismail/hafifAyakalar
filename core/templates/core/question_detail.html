@@ -74,7 +74,7 @@
                     {% if answer.answer_text|length > 500 %}
                         <!-- KISALTILMIŞ YANIT -->
                         <p class="answer-text" id="answer-summary-{{ answer.id }}">
-                            {{ answer.answer_text|linebreaksbr|slice:":500"|tanim_link|reference_link }}...
+                            {{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}...
                         </p>
                         <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
                             {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link|reference_link }}

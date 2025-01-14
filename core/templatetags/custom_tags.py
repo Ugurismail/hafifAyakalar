@@ -35,10 +35,10 @@ def ref_link(text):
         try:
             q = Question.objects.get(question_text__iexact=ref_text)
             url = reverse('question_detail', args=[q.id])
-            return f'<a href="{url}" style="color: #0d6efd; text-decoration: none;">{ref_text}</a>'
+            return f'<a href="{url}" style="text-decoration: none;">{ref_text}</a>'
         except Question.DoesNotExist:
             create_url = reverse('add_question_from_search') + f'?q={ref_text}'
-            return f'<a href="{create_url}" style="color: #0d6efd; text-decoration: none;">{ref_text}</a>'
+            return f'<a href="{create_url}" text-decoration: none;">{ref_text}</a>'
 
     return re.sub(pattern, replace_ref, text)
 
@@ -71,7 +71,7 @@ def tanim_link(text):
             # Bootstrap popover kullanacaksan -> data-bs-toggle="popover" data-bs-content="..."
             # Renk için style ekleyebilirsin
             return f'<span class="tanim-popover" ' \
-                   f'style="color: green; text-decoration: underline; cursor: pointer;" ' \
+                   f'style="text-decoration: underline; cursor: pointer;" ' \
                    f'data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" ' \
                    f'data-bs-content="{definition.definition_text}">{word}</span>'
         else:

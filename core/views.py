@@ -1915,11 +1915,11 @@ def download_entries_json(request, username):
     return response
 
 
-# from django.http import JsonResponse
-# from django.shortcuts import get_object_or_404
-# from django.contrib.auth.models import User
-# from .models import Question, Answer
-# def download_entries_json(request, username):
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
+from .models import Question, Answer
+def download_entries_json(request, username):
     """
     Kullanıcının oluşturduğu tüm soruları, her sorunun altında
     bulunan tüm yanıtları (tüm kullanıcılardan) JSON formatında döndürür.
