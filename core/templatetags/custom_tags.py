@@ -179,12 +179,13 @@ def tanim_link(text, answer_user=None):
         if def_qs.exists():
             definition_text = def_qs.first().definition_text
             # Tooltip HTML
-            html = (
-                f'<span class="tanim-tooltip" '
-                f'data-bs-toggle="tooltip" data-bs-placement="top" '
-                f'title="{definition_text}" '
-                f'style="cursor: pointer; text-decoration: underline;">'
-                f'{q_text}</span>'
+            html = (f'<span '
+                    f'data-bs-toggle="tooltip" '
+                    f'data-bs-placement="top" '
+                    f'data-bs-custom-class="my-tanim-tooltip" '
+                    f'title="{definition_text}" '
+                    f'style="text-decoration: underline; cursor: pointer;">'
+                    f'{q_text}</span>'
             )
             return html
         else:

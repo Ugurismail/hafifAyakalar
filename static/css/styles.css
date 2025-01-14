@@ -371,3 +371,16 @@ a:hover {
 .action-user{
     font-size: 1.1rem;
 }
+
+.tooltip.my-tanim-tooltip .tooltip-inner {
+    background-color: #fbeee0; /* Hafif turuncu/pastel */
+    color: #333;              /* Metin koyu */
+    font-size: 15px;          /* Biraz büyük */
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  /* Tooltip'in arrow (ok) rengi */
+  .tooltip.my-tanim-tooltip .tooltip-arrow::before {
+    background-color: #fbeee0;
+  }
