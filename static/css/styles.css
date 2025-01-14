@@ -6,6 +6,7 @@ body {
     font-family: "EB Garamond", serif;
 }
 
+
 a {
     color: var(--link-color, #007bff);
     text-decoration: none;
@@ -222,6 +223,9 @@ a:hover {
     position: relative;
 }
 
+.container {
+    max-width: 100%;
+}
 #search-results,
 #user-search-results {
     position: absolute;

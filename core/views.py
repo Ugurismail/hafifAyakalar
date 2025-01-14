@@ -370,7 +370,7 @@ def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     answers = question.answers.all()
 
-    
+    definitions = Definition.objects.filter(question=question).select_related('user')
     # **Form Oluşturma ve İşleme Bölümü**
     if request.method == 'POST':
         form = AnswerForm(request.POST)
@@ -437,6 +437,7 @@ def question_detail(request, question_id):
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
         'all_questions': all_questions,
+        'definitions': definitions,
     }
     return render(request, 'core/question_detail.html', context)
 
@@ -1876,43 +1877,6 @@ def get_references(request):
             'display': str(ref),  # Örn. Bellah, R. (2017) - bellah ve din
         })
     return JsonResponse({'references': data}, status=200)
-
-from django.http import HttpResponse
-import json
-
-def download_entries_json(request, username):
-    user = get_object_or_404(User, username=username)
-    if request.user != user and not request.user.is_superuser:
-        return HttpResponse('Yetki yok', status=403)
-
-    questions = Question.objects.filter(user=user).order_by('created_at')
-    data = []
-    for q in questions:
-        answers_data = []
-        for ans in q.answers.all().order_by('created_at'):
-            answers_data.append({
-                'answer_text': ans.answer_text,
-                'answer_user': ans.user.username,
-                'answer_created_at': ans.created_at.isoformat()
-            })
-        data.append({
-            'question_text': q.question_text,
-            'question_created_at': q.created_at.isoformat(),
-            'answers': answers_data
-        })
-
-    final_data = {
-        'username': user.username,
-        'questions': data
-    }
-
-    # JSON’u stringe çevir
-    content = json.dumps(final_data, ensure_ascii=False, indent=2)
-
-    # "application/json" veya "application/octet-stream"
-    response = HttpResponse(content, content_type='application/json')
-    response['Content-Disposition'] = f'attachment; filename="{user.username}_entries.json"'
-    return response
 
 
 from django.http import JsonResponse

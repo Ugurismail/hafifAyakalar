@@ -74,16 +74,16 @@
                     {% if answer.answer_text|length > 500 %}
                         <!-- KISALTILMIŞ YANIT -->
                         <p class="answer-text" id="answer-summary-{{ answer.id }}">
-                            {{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}...
+                            {{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|ref_link|markdownify:"default"|tanim_link:answer.user|reference_link }}...
                         </p>
                         <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                            {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link|reference_link }}
+                            {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link:answer.user|reference_link }}
                         </p>
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- KISA YANIT -->
                         <p class="answer-text">
-                            {{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}
+                            {{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link:answer.user|reference_link }}
                         </p>
                     {% endif %}
                     
