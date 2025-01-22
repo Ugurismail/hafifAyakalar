@@ -49,6 +49,14 @@
                         <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2">
                             <i class="bi bi-box-arrow-in-up-right"></i> hede
                         </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn"
+                                title="Tanım">
+                            <i class="bi bi-book"></i> Tanım
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                            id="gosterKaynakModalButonu" title="Kaynak">
+                            <i class="bi bi-journal"></i> Kaynak
+                        </button>
                     </div>
                     {{ answer_form.answer_text }}
                 </div>
@@ -60,14 +68,222 @@
 </div>
 
 
-<!-- Modals -->
+
+<!-- TANIM MODAL -->
+<div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- Modal header -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="definitionModalLabel">Tanım</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+  
+        <!-- Modal body with tabs -->
+        <div class="modal-body">
+          <ul class="nav nav-tabs" id="definitionTab" role="tablist">
+            <!-- 1) TANIM YAP -->
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab"
+                      data-bs-target="#tanim-yap" type="button" role="tab"
+                      aria-controls="tanim-yap" aria-selected="true">
+                Tanım Yap
+              </button>
+            </li>
+            <!-- 2) TANIMLARIM -->
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab"
+                      data-bs-target="#tanim-bul" type="button" role="tab"
+                      aria-controls="tanim-bul" aria-selected="false">
+                Tanımlarım
+              </button>
+            </li>
+            <!-- 3) GENEL TANIM -->
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="genel-tanim-tab" data-bs-toggle="tab"
+                      data-bs-target="#genel-tanim" type="button" role="tab"
+                      aria-controls="genel-tanim" aria-selected="false">
+                Genel Tanımlar
+              </button>
+            </li>
+          </ul>
+  
+          <!-- Tab Content -->
+          <div class="tab-content mt-3" id="definitionTabContent">
+            
+            <!-- TAB 1: TANIM YAP -->
+            <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
+              <form id="createDefinitionForm">
+                <div class="mb-3">
+                  <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
+                  <textarea class="form-control" id="definitionText" name="definition_text"
+                            rows="3" maxlength="1000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+              </form>
+            </div>
+            
+            <!-- TAB 2: TANIMLARIM -->
+            <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
+              <div class="mb-3">
+                <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
+                <select id="definitionSelect" class="form-select">
+                  <option value="">Bir tanım seçiniz...</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
+            </div>
+            
+            <!-- TAB 3: GENEL TANIM -->
+            <div class="tab-pane fade" id="genel-tanim" role="tabpanel" aria-labelledby="genel-tanim-tab">
+              <div class="mb-3">
+                <label for="allDefSearchInput" class="form-label">Tüm Tanımlarda Ara</label>
+                <input type="text" class="form-control" id="allDefSearchInput"
+                       placeholder="Arama terimi giriniz..." />
+              </div>
+              <ul class="list-group" id="allDefinitionsList">
+                <!-- JS ile doldurulacak -->
+              </ul>
+              <button type="button" class="btn btn-success mt-2" id="insertGlobalDefinitionBtn">
+                Seçili Tanımı Ekle
+              </button>
+            </div>
+  
+          </div><!-- tab-content -->
+        </div><!-- modal-body -->
+      </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+  </div>
 {% include 'core/link_modal.html' %}
+{% include 'core/kaynak_ref.html' %}
 {% include 'core/reference_modal.html' %}
 
 
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
+<script src="{% static 'js/vote_save.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        // Hepsini Bootstrap Tooltip olarak başlat
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // (A) Kaynak Modal Elemanları
+      const gosterKaynakModalButonu = document.getElementById('gosterKaynakModalButonu');
+      const kaynakRefModalElem      = document.getElementById('kaynakRefModal');
+      const kaynakRefModal          = new bootstrap.Modal(kaynakRefModalElem);
+    
+      // (B) “Kaynak Ekle/Seç” sekmeleri
+      const kaynakEkleTab = document.getElementById('kaynak-ekle-tab');
+      const kaynakSecTab  = document.getElementById('kaynak-sec-tab');
+    
+      // (C) Kaynak Formu ve Listesi
+      const kaynakForm        = document.getElementById('kaynakForm');
+      const kaynakListesi     = document.getElementById('kaynakListesi');
+      const seciliKaynakEkleBtn = document.getElementById('seciliKaynakEkleBtn');
+    
+      // (1) Butona basınca modalı aç, “Kaynak Ekle” sekmesini göster
+      gosterKaynakModalButonu.addEventListener('click', function() {
+        kaynakRefModal.show();
+        kaynakEkleTab.click(); // Her açıldığında ilk sekmede başlasın
+      });
+    
+      // (2) Kaynak Formu: create_reference endpoint’ine POST
+      kaynakForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let formData = new FormData(kaynakForm);
+    
+        fetch("{% url 'create_reference' %}", {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': "{{ csrf_token }}",
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert("Kaynak başarıyla eklendi!");
+            kaynakForm.reset();
+            // Otomatik olarak "Kaynak Seç" sekmesine geç
+            kaynakSecTab.click();
+            kaynaklariListele();
+          } else {
+            console.log(data.errors);
+            alert("Form hatası: " + JSON.stringify(data.errors));
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Bir hata oluştu.");
+        });
+      });
+    
+      // (3) “Kaynak Seç” sekmesine tıklanınca mevcut kayıtlı kaynakları getir
+      kaynakSecTab.addEventListener('click', function() {
+        kaynaklariListele();
+      });
+    
+      function kaynaklariListele() {
+        fetch("{% url 'get_references' %}")
+          .then(response => response.json())
+          .then(data => {
+            kaynakListesi.innerHTML = '';
+            data.references.forEach(ref => {
+              let label = document.createElement('label');
+              label.classList.add('list-group-item');
+              label.innerHTML = `
+                <input type="radio" name="kaynakSecimi" value="${ref.id}" class="form-check-input me-2" />
+                <span>${ref.display}</span>
+              `;
+              kaynakListesi.appendChild(label);
+            });
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Liste yüklenirken hata oluştu.");
+          });
+      }
+    
+      // (4) Seçilen Kaynağı “(kaynak:ID)” olarak textarea’ya ekle
+      seciliKaynakEkleBtn.addEventListener('click', function() {
+        const secili = document.querySelector('input[name="kaynakSecimi"]:checked');
+        if (!secili) {
+          alert("Lütfen bir kaynak seçin.");
+          return;
+        }
+        const refId = secili.value;
+        const answerTextArea = document.getElementById('id_answer_text');
+        if (!answerTextArea) {
+          alert("Yanıt textarea bulunamadı!");
+          return;
+        }
+        // Metin sonuna [ (kaynak:REF_ID) ] ekle
+        answerTextArea.value += ` (kaynak:${refId}) `;
+        kaynakRefModal.hide();
+      });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+      var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+          html: true,
+          container: 'body'
+        })
+      })
+    });
+</script>
 {% endblock %}
 
