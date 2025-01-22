@@ -174,23 +174,19 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 });
 
-// 1) Tanım butonuna tıklayınca modal aç
 document.addEventListener('DOMContentLoaded', function() {
   
     // ----------------------------------------------------------------
-    // 1) Genel Değişkenler ve Yardımcı Fonksiyon
+    // A) Ortak Elemanlar ve Yardımcı Fonksiyonlar
     // ----------------------------------------------------------------
-    // Modal referansı
     var defModal = new bootstrap.Modal(document.getElementById('definitionModal'));
     
-    // Django'da CSRF token'ı cookie'den almak için fonksiyon
     function getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
         for (let i = 0; i < cookies.length; i++) {
           const cookie = cookies[i].trim();
-          // Cookie bu isimle başlıyor mu?
           if (cookie.substring(0, name.length + 1) === (name + '=')) {
             cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
             break;
@@ -201,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ----------------------------------------------------------------
-    // 2) "Tanım" Modalını Göster Butonu
+    // B) "Tanım" Modalını Açan Buton
     // ----------------------------------------------------------------
     document.getElementById('showDefinitionModalBtn').addEventListener('click', function(e) {
       e.preventDefault();
@@ -209,15 +205,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   
     // ----------------------------------------------------------------
-    // 3) "Tanım Yap" Sekmesi => Form Submit => createDefinition endpoint'ine POST
+    // C) "Tanım Yap" (1. sekme): Form submit => createDefinition endpoint
     // ----------------------------------------------------------------
     var createDefinitionForm = document.getElementById('createDefinitionForm');
     createDefinitionForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Tanım metnini al
       var definitionText = document.getElementById('definitionText').value;
-      // Hangi soru altına tanım yapıldığını question_id hidden input’tan al
       var questionId = document.getElementById('answer_form_question_id').value; 
   
       fetch(`/create-definition/${questionId}/`, {
@@ -232,90 +226,160 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
          if(data.status === 'success') {
            alert("Tanım kaydedildi!");
-           // Modalı kapat
            let modalInstance = bootstrap.Modal.getInstance(defModal._element);
            if (modalInstance) {
              modalInstance.hide();
            }
-           // Sayfayı yenile (yeni tanım eklensin, answer kısmında da görebilirsin)
            location.reload();
-           // Formu sıfırla
            document.getElementById('definitionText').value = "";
          } else {
            alert("Hata oluştu");
          }
       })
-      .catch((err) => {
+      .catch(err => {
         console.error(err);
-        alert("Sunucu hatası veya ağ hatası oluştu.");
+        alert("Sunucu veya ağ hatası oluştu.");
       });
     });
   
     // ----------------------------------------------------------------
-    // 4) "Tanım Bul" Sekmesine Geçince => Kullanıcının Tanımlarını GET ile çek
+    // D) "Tanımlarım" (2. sekme): show.bs.tab => /get-user-definitions/
     // ----------------------------------------------------------------
     document.getElementById('tanim-bul-tab').addEventListener('show.bs.tab', function(e) {
-      fetch('/get-user-definitions/', {
-        method: 'GET'
-      })
-      .then(res => res.json())
-      .then(data => {
-        var selectEl = document.getElementById('definitionSelect');
-        // Eski seçenekleri temizle
-        selectEl.innerHTML = '<option value="">Bir tanım seçiniz...</option>';
-  
-        // Dönen tanımları <option> şeklinde ekle
-        // data.definitions => [{id, question_id, question_text, definition_text}, ...]
-        data.definitions.forEach(function(item) {
-           // Örnek: "Özgürlük" veya "Özgürlük - (çok iyidir)" diye göstermek istersen
-           // opt.textContent = item.question_text + " - " + item.definition_text.substring(0, 30);
-           // Ama sadece question_text göstermek istersen:
-           var displayLabel = item.question_text;
-  
-           var opt = document.createElement('option');
-           // JS objesini JSON string’e çevirip 'value'ya koyuyoruz.
-           // Sonra seçildiğinde "JSON.parse(...)" ile geri alacağız
-           opt.value = JSON.stringify(item);
-           opt.textContent = displayLabel;
-           selectEl.appendChild(opt);
+      fetch('/get-user-definitions/', { method: 'GET' })
+        .then(res => res.json())
+        .then(data => {
+          var selectEl = document.getElementById('definitionSelect');
+          selectEl.innerHTML = '<option value="">Bir tanım seçiniz...</option>';
+          data.definitions.forEach(function(item) {
+             // item => {id, question_id, question_text, definition_text}
+             var opt = document.createElement('option');
+             opt.value = JSON.stringify(item);
+             // İster "Özgürlük (çok iyidir...)" gibi gösterebilirsin
+             opt.textContent = item.question_text;
+             selectEl.appendChild(opt);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Tanımlar alınırken hata oluştu.");
         });
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Tanımlar alınırken hata oluştu.");
-      });
     });
   
-    // ----------------------------------------------------------------
-    // 5) "Tamam" Butonuna Basınca => Seçili Tanımı Alıp Yanıt Textarea'sına (tanim:...) Ekle
-    // ----------------------------------------------------------------
+    // (D.1) "Tamam" butonu => Seçili tanımı alıp (tanim:kelime:ID) ekle
     document.getElementById('insertDefinitionBtn').addEventListener('click', function(e) {
       var selectEl = document.getElementById('definitionSelect');
       if(!selectEl.value) return;
-  
-      // Seçili option’ın value’su JSON string => parse ediyoruz
       var item = JSON.parse(selectEl.value);
-      // item => {id, question_id, question_text, definition_text, ...}
-      var questionWord = item.question_text;  // "Özgürlük" vb.
-      var definitionId = item.id;            // 42 vb.
+      var questionWord = item.question_text;
+      var definitionId = item.id;
   
-      // Metin içine (tanim:Özgürlük:42) ekleyeceğiz
-      var insertStr = `(tanim:${questionWord}:${definitionId})`;
-  
-      // Ana cevabın yazıldığı textarea (örnek: name="answer_text")
       var answerTextarea = document.querySelector('textarea[name="answer_text"]');
       if(!answerTextarea) {
         alert("Yanıt textarea bulunamadı!");
         return;
       }
   
-      // Sonuna ekleyelim
+      var insertStr = `(tanim:${questionWord}:${definitionId})`;
       answerTextarea.value += " " + insertStr; 
-  
-      // Sonra modalı kapat
       defModal.hide();
     });
   
-  }); // DOMContentLoaded sonu
+    // ----------------------------------------------------------------
+    // E) "Genel Tanımlar" (3. sekme): Tüm tanımlar + Arama
+    // ----------------------------------------------------------------
   
+    // Eleman referansları
+    var allDefSearchInput = document.getElementById('allDefSearchInput');
+    var allDefinitionsList = document.getElementById('allDefinitionsList');
+    var insertGlobalDefinitionBtn = document.getElementById('insertGlobalDefinitionBtn');
+  
+    // (E.1) 3. sekme açıldığında (show.bs.tab)
+    document.getElementById('genel-tanim-tab').addEventListener('show.bs.tab', function(e) {
+      // Sekme ilk açıldığında "arama kutusu boş" => tüm tanımları listele
+      loadGlobalDefinitions("");
+    });
+  
+    // (E.2) Arama kutusuna yazıldıkça => loadGlobalDefinitions( q )
+    allDefSearchInput.addEventListener('keyup', function(e) {
+      var query = allDefSearchInput.value.trim();
+      loadGlobalDefinitions(query);
+    });
+  
+    // (E.3) Tanımları listeleme fonksiyonu
+    function loadGlobalDefinitions(query) {
+      // /get-all-definitions/?q=... endpoint'ine GET request
+      var url = '/get-all-definitions/';
+      if(query) {
+        url += '?q=' + encodeURIComponent(query);
+      }
+  
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          // data.definitions => [{id, question_text, definition_text, username}, ...]
+          // Listeyi dolduralım
+          allDefinitionsList.innerHTML = '';
+          if(data.definitions.length === 0) {
+            allDefinitionsList.innerHTML = '<li class="list-group-item text-muted">Hiç tanım bulunamadı.</li>';
+            return;
+          }
+  
+          data.definitions.forEach(function(d) {
+            // Her tanımı <li> içinde radio buton ile gösteriyoruz
+            // => <input type="radio" name="globalDef" value='{"id":..., "question_text":"...", ...}' />
+            // Sorunun metni + tanımın kısaltılmış versiyonu + kullanıcı adını gösterebilirsin
+            var li = document.createElement('li');
+            li.classList.add('list-group-item');
+  
+            // JSON veriyi saklamak için string’e çevir
+            let itemJson = JSON.stringify(d);
+            let shortDef = d.definition_text;
+            if(shortDef.length > 50) {
+              shortDef = shortDef.substring(0, 50) + '...';
+            }
+  
+            li.innerHTML = `
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="globalDef" value='${itemJson}'>
+                <label class="form-check-label">
+                  <strong>${d.question_text}</strong> <em>(${shortDef})</em> 
+                  <small class="text-muted">- by ${d.username}</small>
+                </label>
+              </div>
+            `;
+            allDefinitionsList.appendChild(li);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Genel tanımlar yüklenirken hata oluştu.");
+        });
+    }
+  
+    // (E.4) "Seçili Tanımı Ekle" butonuna tıklayınca
+    insertGlobalDefinitionBtn.addEventListener('click', function(e) {
+      // Seçili radio butonunu bul
+      var checkedRadio = document.querySelector('input[name="globalDef"]:checked');
+      if(!checkedRadio) {
+        alert("Lütfen bir tanım seçin.");
+        return;
+      }
+      var item = JSON.parse(checkedRadio.value);
+      // item => { id, question_text, definition_text, username }
+  
+      var answerTextarea = document.querySelector('textarea[name="answer_text"]');
+      if(!answerTextarea) {
+        alert("Yanıt textarea bulunamadı!");
+        return;
+      }
+  
+      // (tanim:kelime:ID)
+      var insertStr = `(tanim:${item.question_text}:${item.id})`;
+      answerTextarea.value += " " + insertStr;
+  
+      defModal.hide();
+    });
+  
+  });
   

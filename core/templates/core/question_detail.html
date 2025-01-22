@@ -359,6 +359,7 @@
         <!-- Modal body with tabs -->
         <div class="modal-body">
           <ul class="nav nav-tabs" id="definitionTab" role="tablist">
+            <!-- 1) TANIM YAP -->
             <li class="nav-item" role="presentation">
               <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab"
                       data-bs-target="#tanim-yap" type="button" role="tab"
@@ -366,15 +367,27 @@
                 Tanım Yap
               </button>
             </li>
+            <!-- 2) TANIMLARIM -->
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab"
                       data-bs-target="#tanim-bul" type="button" role="tab"
                       aria-controls="tanim-bul" aria-selected="false">
-                Tanım Bul
+                Tanımlarım
+              </button>
+            </li>
+            <!-- 3) GENEL TANIM -->
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="genel-tanim-tab" data-bs-toggle="tab"
+                      data-bs-target="#genel-tanim" type="button" role="tab"
+                      aria-controls="genel-tanim" aria-selected="false">
+                Genel Tanımlar
               </button>
             </li>
           </ul>
+  
+          <!-- Tab Content -->
           <div class="tab-content mt-3" id="definitionTabContent">
+            
             <!-- TAB 1: TANIM YAP -->
             <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
               <form id="createDefinitionForm">
@@ -386,23 +399,39 @@
                 <button type="submit" class="btn btn-primary">Kaydet</button>
               </form>
             </div>
-  
-            <!-- TAB 2: TANIM BUL -->
+            
+            <!-- TAB 2: TANIMLARIM -->
             <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
               <div class="mb-3">
                 <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
                 <select id="definitionSelect" class="form-select">
                   <option value="">Bir tanım seçiniz...</option>
-                  <!-- JavaScript ile doldurulacak -->
                 </select>
               </div>
               <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-</div>
+            
+            <!-- TAB 3: GENEL TANIM -->
+            <div class="tab-pane fade" id="genel-tanim" role="tabpanel" aria-labelledby="genel-tanim-tab">
+              <div class="mb-3">
+                <label for="allDefSearchInput" class="form-label">Tüm Tanımlarda Ara</label>
+                <input type="text" class="form-control" id="allDefSearchInput"
+                       placeholder="Arama terimi giriniz..." />
+              </div>
+              <ul class="list-group" id="allDefinitionsList">
+                <!-- JS ile doldurulacak -->
+              </ul>
+              <button type="button" class="btn btn-success mt-2" id="insertGlobalDefinitionBtn">
+                Seçili Tanımı Ekle
+              </button>
+            </div>
+  
+          </div><!-- tab-content -->
+        </div><!-- modal-body -->
+      </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+  </div>
+  
 {% endblock %}
 
 {% block extra_js %}

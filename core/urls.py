@@ -84,6 +84,7 @@ urlpatterns = [
     path('get-user-definitions/', views.get_user_definitions, name='get_user_definitions'),
     path('definition/<int:definition_id>/edit/', views.edit_definition, name='edit_definition'),
     path('definition/<int:definition_id>/delete/', views.delete_definition, name='delete_definition'),
+    path('get-all-definitions/', views.get_all_definitions, name='get_all_definitions'),
     path('create-reference/', views.create_reference, name='create_reference'),
     path('get-references/', views.get_references, name='get_references'),
     # path('profile/<str:username>/download_entries/', views.download_entries, name='download_entries'),

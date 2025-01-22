@@ -1837,6 +1837,32 @@ def delete_definition(request, definition_id):
     # “GET” istek geldiğinde doğrulama penceresi (confirm) gösterebilirsiniz.
     return render(request, 'core/confirm_delete_definition.html', {'definition': definition})
 
+@login_required
+def get_all_definitions(request):
+    """
+    Tüm kullanıcıların tanımlarını JSON döndürür.
+    ?q= parametresi ile hem question_text hem definition_text içinde arama yapılabilir.
+    """
+    q = request.GET.get('q', '').strip()
+    defs = Definition.objects.select_related('question', 'user').all()
+
+    if q:
+        defs = defs.filter(
+            Q(definition_text__icontains=q) |
+            Q(question__question_text__icontains=q) |
+            Q(user__username__icontains=q)
+        )
+
+    data = []
+    for d in defs:
+        data.append({
+            'id': d.id,
+            'question_text': d.question.question_text,
+            'definition_text': d.definition_text,
+            'username': d.user.username
+        })
+    
+    return JsonResponse({'definitions': data}, status=200)
 
 @require_POST
 def create_reference(request):
