@@ -373,3 +373,10 @@ a:hover {
 .icon-black-white{
     color: black;
 }
+
+.preserve-lines {
+    white-space: pre-wrap;    /* Satır sonlarını ve boşlukları koru, ancak satırları da ihtiyaç halinde kır. */
+    /* İsteğe bağlı */
+    word-wrap: break-word;
+    text-align: justify;    /* Uzun kelimeleri satır sonlarında kırabilsin. */
+  }
