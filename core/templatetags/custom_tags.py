@@ -57,29 +57,47 @@ def split(value, separator=' '):
 @register.filter
 def tanim_link(text):
     """
-    Metin içerisinde (tanim:Özgürlük) gibi kalıpları bulup, popover linkine dönüştürür.
+    Metin içerisinde (tanim:Özgürlük:42) kalıplarını yakalayıp, popover oluşturur.
     """
-    pattern = r'\(tanim:([^)]+)\)'  # (tanim:kelime)
-    def replace_tanim(match):
-        word = match.group(1).strip()
-        # word’e karşılık veritabanında bir Definition var mı? 
-        # NOT: user’a göre, ya da en güncel tanımı alabilirsin. 
-        # Kolay olması açısından: 
-        definition = Definition.objects.filter(question__question_text__iexact=word).order_by('-created_at').first()
-        if definition:
-            # HTML popover oluştur
-            # Bootstrap popover kullanacaksan -> data-bs-toggle="popover" data-bs-content="..."
-            # Renk için style ekleyebilirsin
-            return f'<span class="tanim-popover" ' \
-                   f'style="text-decoration: underline; cursor: pointer;" ' \
-                   f'data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" ' \
-                   f'data-bs-content="{definition.definition_text}">{word}</span>'
-        else:
-            # Tanım yoksa, normal göster
-            return word
+    if not text:
+        return ""
 
-    return mark_safe(re.sub(pattern, replace_tanim, text))
+    # Yeni pattern: (tanim:kelime:ID)
+    #  Grup 1 => kelime
+    #  Grup 2 => id
+    pattern = re.compile(r'\(tanim:([^:]+):(\d+)\)')
 
+    def replacer(match):
+        question_word = match.group(1).strip()  # "Özgürlük"
+        def_id_str    = match.group(2).strip()  # "42"
+
+        try:
+            definition = Definition.objects.get(id=def_id_str)
+            # Tanım metni
+            def_text   = definition.definition_text
+            # (İstersen "definition.user.username" vs. de popover’a ekleyebilirsin.)
+
+            # HTML popover
+            # Bootstrap 5: data-bs-toggle="popover" data-bs-content="..."
+            # Hover/focus ile açtırmak için -> data-bs-trigger="hover focus"
+            return f'''<span class="tanim-popover" 
+                          style="text-decoration:underline; cursor:pointer;"
+                          data-bs-toggle="popover" 
+                          data-bs-placement="top" 
+                          data-bs-trigger="hover focus"
+                          data-bs-title="{question_word}"
+                          data-bs-content="{def_text}">
+                          {question_word}
+                       </span>'''
+        except Definition.DoesNotExist:
+            # ID bulunamadıysa => orijinal metni döndürmek yerine 
+            # plain text olarak "kelime" döndürebiliriz veya "Tanım yok" diyen bir span.
+            return question_word
+
+    # text içinde tüm (tanim:word:id) kalıplarını replacer ile değiştir.
+    new_text = pattern.sub(replacer, text)
+
+    return mark_safe(new_text)
 
 
 @register.filter

@@ -176,20 +176,49 @@ document.addEventListener('DOMContentLoaded', function(){
 
 // 1) Tanım butonuna tıklayınca modal aç
 document.addEventListener('DOMContentLoaded', function() {
+  
+    // ----------------------------------------------------------------
+    // 1) Genel Değişkenler ve Yardımcı Fonksiyon
+    // ----------------------------------------------------------------
+    // Modal referansı
     var defModal = new bootstrap.Modal(document.getElementById('definitionModal'));
+    
+    // Django'da CSRF token'ı cookie'den almak için fonksiyon
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          // Cookie bu isimle başlıyor mu?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    
+    // ----------------------------------------------------------------
+    // 2) "Tanım" Modalını Göster Butonu
+    // ----------------------------------------------------------------
     document.getElementById('showDefinitionModalBtn').addEventListener('click', function(e) {
       e.preventDefault();
       defModal.show();
     });
   
-    // 2) TANIM YAP: formu submit edince createDefinition endpoint’ine POST
+    // ----------------------------------------------------------------
+    // 3) "Tanım Yap" Sekmesi => Form Submit => createDefinition endpoint'ine POST
+    // ----------------------------------------------------------------
     var createDefinitionForm = document.getElementById('createDefinitionForm');
     createDefinitionForm.addEventListener('submit', function(e) {
       e.preventDefault();
+      
+      // Tanım metnini al
       var definitionText = document.getElementById('definitionText').value;
-      // question_id'yi "page"de bir hidden input ya da data-attribute ile tut
+      // Hangi soru altına tanım yapıldığını question_id hidden input’tan al
       var questionId = document.getElementById('answer_form_question_id').value; 
-      // Yukarıda question.id'yi hidden olarak formda ya da sayfada bulunduruyor olmalısın
   
       fetch(`/create-definition/${questionId}/`, {
         method: 'POST',
@@ -203,20 +232,28 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
          if(data.status === 'success') {
            alert("Tanım kaydedildi!");
+           // Modalı kapat
            let modalInstance = bootstrap.Modal.getInstance(defModal._element);
            if (modalInstance) {
              modalInstance.hide();
            }
+           // Sayfayı yenile (yeni tanım eklensin, answer kısmında da görebilirsin)
            location.reload();
-           // modalda bu sekmeden çık istersen
+           // Formu sıfırla
            document.getElementById('definitionText').value = "";
          } else {
            alert("Hata oluştu");
          }
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Sunucu hatası veya ağ hatası oluştu.");
       });
     });
   
-    // 3) TANIM BUL sekmesine geçince user_definitions’ı çek
+    // ----------------------------------------------------------------
+    // 4) "Tanım Bul" Sekmesine Geçince => Kullanıcının Tanımlarını GET ile çek
+    // ----------------------------------------------------------------
     document.getElementById('tanim-bul-tab').addEventListener('show.bs.tab', function(e) {
       fetch('/get-user-definitions/', {
         method: 'GET'
@@ -224,37 +261,61 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(res => res.json())
       .then(data => {
         var selectEl = document.getElementById('definitionSelect');
+        // Eski seçenekleri temizle
         selectEl.innerHTML = '<option value="">Bir tanım seçiniz...</option>';
+  
+        // Dönen tanımları <option> şeklinde ekle
+        // data.definitions => [{id, question_id, question_text, definition_text}, ...]
         data.definitions.forEach(function(item) {
-           // question_text + definition_text istersen
+           // Örnek: "Özgürlük" veya "Özgürlük - (çok iyidir)" diye göstermek istersen
+           // opt.textContent = item.question_text + " - " + item.definition_text.substring(0, 30);
+           // Ama sadece question_text göstermek istersen:
+           var displayLabel = item.question_text;
+  
            var opt = document.createElement('option');
-           opt.value = JSON.stringify(item); // item objesini stringe çevirip tut
-           opt.textContent = item.question_text; 
+           // JS objesini JSON string’e çevirip 'value'ya koyuyoruz.
+           // Sonra seçildiğinde "JSON.parse(...)" ile geri alacağız
+           opt.value = JSON.stringify(item);
+           opt.textContent = displayLabel;
            selectEl.appendChild(opt);
         });
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Tanımlar alınırken hata oluştu.");
       });
     });
   
-    // 4) “Tamam” butonuna basınca => Seçili tanımı alıp yanıt textarea’sına ekle
+    // ----------------------------------------------------------------
+    // 5) "Tamam" Butonuna Basınca => Seçili Tanımı Alıp Yanıt Textarea'sına (tanim:...) Ekle
+    // ----------------------------------------------------------------
     document.getElementById('insertDefinitionBtn').addEventListener('click', function(e) {
       var selectEl = document.getElementById('definitionSelect');
       if(!selectEl.value) return;
+  
+      // Seçili option’ın value’su JSON string => parse ediyoruz
       var item = JSON.parse(selectEl.value);
-      var questionWord = item.question_text;     // "özgürlük"
-      var definitionTxt = item.definition_text;  // "kısıtsızlıktır"
+      // item => {id, question_id, question_text, definition_text, ...}
+      var questionWord = item.question_text;  // "Özgürlük" vb.
+      var definitionId = item.id;            // 42 vb.
   
-      // Şimdi answer_text alanına eklemek:
+      // Metin içine (tanim:Özgürlük:42) ekleyeceğiz
+      var insertStr = `(tanim:${questionWord}:${definitionId})`;
+  
+      // Ana cevabın yazıldığı textarea (örnek: name="answer_text")
       var answerTextarea = document.querySelector('textarea[name="answer_text"]');
-      if(!answerTextarea) return; // safety
+      if(!answerTextarea) {
+        alert("Yanıt textarea bulunamadı!");
+        return;
+      }
   
-      // Metin içine "(tanim:özgürlük)" ekleriz. 
-      // Sonra template’te parse edip popover yapacağız.
-      var insertStr = `(tanim:${questionWord})`; 
+      // Sonuna ekleyelim
       answerTextarea.value += " " + insertStr; 
   
-      // Sonra modal kapanır
+      // Sonra modalı kapat
       defModal.hide();
     });
   
-  });
+  }); // DOMContentLoaded sonu
+  
   

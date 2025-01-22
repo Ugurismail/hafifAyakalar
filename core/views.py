@@ -1879,42 +1879,6 @@ def get_references(request):
 
 from django.http import HttpResponse
 import json
-
-def download_entries_json(request, username):
-    user = get_object_or_404(User, username=username)
-    if request.user != user and not request.user.is_superuser:
-        return HttpResponse('Yetki yok', status=403)
-
-    questions = Question.objects.filter(user=user).order_by('created_at')
-    data = []
-    for q in questions:
-        answers_data = []
-        for ans in q.answers.all().order_by('created_at'):
-            answers_data.append({
-                'answer_text': ans.answer_text,
-                'answer_user': ans.user.username,
-                'answer_created_at': ans.created_at.isoformat()
-            })
-        data.append({
-            'question_text': q.question_text,
-            'question_created_at': q.created_at.isoformat(),
-            'answers': answers_data
-        })
-
-    final_data = {
-        'username': user.username,
-        'questions': data
-    }
-
-    # JSON’u stringe çevir
-    content = json.dumps(final_data, ensure_ascii=False, indent=2)
-
-    # "application/json" veya "application/octet-stream"
-    response = HttpResponse(content, content_type='application/json')
-    response['Content-Disposition'] = f'attachment; filename="{user.username}_entries.json"'
-    return response
-
-
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User

@@ -72,20 +72,16 @@
             <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
-                        <!-- KISALTILMIŞ YANIT -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">
-                            {{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}...
-                        </p>
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                            {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link|reference_link }}
-                        </p>
-                        <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
-                    {% else %}
-                        <!-- KISA YANIT -->
-                        <p class="answer-text">
-                            {{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}
-                        </p>
-                    {% endif %}
+                    <!-- Kısaltılmış Yanıt -->
+                    <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|tanim_link|reference_link }}...</p>
+                    <!-- Tam Yanıt (Başlangıçta Gizli) -->
+                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"|tanim_link|reference_link }}</p>
+                    <!-- "Tamamını oku" Linki -->
+                    <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
+                {% else %}
+                    <!-- Kısa Yanıt -->
+                    <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
+                {% endif %}
                     
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
                     <div class="d-flex justify-content-between align-items-center">
@@ -588,4 +584,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+      var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+          html: true,
+          container: 'body'
+        })
+      })
+    });
+    </script>
 {% endblock %}
