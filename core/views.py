@@ -1991,8 +1991,6 @@ def get_all_definitions(request):
 
     return JsonResponse({'status': 'success', 'definitions': data}, status=200)
     
-
-
 @require_GET
 def search_definitions(request):
     query = request.GET.get('query', '').strip()

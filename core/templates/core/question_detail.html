@@ -74,14 +74,14 @@
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
                         <!-- Kısaltılmış Yanıt -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link| tanim_link:answer.user|reference_link }}...</p>
+                        <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500"|bkz_link| tanim_link:answer.user|reference_link }}...</p>
                         <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
+                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
                         <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
                         <!-- Kısa Yanıt -->
-                        <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
+                        <p class="answer-text">{{ answer.answer_text|bkz_link|markdownify:"default:0"| tanim_link:answer.user|reference_link }}</p>
                     {% endif %}
                     
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
@@ -105,9 +105,8 @@
                                 <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                     <i class="bi bi-pencil-square icon-black-white"></i>
                                 </a>
-                                <a href="#" class="ms-2 text-danger delete-answer-btn"
-                                   data-answer-id="{{ answer.id }}" title="Sil"
-                                   data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                <!-- Silme Butonu -->
+                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" data-delete-url="{% url 'delete_answer' answer.id %}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
                                     <i class="bi bi-trash icon-black-white"></i>
                                 </a>
                             {% endif %}
