@@ -12,7 +12,9 @@ a {
 }
 
 
-
+.container{
+    max-width: 100%;
+}
 a:hover {
     color: var(--link-hover-color, #0056b3);
     text-decoration: underline;
