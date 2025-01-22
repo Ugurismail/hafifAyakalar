@@ -22,7 +22,7 @@
             </ul>
             {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
         </div>
-
+        <div class="col-md-8">
         <!-- SORU DETAYI (ORTA) -->
         <input type="hidden" id="answer_form_question_id" value="{{ question.id }}">
         <div class="col-md-7">
@@ -66,6 +66,8 @@
                     </small>
                 </div>
             </div>
+</div>
+
 
             <!-- YANITLAR LİSTESİ -->
             {% for answer in answers %}
@@ -215,9 +217,8 @@
                 </div>
             </div>
         </div> <!-- col-md-7 -->
-
         <!-- SAĞ SÜTUN: ALT SORULAR -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>

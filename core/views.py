@@ -810,6 +810,7 @@ def user_settings(request):
 
 @login_required
 def add_starting_question(request):
+    all_questions = get_today_questions(request)
     if request.method == 'POST':
         form = StartingQuestionForm(request.POST)
         if form.is_valid():
@@ -829,7 +830,7 @@ def add_starting_question(request):
             return redirect('user_homepage')
     else:
         form = StartingQuestionForm()
-    return render(request, 'core/add_starting_question.html', {'form': form})
+    return render(request, 'core/add_starting_question.html', {'form': form, 'all_questions': all_questions})
 
 @login_required
 def vote(request):
