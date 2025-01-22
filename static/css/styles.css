@@ -12,6 +12,7 @@ a {
 }
 
 
+
 .container{
     max-width: 100%;
 }
@@ -361,11 +362,14 @@ a:hover {
     font-weight: bold;
 }
 .action{
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 .action i{
     font-size: 0.9rem;
 }
 .action-user{
     font-size: 1.1rem;
+}
+.icon-black-white{
+    color: black;
 }
