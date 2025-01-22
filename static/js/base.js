@@ -20,8 +20,11 @@ function getCookie(name) {
 }
 
 /**
- * Arama özelliğini tek bir dosyada toplayan kod
+ * Arama sonuçlarını global bir değişkende tutacağız,
+ * böylece Enter'a basıldığında bakabiliriz.
  */
+let lastSearchResults = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('search-input');
     var searchResults = document.getElementById('search-results');
@@ -31,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var currentFocus = -1;  
 
     searchInput.addEventListener('input', function() {
-        query = this.value;
+        query = this.value.trim();
         if (query.length > 0) {
             fetch('/search/?q=' + encodeURIComponent(query), {
                 headers: {
@@ -40,21 +43,22 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                // data.results => arama sonuçlarının JSON listesi
+                lastSearchResults = data.results;  // Global değişkende sakla
+
                 // Önceki sonuçları temizle
                 searchResults.innerHTML = '';
                 if (data.results.length > 0) {
                     data.results.forEach(function(item) {
                         var div = document.createElement('div');
                         div.classList.add('list-group-item');
-                        // list-group-item-action eklemek istersen, highlight için
-                        // div.classList.add('list-group-item-action');
                         
                         div.textContent = item.text;
                         div.dataset.type = item.type;
                         if (item.type === 'question') {
                             div.dataset.id = item.id;
                         } else if (item.type === 'user') {
-                            div.dataset.username = item.username;  // data-username özelliğini ekliyoruz
+                            div.dataset.username = item.username;
                         }
                         searchResults.appendChild(div);
                     });
@@ -81,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         } else {
             searchResults.style.display = 'none';
+            lastSearchResults = []; // Arama metni boşaldığında
         }
     });
 
@@ -90,9 +95,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (target.id === 'create-new-question') {
             event.preventDefault();
-            var query = searchInput.value.trim();
-            window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(query);
-        } else if (target.classList.contains('list-group-item')) {
+            var q = searchInput.value.trim();
+            window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(q);
+        } 
+        else if (target.classList.contains('list-group-item')) {
             var type = target.dataset.type;
             if (type === 'question') {
                 var id = target.dataset.id;
@@ -104,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Hide search results when clicking outside
+    // Tıklama sayfanın başka yerinde olursa arama sonuçlarını kapat
     document.addEventListener('click', function(event) {
         if (!event.target.closest('#search-input') && !event.target.closest('#search-results')) {
             searchResults.style.display = 'none';
@@ -112,12 +118,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     /**
-     * ======== OK TUŞLARI VE ENTER DESTEĞİ ========
+     * ========== OK TUŞLARI VE ENTER DESTEĞİ ==========
      */
     searchInput.addEventListener('keydown', function(e) {
         // Mevcut list-group-item'ları al
         var items = searchResults.querySelectorAll('.list-group-item');
-        if (!items.length) return;
+        if (!items.length && e.keyCode === 13) {
+            // Hiç sonuç yokken Enter => yeni başlık
+            e.preventDefault();
+            var q = searchInput.value.trim();
+            if (q) {
+                window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(q);
+            }
+            return;
+        }
 
         if (e.keyCode === 40) {
             // Aşağı ok (arrow down)
@@ -136,23 +150,38 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (e.keyCode === 13) {
             // Enter
             e.preventDefault();
+
+            // (1) Eğer bir öğe seçiliyse (klavyeyle gezerken "active" item)
             if (currentFocus > -1) {
-                // Seçili item'a tıklamayı simüle et
                 items[currentFocus].click();
-            } else {
-                // Hiçbir item seçili değilse 
-                // (isterseniz normal tam arama sayfasına gidebilirsiniz):
-                /*
-                var q = this.value.trim();
+                return;
+            }
+
+            // (2) Hiçbir öğe seçili değilse => Arama sonuçlarına bakalım
+            // "lastSearchResults" dizisinde arama sonuçları var
+            const questions = lastSearchResults.filter(r => r.type === 'question');
+
+            if (questions.length === 1) {
+                // Tek soru sonucu varsa, doğrudan oraya git
+                window.location.href = '/question/' + questions[0].id + '/';
+                return;
+            } else if (questions.length === 0) {
+                // Hiç soru yok => yeni başlık
+                var q = searchInput.value.trim();
                 if (q) {
-                  window.location.href = '/search/?q=' + encodeURIComponent(q);
+                    window.location.href = '/add_question_from_search/?q=' + encodeURIComponent(q);
                 }
-                */
+                return;
+            } else {
+                // Birden fazla sonuç varsa => kullanıcıdan seçim yapmasını bekle
+                // (İstersen ilkine gitmek için "questions[0]" yapabilirsin ama genelde
+                //  birden fazla sonuçta hangi başlığa gideceği belirsiz olur)
+                // Burada hiçbir şey yapmıyoruz veya "Lütfen bir seçim yapın" diyebiliriz.
+                return;
             }
         }
     });
 
-    // "highlightItem" fonksiyonu => tüm item'lardan .active kaldırır, seçiliye ekler
     function highlightItem(items) {
         // Hepsinden "active"i kaldır
         for (var i = 0; i < items.length; i++) {

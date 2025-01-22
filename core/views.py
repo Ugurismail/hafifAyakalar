@@ -550,6 +550,8 @@ def search(request):
             return render(request, 'core/search_results.html', context)
     else:
         return render(request, 'core/search_results.html', {})
+
+
 @login_required
 def add_question_from_search(request):
     all_questions = get_today_questions(request)
