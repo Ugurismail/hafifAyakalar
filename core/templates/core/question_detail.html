@@ -25,7 +25,7 @@
 
         <!-- SORU DETAYI (ORTA) -->
         <input type="hidden" id="answer_form_question_id" value="{{ question.id }}">
-        <div class="col-md-7">
+        <div class="col-md-8">
             <!-- SORU BAŞLIK + HARİTA LİNKİ -->
             <div class="d-flex justify-content-between align-items-center">
                 <h2>
@@ -72,23 +72,19 @@
             <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
-                        <!-- KISALTILMIŞ YANIT -->
-                        <p class="answer-text" id="answer-summary-{{ answer.id }}">
-                            {{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}...
-                        </p>
-                        <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                            {{ answer.answer_text|linebreaksbr|markdownify:"default:0"|tanim_link|reference_link }}
-                        </p>
+                        <!-- Kısaltılmış Yanıt -->
+                        <p class="answer-text preserve-lines" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500"|bkz_link|ref_link|tanim_link|reference_link }}...</p>
+                        <!-- Tam Yanıt (Başlangıçta Gizli) -->
+                        <p class="answer-text preserve-lines" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|bkz_link|ref_link|markdownify:"default:0"|tanim_link|reference_link }}</p>
+                        <!-- "Tamamını oku" Linki -->
                         <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                     {% else %}
-                        <!-- KISA YANIT -->
-                        <p class="answer-text">
-                            {{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}
-                        </p>
+                        <!-- Kısa Yanıt -->
+                        <p class="answer-text preserve-lines">{{ answer.answer_text|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
                     {% endif %}
                     
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="action d-flex justify-content-between align-items-center">
                         <div>
                             <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
                                data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
@@ -115,32 +111,34 @@
                                 </a>
                             {% endif %}
                         </div>
+                        <!-- Right: User Info and Date -->
                         <div class="text-end">
                             <small class="text-muted me-2">
-                                <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                                <a class="action-user" href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                                 | {{ answer.created_at|date:"Y-m-d H:i" }}
                                 {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
                                     {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
+                                        <!-- If the answer was updated on the same day, show only the time -->
                                         ~ {{ answer.updated_at|date:"H:i" }}
                                     {% else %}
+                                        <!-- If the answer was updated on a different day, show date and time -->
                                         ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
                                     {% endif %}
                                 {% endif %}
                             </small>
+                            <!-- Three Dots Menu -->
                             <div class="dropdown d-inline">
-                                <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}"
-                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
                                     &#8226;&#8226;&#8226;
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
                                     <li>
-                                        <button class="dropdown-item copy-link-btn"
-                                                data-url="{% url 'single_answer' question.id answer.id %}">
+                                        <a class="dropdown-item copy-link" href="#" data-question-id="{{ answer.question.id }}" data-answer-id="{{ answer.id }}">
                                             <i class="bi bi-link-45deg"></i> Linki Kopyala
-                                        </button>
+                                        </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}">
+                                        <a class="dropdown-item share-link" href="#" data-question-id="{{ answer.question.id }}" data-answer-id="{{ answer.id }}">
                                             <i class="bi bi-share"></i> Paylaş
                                         </a>
                                     </li>
@@ -151,10 +149,10 @@
                                                 <i class="bi bi-pin-angle"></i> Profil Sabitle
                                             </button>
                                         </form>
+                                        
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'send_message_from_answer' answer.id %}">
-                                            <i class="bi bi-envelope"></i> Mesaj Gönder
+                                    <li><a class="dropdown-item" href="{% url 'send_message_from_answer' answer.id %}">
+                                        <i class="bi bi-envelope"></i> Mesaj Gönder
                                         </a>
                                     </li>
                                 </ul>
@@ -221,7 +219,7 @@
         </div> <!-- col-md-7 -->
 
         <!-- SAĞ SÜTUN: ALT SORULAR -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
