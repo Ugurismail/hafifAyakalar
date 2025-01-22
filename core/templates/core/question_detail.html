@@ -38,7 +38,7 @@
             </div>
 
             <!-- SORUYA OY ve KAYDET -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="action d-flex justify-content-between align-items-center mb-1">
                 <div>
                     <a href="#"
                        class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
@@ -84,7 +84,7 @@
                 {% endif %}
                     
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="action d-flex justify-content-between align-items-center">
                         <div>
                             <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
                                data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
@@ -292,36 +292,10 @@
     </div>
 </div>
 
-<!-- PAYLAŞIM MODAL -->
-<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="shareModalLabel">Paylaş</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-      </div>
-      <div class="modal-body">
-        <ul class="list-group">
-            <li class="list-group-item">
-                <a href="#" id="shareTwitter" target="_blank">
-                    <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
-                </a>
-            </li>
-            <li class="list-group-item">
-                <a href="#" id="shareFacebook" target="_blank">
-                    <i class="bi bi-facebook"></i> Facebook ile Paylaş
-                </a>
-            </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Eski link_modal -->
+
 {% include 'core/link_modal.html' %}
 {% include 'core/kaynak_ref.html' %}
-<!-- Eski reference_modal (kalsın, KAYNAK MODAL) -->
 {% include 'core/reference_modal.html' %}
 
 <!-- Yanıt Silme Modal -->
@@ -432,6 +406,31 @@
     </div><!-- modal-dialog -->
   </div>
   
+ <!-- PAYLAŞIM MODAL -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="shareModalLabel">Paylaş</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-group">
+              <li class="list-group-item">
+                  <a href="#" id="shareTwitter" target="_blank">
+                      <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
+                  </a>
+              </li>
+              <li class="list-group-item">
+                  <a href="#" id="shareFacebook" target="_blank">
+                      <i class="bi bi-facebook"></i> Facebook ile Paylaş
+                  </a>
+              </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -624,5 +623,5 @@ document.addEventListener('DOMContentLoaded', function() {
         })
       })
     });
-    </script>
+</script>
 {% endblock %}

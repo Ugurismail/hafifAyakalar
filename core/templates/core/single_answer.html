@@ -25,7 +25,7 @@
         <!-- Orta Sütun: Soru Detayı ve Yanıtlar -->
         <div class="col-md-8">
             <!-- Soru Başlığı ve Harita İkonu -->
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="action d-flex justify-content-between align-items-center">
                 <h2>{{ question.question_text }}
                     <a href="{% url 'question_map' %}?question_id={{ question.id }}" title="Haritada Gör">
                         <i class="bi bi-geo-alt-fill"></i>
@@ -34,7 +34,7 @@
             </div>
 
             <!-- Soruya Oy Verme ve Kaydetme -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="action d-flex justify-content-between align-items-center mb-3">
                 <!-- Sol Kısım: Oy Verme ve Kaydetme -->
                 <div>
                     <a href="#" class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
@@ -64,9 +64,9 @@
             <!-- Odaklanılan Yanıt -->
             <div class="card mb-3">
                 <div class="card-body">
-                    <p class="answer-text">{{ focused_answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
+                    <p class="answer-text">{{ focused_answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
                     <!-- Oylar, Kaydet, vs. -->
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="action d-flex justify-content-between align-items-center">
                         <div>
                             <a href="#" class="vote-btn me-1 {% if focused_answer.user_vote_value == 1 %}voted-up{% endif %}"
                             data-content-type="answer" data-object-id="{{ focused_answer.id }}" data-value="1" title="Beğen">
@@ -148,8 +148,8 @@
                     {% if answer.id != focused_answer.id %}
                     <div class="card mb-3">
                         <div class="card-body">
-                            <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link }}</p>
-                            <div class="d-flex justify-content-between align-items-center">
+                            <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link  }}</p>
+                            <div class="action d-flex justify-content-between align-items-center">
                                 <div>
                                     <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
                                     data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
@@ -164,7 +164,7 @@
                                     <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
                                         <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                                     </a>
-                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0"|ref_link|tanim_link }}</span>
+                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0"|ref_link|tanim_link|reference_link  }}</span>
                                     {% if answer.user == request.user %}
                                         <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                             <i class="bi bi-pencil-square icon-black-white"></i>
@@ -247,6 +247,10 @@
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn" title="Tanım">
                                 <i class="bi bi-book"></i> Tanım
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                                id="gosterKaynakModalButonu" title="Kaynak">
+                                <i class="bi bi-journal"></i> Kaynak
                             </button>
                         </div>
                         {{ form.answer_text }}
@@ -351,6 +355,7 @@
 
 {% include 'core/link_modal.html' %}
 {% include 'core/reference_modal.html' %}
+{% include 'core/kaynak_ref.html' %}
 
 <!-- Delete Answer Modal -->
 <div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
@@ -422,12 +427,23 @@
       </div>
     </div>
   </div>
+{% include 'core/kaynak_ref.html' %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        // Hepsini Bootstrap Tooltip olarak başlat
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const readMoreLinks = document.querySelectorAll('.read-more');
@@ -497,6 +513,115 @@
                 deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
             });
         });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // (A) Kaynak Modal Elemanları
+      const gosterKaynakModalButonu = document.getElementById('gosterKaynakModalButonu');
+      const kaynakRefModalElem      = document.getElementById('kaynakRefModal');
+      const kaynakRefModal          = new bootstrap.Modal(kaynakRefModalElem);
+    
+      // (B) “Kaynak Ekle/Seç” sekmeleri
+      const kaynakEkleTab = document.getElementById('kaynak-ekle-tab');
+      const kaynakSecTab  = document.getElementById('kaynak-sec-tab');
+    
+      // (C) Kaynak Formu ve Listesi
+      const kaynakForm        = document.getElementById('kaynakForm');
+      const kaynakListesi     = document.getElementById('kaynakListesi');
+      const seciliKaynakEkleBtn = document.getElementById('seciliKaynakEkleBtn');
+    
+      // (1) Butona basınca modalı aç, “Kaynak Ekle” sekmesini göster
+      gosterKaynakModalButonu.addEventListener('click', function() {
+        kaynakRefModal.show();
+        kaynakEkleTab.click(); // Her açıldığında ilk sekmede başlasın
+      });
+    
+      // (2) Kaynak Formu: create_reference endpoint’ine POST
+      kaynakForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let formData = new FormData(kaynakForm);
+    
+        fetch("{% url 'create_reference' %}", {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': "{{ csrf_token }}",
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert("Kaynak başarıyla eklendi!");
+            kaynakForm.reset();
+            // Otomatik olarak "Kaynak Seç" sekmesine geç
+            kaynakSecTab.click();
+            kaynaklariListele();
+          } else {
+            console.log(data.errors);
+            alert("Form hatası: " + JSON.stringify(data.errors));
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Bir hata oluştu.");
+        });
+      });
+    
+      // (3) “Kaynak Seç” sekmesine tıklanınca mevcut kayıtlı kaynakları getir
+      kaynakSecTab.addEventListener('click', function() {
+        kaynaklariListele();
+      });
+    
+      function kaynaklariListele() {
+        fetch("{% url 'get_references' %}")
+          .then(response => response.json())
+          .then(data => {
+            kaynakListesi.innerHTML = '';
+            data.references.forEach(ref => {
+              let label = document.createElement('label');
+              label.classList.add('list-group-item');
+              label.innerHTML = `
+                <input type="radio" name="kaynakSecimi" value="${ref.id}" class="form-check-input me-2" />
+                <span>${ref.display}</span>
+              `;
+              kaynakListesi.appendChild(label);
+            });
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Liste yüklenirken hata oluştu.");
+          });
+      }
+    
+      // (4) Seçilen Kaynağı “(kaynak:ID)” olarak textarea’ya ekle
+      seciliKaynakEkleBtn.addEventListener('click', function() {
+        const secili = document.querySelector('input[name="kaynakSecimi"]:checked');
+        if (!secili) {
+          alert("Lütfen bir kaynak seçin.");
+          return;
+        }
+        const refId = secili.value;
+        const answerTextArea = document.getElementById('id_answer_text');
+        if (!answerTextArea) {
+          alert("Yanıt textarea bulunamadı!");
+          return;
+        }
+        // Metin sonuna [ (kaynak:REF_ID) ] ekle
+        answerTextArea.value += ` (kaynak:${refId}) `;
+        kaynakRefModal.hide();
+      });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+      var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+          html: true,
+          container: 'body'
+        })
+      })
     });
 </script>
 {% endblock %}
