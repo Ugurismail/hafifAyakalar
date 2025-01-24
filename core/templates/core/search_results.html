@@ -1,23 +1,209 @@
 <!-- templates/core/search_results.html -->
+
 {% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Arama Sonuçları{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>"{{ query }}" için arama sonuçları:</h2>
-    {% if questions or users %}
-        <ul class="list-group">
-            {% for question in questions %}
-                <li class="list-group-item">
-                    <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
-                </li>
-            {% endfor %}
-            {% for user in users %}
-                <li class="list-group-item">
-                    <a href="{% url 'user_profile' user.username %}">@{{ user.username }}</a>
-                </li>
-            {% endfor %}
-        </ul>
+<div class="container mt-5">
+  <h2 class="mb-4">Arama Sonuçları</h2>
+
+  <!-- Arama Formu (Gelişmiş Arama) -->
+  <div class="mb-4">
+    <form method="get" action="{% url 'search' %}" class="row g-3">
+      <!-- Sadece 'q' ile basit arama -->
+      <div class="col-md-6">
+        <input type="text" class="form-control" name="q" placeholder="Başlık/Soru ya da Kullanıcı Ara" value="{{ query }}">
+      </div>
+
+      <!-- Gelişmiş Arama Butonu -->
+      <div class="col-md-2">
+        <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#advancedSearchModal">
+          <i class="bi bi-funnel-fill"></i> Filtre
+        </button>
+      </div>
+
+      <!-- Gönder Butonu -->
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Ara</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Sorular Bölümü -->
+  <section class="mb-5">
+    <h4 class="mb-3">Sorular</h4>
+    {% if questions %}
+      <div class="row row-cols-1 row-cols-md-4 g-4">
+        {% for q in questions %}
+          <div class="col">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                  <a href="{% url 'question_detail' q.id %}" class="text-decoration-none text-primary">
+                    {{ q.question_text }}
+                  </a>
+                </h5>
+                <p class="card-text text-muted mt-auto">
+                  <small>Oluşturma: {{ q.created_at|date:"d M Y, H:i" }}</small>
+                </p>
+              </div>
+              <div class="card-footer">
+                <a href="{% url 'question_detail' q.id %}" class="btn btn-sm btn-outline-primary">Detaylar</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <!-- Sorular için Sayfalama -->
+      {% include 'core/pagination.html' with page_obj=questions page_param='questions_page' %}
     {% else %}
-        <p>Sonuç bulunamadı. <a href="{% url 'add_question_from_search' %}?q={{ query }}">Yeni bir başlık oluşturmak ister misiniz?</a></p>
+      <div class="alert alert-warning" role="alert">
+        Bu filtrelere uygun soru bulunamadı.
+      </div>
     {% endif %}
+  </section>
+
+  <!-- Yanıtlar Bölümü -->
+  <section class="mb-5">
+    <h4 class="mb-3">Yanıtlar</h4>
+    {% if answers %}
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for a in answers %}
+          <div class="col">
+            <div class="card h-100 shadow-sm">
+              <!-- Question Title as Card Header -->
+              <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                  <a href="{% url 'question_detail' a.question.id %}" class="text-decoration-none text-primary">
+                    {{ a.question.question_text }}
+                  </a>
+                </h5>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <p class="card-text">
+                  {{ a.answer_text|truncatewords:30 }}
+                </p>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                  <div>
+                    <small class="text-muted">
+                      Yazan: <a href="{% url 'user_profile' a.user.username %}" class="text-decoration-none">@{{ a.user.username }}</a>
+                    </small>
+                  </div>
+                  <div>
+                    <small class="text-muted">{{ a.created_at|date:"d M Y, H:i" }}</small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <a href="{% url 'question_detail' a.question.id %}" class="btn btn-sm btn-outline-primary">Detaylar</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <!-- Yanıtlar için Sayfalama -->
+      {% include 'core/pagination.html' with page_obj=answers page_param='answers_page' %}
+    {% else %}
+      <div class="alert alert-warning" role="alert">
+        Bu filtrelere uygun yanıt bulunamadı.
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- Kullanıcılar Bölümü (Opsiyonel) -->
+  {% if users %}
+    <section class="mb-5">
+      <h4 class="mb-3">Kullanıcılar</h4>
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for user in users %}
+          <div class="col">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex align-items-center">
+                {% if user.userprofile.photo %}
+                  <img src="{{ user.userprofile.photo.url }}" alt="{{ user.username }}" class="rounded-circle me-3" width="60" height="60">
+                {% else %}
+                  <img src="{% static 'core/images/default_avatar.png' %}" alt="{{ user.username }}" class="rounded-circle me-3" width="60" height="60">
+                {% endif %}
+                <div>
+                  <h5 class="card-title mb-0">
+                    <a href="{% url 'user_profile' user.username %}" class="text-decoration-none text-primary">
+                      @{{ user.username }}
+                    </a>
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <!-- Kullanıcılar için Sayfalama -->
+      {% include 'core/pagination.html' with page_obj=users page_param='users_page' %}
+    </section>
+  {% endif %}
+
 </div>
+
+<!-- Gelişmiş Arama Modal -->
+<div class="modal fade" id="advancedSearchModal" tabindex="-1" aria-labelledby="advancedSearchModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="advancedSearchForm" method="get" action="{% url 'search' %}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="advancedSearchModalLabel">Gelişmiş Arama</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Kullanıcı Adı -->
+          <div class="mb-3">
+            <label for="searchUser" class="form-label">Kullanıcı Adı</label>
+            <input type="text" class="form-control" id="searchUser" name="username" placeholder="ör. yigit" value="{{ username }}">
+          </div>
+
+          <!-- Tarih Aralığı -->
+          <div class="mb-3">
+            <label for="searchDateFrom" class="form-label">Başlangıç Tarihi</label>
+            <input type="date" class="form-control" id="searchDateFrom" name="date_from" value="{{ date_from }}">
+          </div>
+          <div class="mb-3">
+            <label for="searchDateTo" class="form-label">Bitiş Tarihi</label>
+            <input type="date" class="form-control" id="searchDateTo" name="date_to" value="{{ date_to }}">
+          </div>
+
+          <!-- Metin Arama (Ek kelimeler) -->
+          <div class="mb-3">
+            <label for="searchKeywords" class="form-label">Metin İçinde Geçen Kelime(ler)</label>
+            <input type="text" class="form-control" id="searchKeywords" name="keywords" placeholder="ör. python django" value="{{ keywords }}">
+          </div>
+
+          <!-- Hangi Tablo? (Soru, Yanıt, Her ikisi) -->
+          <div class="mb-3">
+            <label for="searchIn" class="form-label">Nerede Aransın?</label>
+            <select class="form-select" id="searchIn" name="search_in">
+              <option value="all" {% if search_in == 'all' %}selected{% endif %}>Başlık (Soru) ve Yanıt</option>
+              <option value="question" {% if search_in == 'question' %}selected{% endif %}>Sadece Sorular</option>
+              <option value="answer" {% if search_in == 'answer' %}selected{% endif %}>Sadece Yanıtlar</option>
+            </select>
+          </div>
+        </div> <!-- modal-body -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+          <button type="submit" class="btn btn-primary">Ara</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Gelişmiş Arama Modal'ını otomatik açma
+    {% if show_modal %}
+      var advancedSearchModal = new bootstrap.Modal(document.getElementById('advancedSearchModal'));
+      advancedSearchModal.show();
+    {% endif %}
+  });
+</script>
 {% endblock %}

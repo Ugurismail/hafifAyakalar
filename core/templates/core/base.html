@@ -73,6 +73,9 @@
                     {% csrf_token %}
                     <input type="text" autocomplete="off" id="search-input" class="form-control" placeholder="Başlık/Soru ya da Kullanıcı Ara">
                     <div id="search-results"></div>
+                    <button type="button" class="btn btn-outline-secondary ms-1" id="advancedSearchBtn" title="Gelişmiş Arama">
+                        <i class="bi bi-funnel"></i>
+                    </button>
                 </form>
                 {% endif %}
                 <!-- Sağ taraftaki Navbar Öğeleri -->
@@ -159,7 +162,61 @@
             </div>
         </div>
     </nav>
-
+<!-- Gelişmiş Arama Modal -->
+<div class="modal fade" id="advancedSearchModal" tabindex="-1" aria-labelledby="advancedSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="advancedSearchForm" method="get" action="{% url 'search' %}">
+          <!-- method="get" ve action="/search/" => direk GET parametresiyle search view'e gider -->
+          
+          <div class="modal-header">
+            <h5 class="modal-title" id="advancedSearchModalLabel">Gelişmiş Arama</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+          </div>
+          
+          <div class="modal-body">
+            <!-- Kullanıcı Adı -->
+            <div class="mb-3">
+              <label for="searchUser" class="form-label">Kullanıcı Adı</label>
+              <input type="text" class="form-control" id="searchUser" name="username" placeholder="ör. yigit">
+            </div>
+            
+            <!-- Tarih Aralığı -->
+            <div class="mb-3">
+              <label for="searchDateFrom" class="form-label">Başlangıç Tarihi</label>
+              <input type="date" class="form-control" id="searchDateFrom" name="date_from">
+            </div>
+            <div class="mb-3">
+              <label for="searchDateTo" class="form-label">Bitiş Tarihi</label>
+              <input type="date" class="form-control" id="searchDateTo" name="date_to">
+            </div>
+            
+            <!-- Metin Arama (Ek kelimeler) -->
+            <div class="mb-3">
+              <label for="searchKeywords" class="form-label">Metin İçinde Geçen Kelime(ler)</label>
+              <input type="text" class="form-control" id="searchKeywords" name="keywords" placeholder="ör. python django">
+            </div>
+            
+            <!-- Hangi Tablo? (Soru, Yanıt, Her ikisi) -->
+            <div class="mb-3">
+              <label class="form-label">Nerede Aransın?</label>
+              <select class="form-select" id="searchIn" name="search_in">
+                <option value="all">Başlık (Soru) ve Yanıt</option>
+                <option value="question">Sadece Sorular</option>
+                <option value="answer">Sadece Yanıtlar</option>
+              </select>
+            </div>
+          </div> <!-- modal-body -->
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            <button type="submit" class="btn btn-primary">Ara</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
     <!-- İçerik -->
     <div class="container-fluid" id="mainContent">
         {% block content %}
@@ -243,7 +300,7 @@
 
     {% block extra_js %}{% endblock %}
     <!-- Navbar küçülme ve transparanlık efekti -->
-    <script>
+<script>
         document.addEventListener('DOMContentLoaded', function() {
             var navbar = document.getElementById('mainNavbar');
             window.addEventListener('scroll', function() {
@@ -313,14 +370,28 @@
                 });
             });
         });
-    </script>
-    <script>
+</script>
+<script>
         document.addEventListener('DOMContentLoaded', function() {
           var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
           var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
             return new bootstrap.Popover(popoverTriggerEl);
           });
         });
-        </script>
+ </script>
+ <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Gelişmiş Arama Butonu => modal açma
+    const advancedBtn = document.getElementById('advancedSearchBtn');
+    const advModalEl  = document.getElementById('advancedSearchModal');
+    
+    if (advancedBtn && advModalEl) {
+        const advModal = new bootstrap.Modal(advModalEl);
+        advancedBtn.addEventListener('click', function() {
+            advModal.show();
+        });
+    }
+});
+ </script>
 </body>
 </html>

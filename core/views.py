@@ -520,37 +520,135 @@ def search_suggestions(request):
 
 @login_required
 def search(request):
-    query = request.GET.get('q', '').strip()
-    if query:
-        questions = Question.objects.filter(question_text__icontains=query)
-        users = User.objects.filter(username__icontains=query)
-        is_ajax = request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or request.GET.get('ajax') == '1'
-        if is_ajax:
-            # AJAX isteği ise JSON formatında yanıt dön
+    """
+    Hem AJAX (autocomplete) isteklerini hem de gelişmiş arama parametrelerini destekleyen arama view'i.
+    """
+
+    # 1) AJAX isteği kontrolü
+    is_ajax = (
+        request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or
+        request.GET.get('ajax') == '1'
+    )
+
+    if is_ajax:
+        # AJAX (Autocomplete) İsteği: Sadece 'q' parametresi ile arama yapar ve JSON döner
+        query = request.GET.get('q', '').strip()
+        if query:
+            questions = Question.objects.filter(question_text__icontains=query)
+            users = User.objects.filter(username__icontains=query)
+
             results = []
-            for question in questions:
+
+            # Soruları ekle
+            for q_obj in questions:
                 results.append({
                     'type': 'question',
-                    'id': question.id,
-                    'text': question.question_text,
-                    'url': reverse('question_detail', args=[question.id]),
+                    'id': q_obj.id,
+                    'text': q_obj.question_text,
+                    'url': reverse('question_detail', args=[q_obj.id]),
                 })
+
+            # Kullanıcıları ekle
             for user in users:
                 results.append({
                     'type': 'user',
                     'id': user.id,
-                    'username': user.username,  # username alanını ekliyoruz
+                    'username': user.username,
                     'text': '@' + user.username,
                     'url': reverse('user_profile', args=[user.username]),
                 })
+
             return JsonResponse({'results': results})
         else:
-            # Normal arama sonuçları sayfasını render et
-            context = {'questions': questions, 'users': users, 'query': query}
-            return render(request, 'core/search_results.html', context)
-    else:
-        return render(request, 'core/search_results.html', {})
+            return JsonResponse({'results': []})
 
+    # 2) Gelişmiş Arama: Ek parametreleri al
+    username = request.GET.get('username', '').strip()
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    keywords = request.GET.get('keywords', '').strip()
+    search_in = request.GET.get('search_in', 'all')  # 'question', 'answer' veya 'all'
+
+    # Eski 'q' parametresini de al (basit arama için)
+    q_param = request.GET.get('q', '').strip()
+
+    # 3) Soru ve Yanıt queryset'lerini başlat
+    questions = Question.objects.all()
+    answers = Answer.objects.all()
+    users_found = User.objects.none()  # 'q_param' ile eşleşen kullanıcılar
+
+    # 4) Basit 'q' aramasını uygulama (eski arama)
+    if q_param:
+        questions = questions.filter(question_text__icontains=q_param)
+        users_found = User.objects.filter(username__icontains=q_param)
+
+    # 5) Gelişmiş parametrelerle filtreleme
+    if username:
+        questions = questions.filter(user__username__icontains=username)
+        answers = answers.filter(user__username__icontains=username)
+
+    if date_from:
+        questions = questions.filter(created_at__date__gte=date_from)
+        answers = answers.filter(created_at__date__gte=date_from)
+
+    if date_to:
+        questions = questions.filter(created_at__date__lte=date_to)
+        answers = answers.filter(created_at__date__lte=date_to)
+
+    if keywords:
+        questions = questions.filter(question_text__icontains=keywords)
+        answers = answers.filter(answer_text__icontains=keywords)
+
+    # 6) Hangi tabloda arama yapılacağına karar verme
+    if search_in == 'question':
+        answers = Answer.objects.none()
+    elif search_in == 'answer':
+        questions = Question.objects.none()
+
+    # 7) Pagination for questions
+    questions_page_number = request.GET.get('questions_page', 1)
+    questions_paginator = Paginator(questions.order_by('-created_at'), 10)  # 10 soru per page
+    try:
+        questions_paginated = questions_paginator.page(questions_page_number)
+    except PageNotAnInteger:
+        questions_paginated = questions_paginator.page(1)
+    except EmptyPage:
+        questions_paginated = questions_paginator.page(questions_paginator.num_pages)
+
+    # 8) Pagination for answers
+    answers_page_number = request.GET.get('answers_page', 1)
+    answers_paginator = Paginator(answers.order_by('-created_at'), 10)  # 10 yanıt per page
+    try:
+        answers_paginated = answers_paginator.page(answers_page_number)
+    except PageNotAnInteger:
+        answers_paginated = answers_paginator.page(1)
+    except EmptyPage:
+        answers_paginated = answers_paginator.page(answers_paginator.num_pages)
+
+    # 9) Sayfalama için kullanıcılar bölümü
+    users_page_number = request.GET.get('users_page', 1)
+    users_paginator = Paginator(users_found.order_by('username'), 10)  # 10 kullanıcı per page
+    try:
+        users_paginated = users_paginator.page(users_page_number)
+    except PageNotAnInteger:
+        users_paginated = users_paginator.page(1)
+    except EmptyPage:
+        users_paginated = users_paginator.page(users_paginator.num_pages)
+
+    # 10) Sonuçları sayfaya gönder
+    context = {
+        'questions': questions_paginated,
+        'answers': answers_paginated,
+        'users': users_paginated,
+        'query': q_param,
+        'username': username,
+        'date_from': date_from,
+        'date_to': date_to,
+        'keywords': keywords,
+        'search_in': search_in,
+    }
+
+    return render(request, 'core/search_results.html', context)
 
 @login_required
 def add_question_from_search(request):
