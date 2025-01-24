@@ -70,12 +70,15 @@ def tanim_link(text):
     def replacer(match):
         question_word = match.group(1).strip()  # "Özgürlük"
         def_id_str    = match.group(2).strip()  # "42"
+       
 
         try:
             definition = Definition.objects.get(id=def_id_str)
             # Tanım metni
             def_text   = definition.definition_text
             # (İstersen "definition.user.username" vs. de popover’a ekleyebilirsin.)
+            user_name = definition.user.username
+
 
             # HTML popover
             # Bootstrap 5: data-bs-toggle="popover" data-bs-content="..."
@@ -85,7 +88,7 @@ def tanim_link(text):
                           data-bs-toggle="popover" 
                           data-bs-placement="top" 
                           data-bs-trigger="hover focus"
-                          data-bs-title="{question_word}"
+                          data-bs-title="{user_name}"
                           data-bs-content="{def_text}">
                           {question_word}
                        </span>'''
