@@ -70,10 +70,13 @@
                               </button>
   
                               <!-- KAYNAK MODAL BUTONU -->
-                              <button type="button" class="btn btn-sm btn-outline-secondary me-2"
-                                  id="gosterKaynakModalButonu" title="Kaynak">
-                                  <i class="bi bi-journal"></i> Kaynak
-                              </button>
+                              <button type="button" 
+                              class="btn btn-sm btn-outline-secondary me-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#kaynakRefModal"
+                              title="Kaynak">
+                              <i class="bi bi-journal"></i> Kaynak
+                            </button>
                           </div>
                           {{ form.answer_text }}
                       </div>
@@ -241,7 +244,6 @@
 <script src="{% static 'js/vote_save.js' %}"></script>
 
 
-
 <!-- Geri Kalan (Okuma, Paylaş vs.) -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -288,6 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     $('#shareModal').on('shown.bs.modal', function () {
+        
         var absoluteLink = window.location.origin + link;
         var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
         var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
@@ -313,9 +316,11 @@ document.addEventListener('DOMContentLoaded', function() {
       var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl, {
           html: true,
-          container: 'body'
+          container: 'body',
         })
       })
     });
 </script>
+
+    
 {% endblock %}

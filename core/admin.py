@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.http import HttpResponseRedirect
+from .models import Reference
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
 
@@ -172,3 +173,21 @@ class CustomUserAdmin(UserAdmin):
 
 # d) Kayıt: User modelini CustomUserAdmin ile
 admin.site.register(User, CustomUserAdmin)
+
+@admin.register(Reference)
+class ReferenceAdmin(admin.ModelAdmin):
+    # Kullanıcı dostu bir liste görünümü için arama, filtre vb.
+    search_fields = ['author_surname', 'author_name', 'year', 'rest', 'abbreviation']
+    list_display = ['author_surname', 'author_name', 'year', 'abbreviation', 'short_rest']
+    list_filter = ['year']
+
+    def short_rest(self, obj):
+        # rest alanını liste görünümünde kısaltabilirsiniz (opsiyonel)
+        return (obj.rest[:50] + "...") if len(obj.rest) > 50 else obj.rest
+    short_rest.short_description = "Ek Bilgiler (kısaltılmış)"
+
+
+"""
+Mevcut admin.py'nizde en alta (veya uygun bir yere) ekleyin:
+(Invitation, UserProfile, SavedItem vs. kaydettiğiniz gibi.)
+"""
