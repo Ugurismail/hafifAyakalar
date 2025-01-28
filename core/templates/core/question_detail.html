@@ -107,10 +107,11 @@
                                     <i class="bi bi-pencil-square icon-black-white"></i>
                                 </a>
                                 <a href="#" class="ms-2 text-danger delete-answer-btn"
-                                   data-answer-id="{{ answer.id }}" title="Sil"
-                                   data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
-                                    <i class="bi bi-trash icon-black-white"></i>
-                                </a>
+                                data-answer-id="{{ answer.id }}" 
+                                data-delete-url="{% url 'delete_answer' answer.id %}?next={{ request.path|urlencode }}"
+                                title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                <i class="bi bi-trash icon-black-white"></i>
+                             </a>
                             {% endif %}
                         </div>
                         <div class="text-end">

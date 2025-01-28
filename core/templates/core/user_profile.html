@@ -15,17 +15,14 @@
                 <img src="{% static 'imgs/default_profile.jpg' %}" alt="Profil Fotoğrafı" class="rounded-circle img-fluid">
             {% endif %}
 
-            <!-- Kullanıcı Adı -->
+            <!-- Kullanıcı Adı ve Takipçileri -->
             <h3 class="mt-3">{{ profile_user.username }}</h3>
-
-            <!-- Takipçi ve Takip Edilen -->
             <p>
                 <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
             </p>
 
-            <!-- Butonlar -->
+            <!-- Kendi profilimizse butonlar -->
             {% if is_own_profile %}
-                <!-- Profil Fotoğrafını Güncelle Butonu (Modal'ı açacak) -->
                 <button type="button" class="btn btn-secondary btn-sm mb-1" data-bs-toggle="modal" data-bs-target="#profilePhotoModal">
                     Profil Fotosunu Güncelle
                 </button>
@@ -34,10 +31,9 @@
                 <a href="{% url 'download_entries_json' profile_user.username %}" class="btn btn-secondary btn-sm mb-1">
                     Tüm Entry’lerimi (JSON) İndir
                 </a>
-                <a href="{% url 'download_entries_xlsx' profile_user.username %}" 
-                    class="btn btn-secondary btn-sm mb-1">
+                <a href="{% url 'download_entries_xlsx' profile_user.username %}" class="btn btn-secondary btn-sm mb-1">
                     Tüm Entry’lerimi (Excel) İndir
-                    </a>
+                </a>
             {% else %}
                 {% if request.user.is_authenticated %}
                     {% if is_following %}
@@ -96,7 +92,6 @@
     <!-- Sekmeler (Bootstrap Nav Tabs) -->
     <ul class="nav nav-tabs mt-5" id="profileTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <!-- Sorular sekmesi -->
             <a class="nav-link {% if active_tab == 'sorular' %}active{% endif %}"
                id="sorular-tab"
                data-bs-toggle="tab"
@@ -110,7 +105,6 @@
 
         {% if is_own_profile %}
         <li class="nav-item" role="presentation">
-            <!-- Davetler sekmesi -->
             <a class="nav-link {% if active_tab == 'davetler' %}active{% endif %}"
                id="davetler-tab"
                data-bs-toggle="tab"
@@ -124,7 +118,6 @@
         {% endif %}
 
         <li class="nav-item" role="presentation">
-            <!-- Yanıtlar sekmesi -->
             <a class="nav-link {% if active_tab == 'yanitlar' %}active{% endif %}"
                id="yanitlar-tab"
                data-bs-toggle="tab"
@@ -135,8 +128,8 @@
                Yanıtlar
             </a>
         </li>
+
         <li class="nav-item" role="presentation">
-            <!-- Kelimeler sekmesi -->
             <a class="nav-link {% if active_tab == 'kelimeler' %}active{% endif %}"
                id="kelimeler-tab"
                data-bs-toggle="tab"
@@ -147,8 +140,8 @@
                Kelimeler
             </a>
         </li>
+
         <li class="nav-item" role="presentation">
-            <!-- İstatistikler sekmesi -->
             <a class="nav-link {% if active_tab == 'istatistikler' %}active{% endif %}"
                id="istatistikler-tab"
                data-bs-toggle="tab"
@@ -159,8 +152,8 @@
                İstatistikler
             </a>
         </li>
+
         <li class="nav-item" role="presentation">
-            <!-- Tanımlarım sekmesi -->
             <a class="nav-link {% if active_tab == 'tanimlar' %}active{% endif %}"
                id="tanimlar-tab"
                data-bs-toggle="tab"
@@ -171,10 +164,24 @@
                Tanımlarım
             </a>
         </li>
+
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if active_tab == 'kaydedilenler' %}active{% endif %}"
+               id="kaydedilenler-tab"
+               data-bs-toggle="tab"
+               href="#kaydedilenler"
+               role="tab"
+               aria-controls="kaydedilenler"
+               aria-selected="{% if active_tab == 'kaydedilenler' %}true{% else %}false{% endif %}">
+               Kaydedilenler
+            </a>
+        </li>
     </ul>
 
     <!-- Sekme İçerikleri -->
     <div class="tab-content" id="profileTabContent">
+
+        <!-- Davetler Tab (Sadece kendi profilimiz) -->
         {% if is_own_profile %}
         <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}"
              id="davetler"
@@ -236,8 +243,10 @@
              aria-labelledby="sorular-tab">
             <div class="mt-4">
                 {% for question in questions %}
-                    <div class="question">
-                        <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a>
+                    <div class="mb-3">
+                        <a href="{% url 'question_detail' question.id %}">
+                            {{ question.question_text }}
+                        </a>
                     </div>
                 {% empty %}
                     <p>Henüz soru yok.</p>
@@ -253,6 +262,7 @@
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                         {% endif %}
+
                         {% for num in questions.paginator.page_range %}
                             {% if questions.number == num %}
                                 <li class="page-item active"><span class="page-link">{{ num }}</span></li>
@@ -260,6 +270,7 @@
                                 <li class="page-item"><a class="page-link" href="?question_page={{ num }}&tab=sorular">{{ num }}</a></li>
                             {% endif %}
                         {% endfor %}
+
                         {% if questions.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?question_page={{ questions.next_page_number }}&tab=sorular" aria-label="Sonraki">&raquo;</a>
@@ -279,9 +290,25 @@
              aria-labelledby="yanitlar-tab">
             <div class="mt-4">
                 {% for answer in answers %}
-                    <div class="answer">
-                        <p><a href="{% url 'question_detail' answer.question.id %}">{{ answer.question.question_text }}</a></p>
+                    <div class="mb-3">
+                        <p>
+                            <a href="{% url 'question_detail' answer.question.id %}">
+                                {{ answer.question.question_text }}
+                            </a>
+                        </p>
                         <p>{{ answer.answer_text|truncatewords:20 }}</p>
+
+                        <!-- Yanıt Sahibi İse Sil Butonu (POST formu) -->
+                        {% if answer.user == request.user %}
+                            <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn btn-sm btn-danger float-end"
+                                        onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">
+                                    Sil
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
                 {% empty %}
                     <p>Henüz yanıt yok.</p>
@@ -297,6 +324,7 @@
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                         {% endif %}
+
                         {% for num in answers.paginator.page_range %}
                             {% if answers.number == num %}
                                 <li class="page-item active"><span class="page-link">{{ num }}</span></li>
@@ -304,6 +332,7 @@
                                 <li class="page-item"><a class="page-link" href="?answer_page={{ num }}&tab=yanitlar">{{ num }}</a></li>
                             {% endif %}
                         {% endfor %}
+
                         {% if answers.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?answer_page={{ answers.next_page_number }}&tab=yanitlar" aria-label="Sonraki">&raquo;</a>
@@ -370,7 +399,9 @@
                                         <form method="get" action="" style="display: inline;">
                                             <input type="hidden" name="tab" value="kelimeler">
                                             <input type="hidden" name="exclude_words" value="{{ exclude_words }}">
-                                            <button type="submit" name="include_word" value="{{ word }}" class="btn btn-sm btn-secondary">Geri Ekle</button>
+                                            <button type="submit" name="include_word" value="{{ word }}" class="btn btn-sm btn-secondary">
+                                                Geri Ekle
+                                            </button>
                                         </form>
                                     {% endif %}
                                 </li>
@@ -397,9 +428,17 @@
                 <h6>En Çok Upvote Alan Girdi:</h6>
                 {% if most_upvoted_entry %}
                     {% if most_upvoted_entry|instance_of:'Question' %}
-                        <p>Soru: <a href="{% url 'question_detail' most_upvoted_entry.id %}">{{ most_upvoted_entry.question_text }}</a> ({{ most_upvoted_entry.upvotes }} upvotes)</p>
+                        <p>Soru: 
+                            <a href="{% url 'question_detail' most_upvoted_entry.id %}">
+                                {{ most_upvoted_entry.question_text }}
+                            </a> ({{ most_upvoted_entry.upvotes }} upvotes)
+                        </p>
                     {% elif most_upvoted_entry|instance_of:'Answer' %}
-                        <p>Yanıt: <a href="{% url 'question_detail' most_upvoted_entry.question.id %}">{{ most_upvoted_entry.question.question_text }}</a> ({{ most_upvoted_entry.upvotes }} upvotes)</p>
+                        <p>Yanıt: 
+                            <a href="{% url 'question_detail' most_upvoted_entry.question.id %}">
+                                {{ most_upvoted_entry.question.question_text }}
+                            </a> ({{ most_upvoted_entry.upvotes }} upvotes)
+                        </p>
                     {% endif %}
                 {% else %}
                     <p>Henüz upvote alan bir girdi yok.</p>
@@ -408,9 +447,17 @@
                 <h6>En Çok Downvote Alan Girdi:</h6>
                 {% if most_downvoted_entry %}
                     {% if most_downvoted_entry|instance_of:'Question' %}
-                        <p>Soru: <a href="{% url 'question_detail' most_downvoted_entry.id %}">{{ most_downvoted_entry.question_text }}</a> ({{ most_downvoted_entry.downvotes }} downvotes)</p>
+                        <p>Soru: 
+                            <a href="{% url 'question_detail' most_downvoted_entry.id %}">
+                                {{ most_downvoted_entry.question_text }}
+                            </a> ({{ most_downvoted_entry.downvotes }} downvotes)
+                        </p>
                     {% elif most_downvoted_entry|instance_of:'Answer' %}
-                        <p>Yanıt: <a href="{% url 'question_detail' most_downvoted_entry.question.id %}">{{ most_downvoted_entry.question.question_text }}</a> ({{ most_downvoted_entry.downvotes }} downvotes)</p>
+                        <p>Yanıt: 
+                            <a href="{% url 'question_detail' most_downvoted_entry.question.id %}">
+                                {{ most_downvoted_entry.question.question_text }}
+                            </a> ({{ most_downvoted_entry.downvotes }} downvotes)
+                        </p>
                     {% endif %}
                 {% else %}
                     <p>Henüz downvote alan bir girdi yok.</p>
@@ -419,9 +466,17 @@
                 <h6>En Çok Kaydedilen Girdi:</h6>
                 {% if most_saved_entry %}
                     {% if most_saved_entry|instance_of:'Question' %}
-                        <p>Soru: <a href="{% url 'question_detail' most_saved_entry.id %}">{{ most_saved_entry.question_text }}</a></p>
+                        <p>Soru: 
+                            <a href="{% url 'question_detail' most_saved_entry.id %}">
+                                {{ most_saved_entry.question_text }}
+                            </a>
+                        </p>
                     {% elif most_saved_entry|instance_of:'Answer' %}
-                        <p>Yanıt: <a href="{% url 'question_detail' most_saved_entry.question.id %}">{{ most_saved_entry.question.question_text }}</a></p>
+                        <p>Yanıt: 
+                            <a href="{% url 'question_detail' most_saved_entry.question.id %}">
+                                {{ most_saved_entry.question.question_text }}
+                            </a>
+                        </p>
                     {% endif %}
                 {% else %}
                     <p>Henüz kaydedilen bir girdi yok.</p>
@@ -461,7 +516,8 @@
                                 </a>
                                 <form action="{% url 'delete_definition' definition.id %}" method="post" class="d-inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger"
+                                    <button type="submit"
+                                            class="btn btn-sm btn-danger"
                                             onclick="return confirm('Bu tanımı silmek istediğinize emin misiniz?');">
                                         Sil
                                     </button>
@@ -475,6 +531,84 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Kaydedilenler Tab -->
+        <div class="tab-pane fade {% if active_tab == 'kaydedilenler' %}show active{% endif %}"
+             id="kaydedilenler"
+             role="tabpanel"
+             aria-labelledby="kaydedilenler-tab">
+            <div class="mt-4">
+                <h5>Kaydedilenler</h5>
+
+                {% if saved_items %}
+                    {% for saved in saved_items %}
+                        {% if saved.type == 'question' %}
+                            <!-- Kaydedilen Soru -->
+                            {% with question_obj=saved.object %}
+                            <div class="mb-3 border p-2">
+                                <p><strong>Soru:</strong>
+                                    <a href="{% url 'question_detail' question_obj.id %}">
+                                        {{ question_obj.question_text|truncatewords:20 }}
+                                    </a>
+                                </p>
+                                <!-- Kaydetmeyi Kaldır Butonu -->
+                                <a href="#"
+                                   class="save-btn btn btn-sm btn-warning"
+                                   data-content-type="question"
+                                   data-object-id="{{ question_obj.id }}">
+                                    Kaydetmeyi Kaldır
+                                </a>
+                            </div>
+                            {% endwith %}
+
+                        {% elif saved.type == 'answer' %}
+                        {% with answer_obj=saved.object %}
+                        <div class="mb-3 border p-2 position-relative">
+                            <!-- Başlık -->
+                            <p>
+                                <strong>Yanıt:</strong> 
+                                <a href="{% url 'question_detail' answer_obj.question.id %}#answer-{{ answer_obj.id }}">
+                                    {{ answer_obj.question.question_text|truncatewords:20 }}
+                                </a>
+                            </p>
+                            <!-- Cevap metni kısaltılmış -->
+                            <p>{{ answer_obj.answer_text|truncatewords:40 }}</p>
+                      
+                            <!-- Sağ üst ikona benzer butonlar -->
+                            <div class="position-absolute top-0 end-0 me-2 mt-2">
+                                <!-- Kaydetmeyi Kaldır (icon) -->
+                                <a href="#"
+                                   class="save-btn btn btn-sm btn-link text-warning"
+                                   data-content-type="answer"
+                                   data-object-id="{{ answer_obj.id }}"
+                                   title="Kaydetmeyi kaldır">
+                                    <i class="bi bi-bookmark-x fs-5"></i>
+                                </a>
+                      
+                                <!-- Eğer bu yanıt kullanıcın kendisine aitse, Sil ikonu -->
+                                {% if answer_obj.user == request.user %}
+                                <form action="{% url 'delete_answer' answer_obj.id %}?next={{ request.get_full_path|urlencode }}" 
+                                      method="post" 
+                                      class="d-inline ms-2">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="btn btn-sm btn-link text-danger"
+                                            onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');"
+                                            title="Sil">
+                                        <i class="bi bi-trash fs-5"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endwith %}
+                      {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p>Hiç kaydedilmiş soru veya yanıt yok.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -495,9 +629,11 @@
             <!-- Mevcut fotoğraf önizlemesi -->
             <div class="text-center mb-3">
                 {% if user_profile.photo %}
-                    <img id="current-profile-pic" src="{{ user_profile.photo.url }}" alt="Mevcut Fotoğraf" class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
+                    <img id="current-profile-pic" src="{{ user_profile.photo.url }}" alt="Mevcut Fotoğraf"
+                         class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
                 {% else %}
-                    <img id="current-profile-pic" src="{% static 'imgs/default_profile.jpg' %}" alt="Varsayılan Fotoğraf" class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
+                    <img id="current-profile-pic" src="{% static 'imgs/default_profile.jpg' %}" alt="Varsayılan Fotoğraf"
+                         class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
                 {% endif %}
             </div>
 
@@ -507,7 +643,6 @@
               <input type="file" name="photo" id="id_photo" class="form-control">
             </div>
 
-            <!-- Mevcut fotoğrafı kaldır -->
             {% if user_profile.photo %}
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" name="remove_photo" value="true" id="removePhotoCheck">
@@ -520,7 +655,8 @@
             <!-- Yeni seçilen fotoğrafın önizlemesi -->
             <div class="text-center" id="new-photo-preview-container" style="display:none;">
                 <p>Yeni Seçilen Fotoğraf Önizlemesi:</p>
-                <img id="new-photo-preview" src="#" alt="Önizleme" class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
+                <img id="new-photo-preview" src="#" alt="Önizleme"
+                     class="img-fluid rounded-circle" style="max-width:150px; max-height:150px;">
             </div>
 
           </div>
@@ -533,140 +669,7 @@
     </div>
 </div>
 
-<!-- Yanıt Silme Modal -->
-<div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="post" id="delete-answer-form">
-                {% csrf_token %}
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteAnswerModalLabel">Yanıtı Sil</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Bu yanıtı silmek istediğinizden emin misiniz?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-danger">Evet, Sil</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- TANIM MODAL -->
-<div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <!-- Modal header -->
-        <div class="modal-header">
-          <h5 class="modal-title" id="definitionModalLabel">Tanım</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-        </div>
-  
-        <!-- Modal body with tabs -->
-        <div class="modal-body">
-          <ul class="nav nav-tabs" id="definitionTab" role="tablist">
-            <!-- 1) TANIM YAP -->
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab"
-                      data-bs-target="#tanim-yap" type="button" role="tab"
-                      aria-controls="tanim-yap" aria-selected="true">
-                Tanım Yap
-              </button>
-            </li>
-            <!-- 2) TANIMLARIM -->
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab"
-                      data-bs-target="#tanim-bul" type="button" role="tab"
-                      aria-controls="tanim-bul" aria-selected="false">
-                Tanımlarım
-              </button>
-            </li>
-            <!-- 3) GENEL TANIM -->
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="genel-tanim-tab" data-bs-toggle="tab"
-                      data-bs-target="#genel-tanim" type="button" role="tab"
-                      aria-controls="genel-tanim" aria-selected="false">
-                Genel Tanımlar
-              </button>
-            </li>
-          </ul>
-  
-          <!-- Tab Content -->
-          <div class="tab-content mt-3" id="definitionTabContent">
-            
-            <!-- TAB 1: TANIM YAP -->
-            <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
-              <form id="createDefinitionForm">
-                <div class="mb-3">
-                  <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
-                  <textarea class="form-control" id="definitionText" name="definition_text"
-                            rows="3" maxlength="1000"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Kaydet</button>
-              </form>
-            </div>
-            
-            <!-- TAB 2: TANIMLARIM -->
-            <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
-              <div class="mb-3">
-                <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
-                <select id="definitionSelect" class="form-select">
-                  <option value="">Bir tanım seçiniz...</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
-            </div>
-            
-            <!-- TAB 3: GENEL TANIM -->
-            <div class="tab-pane fade" id="genel-tanim" role="tabpanel" aria-labelledby="genel-tanim-tab">
-              <div class="mb-3">
-                <label for="allDefSearchInput" class="form-label">Tüm Tanımlarda Ara</label>
-                <input type="text" class="form-control" id="allDefSearchInput"
-                       placeholder="Arama terimi giriniz..." />
-              </div>
-              <ul class="list-group" id="allDefinitionsList">
-                <!-- JS ile doldurulacak -->
-              </ul>
-              <button type="button" class="btn btn-success mt-2" id="insertGlobalDefinitionBtn">
-                Seçili Tanımı Ekle
-              </button>
-            </div>
-  
-          </div><!-- tab-content -->
-        </div><!-- modal-body -->
-      </div><!-- modal-content -->
-    </div><!-- modal-dialog -->
-  </div>
-  
- <!-- PAYLAŞIM MODAL -->
-<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="shareModalLabel">Paylaş</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-        </div>
-        <div class="modal-body">
-          <ul class="list-group">
-              <li class="list-group-item">
-                  <a href="#" id="shareTwitter" target="_blank">
-                      <i class="bi bi-twitter"></i> X (Twitter) ile Paylaş
-                  </a>
-              </li>
-              <li class="list-group-item">
-                  <a href="#" id="shareFacebook" target="_blank">
-                      <i class="bi bi-facebook"></i> Facebook ile Paylaş
-                  </a>
-              </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<!-- Diğer modal ve JS -->
 {% include 'core/link_modal.html' %}
 {% include 'core/kaynak_ref.html' %}
 {% include 'core/reference_modal.html' %}
@@ -679,203 +682,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
-{% endblock %}
+
+{% endblock content %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        // Hepsini Bootstrap Tooltip olarak başlat
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-    </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
+<!-- Düzenlenmiş vote_save.js dosyası -->
 <script src="{% static 'js/vote_save.js' %}"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // (A) Kaynak Modal Elemanları
-      const gosterKaynakModalButonu = document.getElementById('gosterKaynakModalButonu');
-      const kaynakRefModalElem      = document.getElementById('kaynakRefModal');
-      const kaynakRefModal          = new bootstrap.Modal(kaynakRefModalElem);
-    
-      // (B) “Kaynak Ekle/Seç” sekmeleri
-      const kaynakEkleTab = document.getElementById('kaynak-ekle-tab');
-      const kaynakSecTab  = document.getElementById('kaynak-sec-tab');
-    
-      // (C) Kaynak Formu ve Listesi
-      const kaynakForm        = document.getElementById('kaynakForm');
-      const kaynakListesi     = document.getElementById('kaynakListesi');
-      const seciliKaynakEkleBtn = document.getElementById('seciliKaynakEkleBtn');
-    
-      // (1) Butona basınca modalı aç, “Kaynak Ekle” sekmesini göster
-      gosterKaynakModalButonu.addEventListener('click', function() {
-        kaynakRefModal.show();
-        kaynakEkleTab.click(); // Her açıldığında ilk sekmede başlasın
-      });
-    
-      // (2) Kaynak Formu: create_reference endpoint’ine POST
-      kaynakForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        let formData = new FormData(kaynakForm);
-    
-        fetch("{% url 'create_reference' %}", {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-CSRFToken': "{{ csrf_token }}",
-          },
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.status === 'success') {
-            alert("Kaynak başarıyla eklendi!");
-            kaynakForm.reset();
-            // Otomatik olarak "Kaynak Seç" sekmesine geç
-            kaynakSecTab.click();
-            kaynaklariListele();
-          } else {
-            console.log(data.errors);
-            alert("Form hatası: " + JSON.stringify(data.errors));
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Bir hata oluştu.");
-        });
-      });
-    
-      // (3) “Kaynak Seç” sekmesine tıklanınca mevcut kayıtlı kaynakları getir
-      kaynakSecTab.addEventListener('click', function() {
-        kaynaklariListele();
-      });
-    
-      function kaynaklariListele() {
-        fetch("{% url 'get_references' %}")
-          .then(response => response.json())
-          .then(data => {
-            kaynakListesi.innerHTML = '';
-            data.references.forEach(ref => {
-              let label = document.createElement('label');
-              label.classList.add('list-group-item');
-              label.innerHTML = `
-                <input type="radio" name="kaynakSecimi" value="${ref.id}" class="form-check-input me-2" />
-                <span>${ref.display}</span>
-              `;
-              kaynakListesi.appendChild(label);
-            });
-          })
-          .catch(err => {
-            console.error(err);
-            alert("Liste yüklenirken hata oluştu.");
-          });
-      }
-    
-      // (4) Seçilen Kaynağı “(kaynak:ID)” olarak textarea’ya ekle
-      seciliKaynakEkleBtn.addEventListener('click', function() {
-        const secili = document.querySelector('input[name="kaynakSecimi"]:checked');
-        if (!secili) {
-          alert("Lütfen bir kaynak seçin.");
-          return;
-        }
-        const refId = secili.value;
-        const answerTextArea = document.getElementById('id_answer_text');
-        if (!answerTextArea) {
-          alert("Yanıt textarea bulunamadı!");
-          return;
-        }
-        // Metin sonuna [ (kaynak:REF_ID) ] ekle
-        answerTextArea.value += ` (kaynak:${refId}) `;
-        kaynakRefModal.hide();
-      });
-    });
-</script>
-
-<script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tamamını Oku / Daha Az
-    const readMoreLinks = document.querySelectorAll('.read-more');
-    readMoreLinks.forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            const answerId = this.getAttribute('data-answer-id');
-            const summary = document.getElementById('answer-summary-' + answerId);
-            const fullText = document.getElementById('answer-full-' + answerId);
-
-            if (summary.style.display === 'none') {
-                summary.style.display = 'block';
-                fullText.style.display = 'none';
-                this.textContent = 'Tamamını oku';
-            } else {
-                summary.style.display = 'none';
-                fullText.style.display = 'block';
-                this.textContent = 'Daha az göster';
-            }
-        });
-    });
-
-    // Link Kopyala
-    $('.copy-link-btn').click(function(e) {
-        e.preventDefault();
-        var url = $(this).data('url');
-        var tempInput = $("<input>");
-        $("body").append(tempInput);
-        var absoluteLink = window.location.origin + url;
-        tempInput.val(absoluteLink).select();
-        document.execCommand("copy");
-        tempInput.remove();
-        alert("Link kopyalandı!");
-    });
-
-    // Paylaş
-    var currentAnswerId;
-    $('.share-link').click(function(e) {
-        e.preventDefault();
-        currentAnswerId = $(this).data('answer-id');
-        $('#shareModal').modal('show');
-    });
-
-    $('#shareModal').on('shown.bs.modal', function () {
-
-        var absoluteLink = window.location.origin + link;
-        var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
-        var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
-        $('#shareTwitter').attr('href', twitterUrl);
-        $('#shareFacebook').attr('href', facebookUrl);
-    });
-
-    // Yanıt Silme
-    var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-    var deleteAnswerForm = document.getElementById('delete-answer-form');
-    deleteAnswerBtns.forEach(function(btn) {
-        btn.addEventListener('click', function(event) {
-            var answerId = this.getAttribute('data-answer-id');
-            deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
-        });
-    });
-});
-</script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-      var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl, {
-          html: true,
-          container: 'body'
-        })
-      })
-    });
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1) Sayfa ilk açıldığında ?tab=...'ı okuyup ilgili sekmeyi gösterelim (eğer Django "active_tab" vermediyse).
-    //    Ama genelde Django şablonda "active" verdiği için ilk yükleme zaten doğru sekmede açılır.
-    //    Buna ek olarak pushState için parametreyi güncelleyebiliriz.
+    // URL parametreyle sekme seçimi
     var params = new URLSearchParams(window.location.search);
     var initialTab = params.get('tab');
     if (initialTab) {
@@ -886,21 +704,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 2) Sekme her değiştiğinde (shown.bs.tab) URL parametresini pushState ile güncelle.
+    // Sekme değişince URL’yi güncelle
     var tabLinks = document.querySelectorAll('#profileTab .nav-link');
     tabLinks.forEach(function(link) {
         link.addEventListener('shown.bs.tab', function(e) {
-            // e.target => <a class="nav-link" href="#yanitlar">
-            var href = e.target.getAttribute('href'); // "#yanitlar"
-            var newTab = href.replace('#', '');        // "yanitlar"
+            var href = e.target.getAttribute('href');
+            var newTab = href.replace('#', '');
             var newUrl = window.location.pathname + '?tab=' + newTab;
-
-            // sayfa tam yenilenmeden URL'i güncelle
             history.pushState({}, '', newUrl);
         });
     });
 
-    // 3) "Tamamını oku" / "Daha az göster" fonksiyonu (pinned_entry içinde).
+    // Sabitlenmiş girdi "Tamamını oku" fonksiyonu
     var readMoreLinks = document.querySelectorAll('.read-more');
     readMoreLinks.forEach(function(link) {
         link.addEventListener('click', function(e) {
@@ -916,15 +731,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 4) Yeni fotoğraf seçildiğinde önizleme güncelleme
+    // Profil fotoğrafı önizleme
     var fileInput = document.getElementById('id_photo');
     var previewContainer = document.getElementById('new-photo-preview-container');
     var previewImage = document.getElementById('new-photo-preview');
 
-    if(fileInput) {
+    if (fileInput) {
         fileInput.addEventListener('change', function() {
             var file = this.files[0];
-            if(file) {
+            if (file) {
                 var reader = new FileReader();
                 reader.onload = function(e) {
                     previewContainer.style.display = 'block';
@@ -932,7 +747,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 reader.readAsDataURL(file);
             } else {
-                // Dosya seçilmezse önizlemeyi gizleyin
                 previewContainer.style.display = 'none';
                 previewImage.src = '#';
             }
