@@ -419,10 +419,10 @@ def get_invitation_tree(user):
 @login_required
 def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    answers = question.answers.all()
+    # Tüm yanıtları çek, sıralama isterseniz (örn. en yeni yanıtlar en üstte)
+    all_answers = question.answers.all().order_by('created_at')
 
-    
-    # **Form Oluşturma ve İşleme Bölümü**
+    # 1) Form Oluşturma & İşleme
     if request.method == 'POST':
         form = AnswerForm(request.POST)
         if form.is_valid():
@@ -434,60 +434,68 @@ def question_detail(request, question_id):
     else:
         form = AnswerForm()
 
+    # 2) Yanıtlar için Paginator
+    page_number = request.GET.get('page')  # ?page=... parametresi
+    paginator = Paginator(all_answers, 10)  # Sayfa başına 10 yanıt
+    answers_page = paginator.get_page(page_number)  # veya get_page() [Django 2.0+]
 
-    # Kullanıcının bu soruyu kaydedip kaydetmediğini kontrol et
+    # 3) Kullanıcının bu soruyu kaydedip kaydetmediğini kontrol et
     content_type_question = ContentType.objects.get_for_model(Question)
     user_has_saved_question = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_question,
         object_id=question.id
     ).exists()
-    
-    # Soru için kaydedilme sayısını al
+
+    # 4) Soru için kaydedilme sayısını al
     question_save_count = SavedItem.objects.filter(
         content_type=content_type_question,
         object_id=question.id
     ).count()
-    
-    # Kullanıcının oylarını al
+
+    # 5) Kullanıcının oylarını al (sadece sayfada gösterilen yanıtlar için)
     content_type_answer = ContentType.objects.get_for_model(Answer)
+    page_answer_ids = [ans.id for ans in answers_page.object_list]
     user_votes = Vote.objects.filter(
         user=request.user,
         content_type=content_type_answer,
-        object_id__in=answers.values_list('id', flat=True)
+        object_id__in=page_answer_ids
     ).values('object_id', 'value')
     user_vote_dict = {vote['object_id']: vote['value'] for vote in user_votes}
-    
-    # Her yanıta `user_vote_value` özelliğini ekle
-    for answer in answers:
-        answer.user_vote_value = user_vote_dict.get(answer.id, 0)
-    
-    # Kullanıcının kaydettiği yanıtların ID'lerini al
+
+    # 6) Her yanıta `user_vote_value` ekle
+    for ans in answers_page:  # answers_page bir Page objesi, içindeki nesnelere loop atabiliriz
+        ans.user_vote_value = user_vote_dict.get(ans.id, 0)
+
+    # 7) Kullanıcının kaydettiği yanıtların ID'lerini al (sadece bu sayfada gösterilenler)
     saved_answer_ids = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_answer,
-        object_id__in=answers.values_list('id', flat=True)
+        object_id__in=page_answer_ids
     ).values_list('object_id', flat=True)
-    
-    # Yanıtların kaydedilme sayılarını al
+
+    # 8) Yanıtların kaydedilme sayılarını al
     answer_save_counts = SavedItem.objects.filter(
         content_type=content_type_answer,
-        object_id__in=answers.values_list('id', flat=True)
+        object_id__in=page_answer_ids
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
 
+    # 9) Soldaki "Tüm Sorular" listesi (mevcut kodunuz)
     all_questions = get_today_questions(request)
-
 
     context = {
         'question': question,
-        'answers': answers,
+        'answers': answers_page,  # Sayfalanmış yanıtlar
         'form': form,
         'user_has_saved_question': user_has_saved_question,
         'question_save_count': question_save_count,
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
         'all_questions': all_questions,
+
+        # Pagination için page_obj ismi:
+        'page_obj': answers_page,
     }
     return render(request, 'core/question_detail.html', context)
 
@@ -1215,7 +1223,7 @@ def user_homepage(request):
     all_questions = get_today_questions(request)
 
     # Rastgele yanıtlar (Örnek)
-    random_items = Answer.objects.all().order_by('?')[:10]
+    random_items = Answer.objects.all().order_by('?')[:20]
 
 
     # Başlangıç sorularını al
@@ -1223,9 +1231,8 @@ def user_homepage(request):
         total_subquestions=Count('question__subquestions'),
         latest_subquestion_date=Max('question__subquestions__created_at')
     ).order_by(F('latest_subquestion_date').desc(nulls_last=True))
-    
-    # Rastgele yanıtları alıyoruz
-    random_items = Answer.objects.all().order_by('?')[:10]
+
+
     
     # Kullanıcının oylarını alalım
     if request.user.is_authenticated:

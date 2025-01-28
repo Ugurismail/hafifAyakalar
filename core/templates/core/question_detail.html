@@ -84,7 +84,7 @@
                     <!-- Kısa Yanıt -->
                     <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
                 {% endif %}
-                    
+               
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
                     <div class="action d-flex justify-content-between align-items-center">
                         <div>
@@ -165,7 +165,7 @@
             {% empty %}
             <p>Henüz yanıt yok. İlk yanıtı siz verin!</p>
             {% endfor %}
-
+            {% include 'core/pagination.html' with page_obj=answers page_param='page' %}
             <!-- YANIT EKLEME FORMU -->
             <div class="card mt-4">
                 <div class="card-body answer-arkaRenk">
