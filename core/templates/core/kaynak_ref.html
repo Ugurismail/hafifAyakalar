@@ -1,91 +1,250 @@
-
 <!-- core/kaynak_ref.html -->
 <div class="modal fade" id="kaynakRefModal" tabindex="-1" aria-labelledby="kaynakRefModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-  
-        <!-- Modal Başlığı -->
-        <div class="modal-header">
-          <h5 class="modal-title" id="kaynakRefModalLabel">Kaynak İşlemleri</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-        </div>
-  
-        <!-- Modal İçeriği (Sekmeler) -->
-        <div class="modal-body">
-          <ul class="nav nav-tabs" id="kaynakTab" role="tablist">
-            <!-- Kaynak Ekle Sekmesi -->
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active"
-                      id="kaynak-ekle-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#kaynakEkle"
-                      type="button" role="tab"
-                      aria-controls="kaynakEkle"
-                      aria-selected="true">
-                Kaynak Ekle
-              </button>
-            </li>
-            <!-- Kaynak Seç Sekmesi -->
-            <li class="nav-item" role="presentation">
-              <button class="nav-link"
-                      id="kaynak-sec-tab"
-                      data-bs-toggle="tab"
-                      data-bs-target="#kaynakSec"
-                      type="button" role="tab"
-                      aria-controls="kaynakSec"
-                      aria-selected="false">
-                Kaynak Seç
-              </button>
-            </li>
-          </ul>
-  
-          <div class="tab-content mt-3" id="kaynakTabContent">
-            <!-- (1) Kaynak Ekle İçeriği -->
-            <div class="tab-pane fade show active"
-                 id="kaynakEkle"
-                 role="tabpanel"
-                 aria-labelledby="kaynak-ekle-tab">
-              <form id="kaynakForm">
-                <!-- Bu formu create_reference endpoint’ine POST yapacağız -->
-                {% csrf_token %}
-                <div class="mb-3">
-                  <label for="id_author_surname" class="form-label">Yazar Soyadı</label>
-                  <input type="text" class="form-control" name="author_surname" id="id_author_surname" required>
-                </div>
-                <div class="mb-3">
-                  <label for="id_author_name" class="form-label">Yazar Adı</label>
-                  <input type="text" class="form-control" name="author_name" id="id_author_name" required>
-                </div>
-                <div class="mb-3">
-                  <label for="id_year" class="form-label">Yıl</label>
-                  <input type="number" class="form-control" name="year" id="id_year" required>
-                </div>
-                <div class="mb-3">
-                  <label for="id_rest" class="form-label">Ek Bilgiler</label>
-                  <textarea class="form-control" name="rest" id="id_rest" rows="2"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label for="id_abbreviation" class="form-label">Kısaltma (Opsiyonel)</label>
-                  <input type="text" class="form-control" name="abbreviation" id="id_abbreviation">
-                </div>
-                <button type="submit" class="btn btn-primary">Kaydet</button>
-              </form>
-            </div>
-  
-            <!-- (2) Kaynak Seç İçeriği -->
-            <div class="tab-pane fade"
-                 id="kaynakSec"
-                 role="tabpanel"
-                 aria-labelledby="kaynak-sec-tab">
-              <div class="list-group" id="kaynakListesi"></div>
-              <button type="button" class="btn btn-success mt-2" id="seciliKaynakEkleBtn">
-                Seçileni Ekle
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- /modal-body -->
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <!-- Modal Başlık -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="kaynakRefModalLabel">Kaynak İşlemleri</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
-    </div>
-  </div>
-  
+
+      <!-- Modal İçeriği (Sekmeler) -->
+      <div class="modal-body">
+        <ul class="nav nav-tabs" id="kaynakTab" role="tablist">
+          <!-- Kaynak Ekle Sekmesi -->
+          <li class="nav-item" role="presentation">
+            <button 
+              class="nav-link active"
+              id="kaynak-ekle-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#kaynakEkle"
+              type="button" 
+              role="tab"
+              aria-controls="kaynakEkle"
+              aria-selected="true">
+              Kaynak Ekle
+            </button>
+          </li>
+
+          <!-- Kaynak Seç Sekmesi -->
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="kaynak-sec-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#kaynakSec"
+              type="button"
+              role="tab"
+              aria-controls="kaynakSec"
+              aria-selected="false">
+              Kaynak Seç
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="kaynakTabContent">
+
+          <!-- (1) Kaynak Ekle Sekmesi -->
+          <div 
+            class="tab-pane fade show active"
+            id="kaynakEkle"
+            role="tabpanel"
+            aria-labelledby="kaynak-ekle-tab">
+            
+            <!-- Bu formu AJAX ile create_reference endpoint’ine POST yapacağız -->
+            <form id="kaynakForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="id_author_surname" class="form-label">Yazar Soyadı</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  name="author_surname" 
+                  id="id_author_surname" 
+                  required>
+              </div>
+
+              <div class="mb-3">
+                <label for="id_author_name" class="form-label">Yazar Adı</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  name="author_name" 
+                  id="id_author_name" 
+                  required>
+              </div>
+
+              <div class="mb-3">
+                <label for="id_year" class="form-label">Yıl</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  name="year" 
+                  id="id_year" 
+                  required>
+              </div>
+
+              <div class="mb-3">
+                <label for="id_rest" class="form-label">Ek Bilgiler</label>
+                <textarea 
+                  class="form-control" 
+                  name="rest" 
+                  id="id_rest" 
+                  rows="2"></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="id_abbreviation" class="form-label">Kısaltma (Opsiyonel)</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  name="abbreviation" 
+                  id="id_abbreviation">
+              </div>
+
+              <button type="submit" class="btn btn-primary">Kaydet</button>
+            </form>
+          </div>
+
+          <!-- (2) Kaynak Seç Sekmesi -->
+          <div 
+            class="tab-pane fade"
+            id="kaynakSec"
+            role="tabpanel"
+            aria-labelledby="kaynak-sec-tab">
+            
+            <!-- ARAMA KUTUSU -->
+            <div class="mb-3">
+              <label for="kaynakAraInput" class="form-label">Arama</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="kaynakAraInput" 
+                placeholder="Arama...">
+            </div>
+
+            <!-- Arama Sonuçları (List Group) -->
+            <div class="list-group" id="kaynakListesi"></div>
+
+            <!-- Seçili Kaynağı Metne Ekle -->
+            <button 
+              type="button" 
+              class="btn btn-success mt-2" 
+              id="seciliKaynakEkleBtn">
+              Seçileni Ekle
+            </button>
+          </div><!-- /tab-pane -->
+        </div><!-- /tab-content -->
+      </div><!-- /modal-body -->
+    </div><!-- /modal-content -->
+  </div><!-- /modal-dialog -->
+</div><!-- /modal fade -->
+
+
+<!-- SCRIPTS: Kaynak Ekle + Arama + (kaynak:ID) ekle -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // (A) Sekme butonları
+  const kaynakEkleTab = document.getElementById('kaynak-ekle-tab');
+  const kaynakSecTab  = document.getElementById('kaynak-sec-tab');
+
+  // (B) Form (Kaynak Ekle)
+  const kaynakForm    = document.getElementById('kaynakForm');
+
+  // (C) Arama (Kaynak Seç)
+  const kaynakAraInput       = document.getElementById('kaynakAraInput');
+  const kaynakListesi        = document.getElementById('kaynakListesi');
+  const seciliKaynakEkleBtn  = document.getElementById('seciliKaynakEkleBtn');
+
+  // --- 1) KAYNAK OLUŞTURMA (AJAX) ---
+  kaynakForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    let formData = new FormData(kaynakForm);
+
+    fetch("{% url 'create_reference' %}", {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': "{{ csrf_token }}", // Django CSRF
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert("Kaynak başarıyla eklendi!");
+        kaynakForm.reset();
+        // Kaynak eklendikten sonra "Kaynak Seç" sekmesine geçip listeyi yenileyelim
+        kaynakSecTab.click();
+        kaynaklariListele('');
+      } else {
+        console.error(data.errors);
+        alert("Kaynak eklenirken hata oluştu:\n" + JSON.stringify(data.errors));
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Bir hata oluştu.");
+    });
+  });
+
+  // --- 2) KAYNAK ARA/SEÇ ---
+  // “Kaynak Seç” sekmesine geçildiğinde önce tüm kayıtları çekelim
+  kaynakSecTab.addEventListener('click', function() {
+    kaynakAraInput.value = '';
+    kaynaklariListele('');
+  });
+
+  // Arama kutusuna yazıldıkça listeyi filtrele
+  kaynakAraInput.addEventListener('input', function() {
+    let searchTerm = kaynakAraInput.value.trim();
+    kaynaklariListele(searchTerm);
+  });
+
+  function kaynaklariListele(searchTerm='') {
+    const url = "{% url 'get_references' %}?q=" + encodeURIComponent(searchTerm);
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        // Mevcut listeyi temizle
+        kaynakListesi.innerHTML = '';
+        // Dönen verileri listeye ekle
+        data.references.forEach(ref => {
+          let label = document.createElement('label');
+          label.classList.add('list-group-item');
+          label.innerHTML = `
+            <input type="radio" name="kaynakSecimi" value="${ref.id}" class="form-check-input me-2" />
+            <span>${ref.display}</span>
+          `;
+          kaynakListesi.appendChild(label);
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Kaynak listesi yüklenirken hata oluştu.");
+      });
+  }
+
+  // --- 3) SEÇİLEN KAYNAĞI METNE EKLE ---
+  seciliKaynakEkleBtn.addEventListener('click', function() {
+    const secili = document.querySelector('input[name="kaynakSecimi"]:checked');
+    if (!secili) {
+      alert("Lütfen bir kaynak seçin.");
+      return;
+    }
+    const refId = secili.value;
+    
+    // Yanıt textarea'sını bulalım (question_detail.html içinde <textarea id="id_answer_text">)
+    const answerTextArea = document.getElementById('id_answer_text');
+    if (!answerTextArea) {
+      alert("Yanıt metin alanı (#id_answer_text) bulunamadı!");
+      return;
+    }
+    // Metnin sonuna (kaynak:REF_ID) formatını ekle
+    answerTextArea.value += ` (kaynak:${refId}) `;
+    const myModal = bootstrap.Modal.getInstance(document.getElementById('kaynakRefModal'));
+    myModal.hide();
+  });
+});
+</script>

@@ -1,8 +1,96 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1>Hakkında</h1>
-    <p>Felsefeciler tarafından felsefeciler için.</p>
+<div class="container my-5">
+  <h1 class="mb-4">Site Bilgileri</h1>
+
+  <!-- Sekme Başlıkları -->
+  <ul class="nav nav-tabs" id="infoTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button 
+        class="nav-link active" 
+        id="hakkinda-tab" 
+        data-bs-toggle="tab" 
+        data-bs-target="#hakkinda" 
+        type="button" 
+        role="tab" 
+        aria-controls="hakkinda" 
+        aria-selected="true">
+        Hakkında
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button 
+        class="nav-link"
+        id="kurallar-tab"
+        data-bs-toggle="tab"
+        data-bs-target="#kurallar"
+        type="button"
+        role="tab"
+        aria-controls="kurallar"
+        aria-selected="false">
+        Kurallar
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button 
+        class="nav-link"
+        id="iletisim-tab"
+        data-bs-toggle="tab"
+        data-bs-target="#iletisim"
+        type="button"
+        role="tab"
+        aria-controls="iletisim"
+        aria-selected="false">
+        İletişim
+      </button>
+    </li>
+  </ul>
+
+  <!-- Sekme İçerikleri -->
+  <div class="tab-content" id="infoTabsContent">
+    <!-- 1) HAKKINDA -->
+    <div class="tab-pane fade show active p-3" 
+         id="hakkinda" 
+         role="tabpanel"
+         aria-labelledby="hakkinda-tab">
+      <h2>Hakkında</h2>
+      <p>Felsefeciler tarafından felsefeciler için.</p>
+      <p>Bu platform, felsefi konuların tartışılması ve derinlemesine incelenmesi amacıyla kurulmuştur. 
+         Katkıda bulunmak isteyen herkes sorular sorabilir, yanıt verebilir veya yeni tartışma başlıkları oluşturabilir.</p>
+    </div>
+
+    <!-- 2) KURALLAR -->
+    <div class="tab-pane fade p-3" 
+         id="kurallar" 
+         role="tabpanel"
+         aria-labelledby="kurallar-tab">
+      <h2>Kurallar</h2>
+      <ul>
+        <li>Saygılı ve nezaket kurallarına uygun yazışma.</li>
+        <li>Farklı fikirlere saygı duymak ve kişisel saldırılardan kaçınmak.</li>
+        <li>Forumun amacına uygun başlıklar açmak ve ilgili konularda devam etmek.</li>
+        <li>Spam veya reklam amaçlı içerik paylaşmamak.</li>
+        <li>Telif hakkı ihlali yapmamak.</li>
+      </ul>
+      <p>Tüm kullanıcılarımızın bu kurallara uyması, sağlıklı bir tartışma ortamı için elzemdir.</p>
+    </div>
+
+    <!-- 3) İLETİŞİM -->
+    <div class="tab-pane fade p-3" 
+         id="iletisim" 
+         role="tabpanel"
+         aria-labelledby="iletisim-tab">
+      <h2>İletişim</h2>
+      <p>Her türlü istek, öneri ve şikayet için bize ulaşabilirsiniz:</p>
+      <ul>
+        <li><strong>E-posta:</strong> <a href="mailto:info@orneksite.com">info@orneksite.com</a></li>
+        <li><strong>Twitter:</strong> <a href="https://twitter.com/orneksite" target="_blank">@orneksite</a></li>
+        <li><strong>Facebook:</strong> <a href="https://facebook.com/orneksite" target="_blank">facebook.com/orneksite</a></li>
+      </ul>
+      <p>Ayrıca forum içerisindeki mesaj sistemiyle de bize ulaşabilirsiniz.</p>
+    </div>
+  </div>
 </div>
 {% endblock %}

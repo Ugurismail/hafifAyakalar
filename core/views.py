@@ -2084,13 +2084,29 @@ def create_reference(request):
         return JsonResponse(data, status=200)
     else:
         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-
 def get_references(request):
     """
-    Tüm referans kayıtlarını JSON olarak döndürür.
-    Böylece "Kaynak Seç" sekmesinde listelenebilir.
+    Tüm referans kayıtlarını, opsiyonel 'q' arama parametresi ile 
+    filtreleyerek JSON döndürür.
     """
-    references = Reference.objects.all().order_by('author_surname', 'year')
+    q = request.GET.get('q', '').strip()  # Arama terimi
+    references = Reference.objects.all()
+
+    if q:
+        references = references.filter(
+            Q(author_surname__icontains=q) |
+            Q(author_name__icontains=q) |
+            Q(rest__icontains=q) |
+            Q(abbreviation__icontains=q)
+            # Yıl alanında arama yapmak isterseniz (IntegerField olduğu için tam eşleşmede kullanabilirsiniz)
+            # veya q yalnızca sayıysa year__icontains gibi bir yaklaşımla handle edebilirsiniz.
+            # Örnek:
+            # Q(year__iexact=q)
+        )
+    
+    # Sıralama
+    references = references.order_by('author_surname', 'year')
+
     data = []
     for ref in references:
         data.append({
@@ -2100,10 +2116,10 @@ def get_references(request):
             'year': ref.year,
             'rest': ref.rest,
             'abbreviation': ref.abbreviation or '',
-            'display': str(ref),  # Örn. Bellah, R. (2017) - bellah ve din
+            'display': str(ref),
         })
+    
     return JsonResponse({'references': data}, status=200)
-
 
 def download_entries_json(request, username):
     target_user = get_object_or_404(User, username=username)
