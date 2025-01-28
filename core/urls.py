@@ -71,6 +71,7 @@ urlpatterns = [
 
     path('random_sentence/', views.get_random_sentence, name='get_random_sentence'),
     path('add_random_sentence/', views.add_random_sentence, name='add_random_sentence'),
+    path('ignore_random_sentence/', views.ignore_random_sentence, name='ignore_random_sentence'),
 
     # Anket ana sayfası
     path('polls/', views.polls_home, name='polls_home'),

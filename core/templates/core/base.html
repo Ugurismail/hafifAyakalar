@@ -251,24 +251,57 @@
 <!-- Toast -->
 <div class="position-fixed bottom-0 end-3 p-3" style="z-index: 9999;">
     <div id="randomToast" 
-         class="toast fade" 
+         class="toast fade"
          role="alert" 
          aria-live="assertive" 
          aria-atomic="true" 
-         data-bs-autohide="true" 
-         data-bs-delay="4000" 
-         style="min-width: 300px;">
-      <div class="toast-header">
+         data-bs-autohide="true"
+         data-bs-delay="4000"
+         style="width: 350px;">
+         
+      <!-- Toast başlık kısmı -->
+      <div class="toast-header d-flex justify-content-between align-items-center">
         <strong class="me-auto">Random Kutusu</strong>
-        <!-- "+" butonu modal açacak -->
-        <button type="button" class="btn btn-sm btn-success me-2" id="addSentenceBtn"><i class="bi bi-plus-lg"></i></button>
-        <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+        
+        <!-- "Yeni cümle ekle" butonu -->
+        <button type="button"
+                class="btn btn-success btn-sm me-2"
+                id="addSentenceBtn"
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top" 
+                title="Yeni cümle ekle">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+  
+        <!-- Toast'ı kapatma butonu (varsayılana dokunmadık) -->
+        <button type="button" 
+                class="btn-close" 
+                data-bs-dismiss="toast" 
+                aria-label="Close">
+        </button>
       </div>
-      <div class="toast-body">
-        <div id="randomSentenceText">Cümle buraya gelecek...</div>
+  
+      <!-- Toast gövdesi -->
+      <div class="toast-body d-flex justify-content-between align-items-center">
+        <!-- Rastgele cümle metni -->
+        <span id="randomSentenceText" class="me-2">
+          Cümle buraya gelecek...
+        </span>
+  
+        <!-- "Bir Daha Gösterme" (ignore) butonu (ilk başta gizli) -->
+        <button type="button" 
+                class="btn btn-link text-danger p-0" 
+                id="ignoreRandomBtn" 
+                style="display: none;" 
+                data-bs-toggle="tooltip" 
+                data-bs-placement="right" 
+                title="Bu cümleyi bir daha gösterme">
+          <i class="bi bi-eye-slash"></i>
+        </button>
       </div>
     </div>
   </div>
+  
 
     <!-- Modal -->
     <div class="modal fade" id="addSentenceModal" tabindex="-1" aria-labelledby="addSentenceModalLabel" aria-hidden="true">
@@ -315,62 +348,99 @@
         });
 
         $(document).ready(function() {
-            var toastEl = document.getElementById('randomToast');
-            var toast = new bootstrap.Toast(toastEl);
-            var csrftoken = $('meta[name="csrf-token"]').attr('content');
+    var toastEl = document.getElementById('randomToast');
+    var toast   = new bootstrap.Toast(toastEl);
+    var csrftoken = $('meta[name="csrf-token"]').attr('content');
 
-            $('#help-btn').click(function() {
-                // help btn basılınca random cümle çek
-                $.ajax({
-                    url: "{% url 'get_random_sentence' %}",
-                    method: "GET",
-                    success: function(data) {
-                        $('#randomSentenceText').text(data.sentence);
-                        toast.show();
-                    }
-                });
-            });
+    // Rastgele cümleyi çeker
+    $('#help-btn').click(function() {
+        // help btn basılınca random cümle çek
+        $.ajax({
+            url: "{% url 'get_random_sentence' %}",
+            method: "GET",
+            success: function(data) {
+                // data = { id: xx, sentence: '...' }
+                $('#randomSentenceText').text(data.sentence);
+                
+                // Cümle id bilgisini butona set edelim ki ignore fonksiyonu bilebilsin
+                $('#ignoreRandomBtn').data('sentence-id', data.id);
+                // Butonu görünür yap
+                $('#ignoreRandomBtn').show();
 
-            // "+" butonuna basıldığında modal aç
-            $('#addSentenceBtn').click(function() {
-                var addModal = new bootstrap.Modal(document.getElementById('addSentenceModal'), {
-                    backdrop: 'static',
-                    keyboard: false
-                });
-                addModal.show();
-            });
-
-            $('#addRandomSentenceForm').on('submit', function(e) {
-                e.preventDefault();
-                $.ajax({
-                    url: "{% url 'add_random_sentence' %}",
-                    method: "POST",
-                    data: $(this).serialize(),
-                    headers: {'X-CSRFToken': csrftoken},
-                    success: function(data) {
-                        if(data.status == 'success') {
-                            alert(data.message);
-                            // Yeni cümle eklendi, formu temizleyelim
-                            $('#addRandomSentenceForm textarea[name="sentence"]').val('');
-                            // Modal kapat
-                            var addModalEl = document.getElementById('addSentenceModal');
-                            var addModal = bootstrap.Modal.getInstance(addModalEl);
-                            addModal.hide();
-                        } else {
-                            // Hatalar varsa gösterelim
-                            let errorMsg = "Hata:\n";
-                            for (let field in data.errors) {
-                                data.errors[field].forEach((err) => {
-                                    errorMsg += err.message + "\n";
-                                });
-                            }
-                            alert(errorMsg);
-                        }
-                    }
-                });
-            });
+                toast.show();
+            }
         });
+    });
+
+    // “+” butonuna basıldığında modal aç
+    $('#addSentenceBtn').click(function() {
+        var addModal = new bootstrap.Modal(document.getElementById('addSentenceModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
+        addModal.show();
+    });
+
+    // Yeni cümle ekleme formu
+    $('#addRandomSentenceForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: "{% url 'add_random_sentence' %}",
+            method: "POST",
+            data: $(this).serialize(),
+            headers: {'X-CSRFToken': csrftoken},
+            success: function(data) {
+                if(data.status == 'success') {
+                    alert(data.message);
+                    $('#addRandomSentenceForm textarea[name="sentence"]').val('');
+                    var addModalEl = document.getElementById('addSentenceModal');
+                    var addModal   = bootstrap.Modal.getInstance(addModalEl);
+                    addModal.hide();
+                } else {
+                    let errorMsg = "Hata:\n";
+                    for (let field in data.errors) {
+                        data.errors[field].forEach((err) => {
+                            errorMsg += err.message + "\n";
+                        });
+                    }
+                    alert(errorMsg);
+                }
+            }
+        });
+    });
+
+    // “Bir Daha Gösterme” butonuna tıklayınca
+    $('#ignoreRandomBtn').click(function() {
+        const sentenceId = $(this).data('sentence-id');
+        if (!sentenceId) return;
+
+        $.ajax({
+            url: "{% url 'ignore_random_sentence' %}",
+            method: "POST",
+            data: { sentence_id: sentenceId },
+            headers: { 'X-CSRFToken': csrftoken },
+            success: function(data) {
+                if(data.status === 'success') {
+                    // İsteğe göre toast'ı kapatabilir, 
+                    // veya "Bu cümle bir daha gösterilmeyecek" mesajı verebilirsiniz.
+                    toast.hide();
+                    alert(data.message);
+                } else {
+                    alert(data.message || "Bir hata oluştu.");
+                }
+            }
+        });
+    });
+});
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+      })
+    });
+  </script>
 <script>
         document.addEventListener('DOMContentLoaded', function() {
           var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));

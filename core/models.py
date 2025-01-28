@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 import datetime
+from django.conf import settings
 
 
 
@@ -192,6 +193,11 @@ class Entry(models.Model):
 
 class RandomSentence(models.Model):
     sentence = models.CharField(max_length=280)
+    ignored_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name='ignored_random_sentences'
+    )
 
     def __str__(self):
         return self.sentence[:50]
