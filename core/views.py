@@ -24,6 +24,11 @@ from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import timedelta
 from django.utils.timezone import now
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
 
 
 
@@ -2045,55 +2050,23 @@ def get_references(request):
         })
     return JsonResponse({'references': data}, status=200)
 
-from django.http import HttpResponse
-import json
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import User
-from .models import Question, Answer
+
 def download_entries_json(request, username):
-    """
-    Kullanıcının oluşturduğu tüm soruları, her sorunun altında
-    bulunan tüm yanıtları (tüm kullanıcılardan) JSON formatında döndürür.
-
-    Örnek JSON çıktısı:
-    {
-      "username": "ali",
-      "questions": [
-        {
-          "question_text": "Sizce özgürlük nedir?",
-          "question_created_at": "2025-01-11T12:34:56",
-          "answers": [
-            {
-              "answer_text": "Bence özgürlük sorumluluk demektir...",
-              "answer_created_at": "2025-01-12T10:00:00",
-              "answer_user": "veli"
-            },
-            ...
-          ]
-        },
-        ...
-      ]
-    }
-    """
-    # 1) Kullanıcı doğrulama
     target_user = get_object_or_404(User, username=username)
-
-    # Sadece kendisi (veya istersek admin) indirebilsin
     if request.user != target_user and not request.user.is_superuser:
         return JsonResponse(
             {'error': 'Bu işlemi yapmaya yetkiniz yok.'},
             status=403
         )
 
-    # 2) Kullanıcının yazdığı soruları çek
     user_questions = Question.objects.filter(user=target_user).order_by('created_at')
 
-    # 3) JSON yapısı oluştur
     questions_data = []
     for q in user_questions:
-        # Her soru altındaki TÜM yanıtlar (kim yazmış olursa olsun)
+        # Soru sahibinin kendi yanıtlarını çekmek istiyorsanız:
         q_answers = q.answers.filter(user=target_user).order_by('created_at')
+        # Tüm yanıtları (herhangi bir kullanıcıdan) istiyorsanız: q.answers.all()
+        
         answers_data = []
         for ans in q_answers:
             answers_data.append({
@@ -2107,15 +2080,95 @@ def download_entries_json(request, username):
             'answers': answers_data
         })
 
-    # 4) Final JSON sözlüğü
     final_data = {
         'username': target_user.username,
         'questions': questions_data,
     }
 
-    # 5) JsonResponse ile döndür (indent vererek görece okunaklı hale getirebilirsiniz)
-    return JsonResponse(
-        final_data, 
-        safe=True,
-        json_dumps_params={'ensure_ascii': False, 'indent': 2}  # Türkçe karakterleri koru, pretty-print
+    # Python'da sözlüğü JSON stringine dönüştür
+    json_string = json.dumps(
+        final_data,
+        ensure_ascii=False,
+        indent=2
     )
+
+    # HttpResponse ile "indirilebilir" döndür
+    response = HttpResponse(json_string, content_type='application/json; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="entries.json"'
+    return response
+
+
+
+def download_entries_xlsx(request, username):
+    """
+    Kullanıcının oluşturduğu tüm soruları ve bu sorulara
+    kullanıcının verdiği yanıtları Excel formatında indirir.
+
+    Format:
+    - A sütununda soru metni (her soru ilk boş satırda)
+    - B sütununda yanıtlar (her yanıt bir alt satırda)
+    - Sonraki soru, son yanıtın altındaki satırdan itibaren başlar.
+    """
+
+    # 1) Kullanıcıyı doğrula
+    target_user = get_object_or_404(User, username=username)
+    if request.user != target_user and not request.user.is_superuser:
+        return JsonResponse(
+            {'error': 'Bu işlemi yapmaya yetkiniz yok.'},
+            status=403
+        )
+
+    # 2) Kullanıcının oluşturduğu soruları çek
+    user_questions = Question.objects.filter(user=target_user).order_by('created_at')
+
+    # 3) Excel çalışma kitabı ve sayfa oluştur
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Entries"
+
+    # (İsteğe Bağlı) Başlık Satırı Ekleyebilirsiniz
+    # ws["A1"] = "Soru"
+    # ws["B1"] = "Yanıt"
+    # ws["A1"].font = Font(bold=True)
+    # ws["B1"].font = Font(bold=True)
+    #
+    # row_idx = 2  # Başlık satırı kullanıyorsak 2'den başlayacağız
+    #
+    # Aşağıda örnek, başlık satırı yokmuş gibi direkt 1. satırdan başlıyoruz:
+
+    row_idx = 1
+
+    # 4) Soruları gezip, satır-sütun mantığıyla verileri yerleştirelim
+    for question in user_questions:
+        # A sütununa soru metnini yaz
+        ws.cell(row=row_idx, column=1, value=question.question_text)
+
+        # Bu soruya kullanıcının verdiği tüm yanıtları çek
+        # (Eğer tüm kullanıcılardan gelen yanıtları istiyorsanız: question.answers.all())
+        user_answers = question.answers.filter(user=target_user).order_by('created_at')
+
+        # Yanıtları B sütunundan itibaren ekleyelim
+        # İlk yanıt, aynı satırda (B sütunu) olacak
+        # Sonraki yanıtlar bir alt satıra inerek (B sütununda)
+        answer_start_row = row_idx  # Soru metnini koyduğumuz satır
+
+        for i, ans in enumerate(user_answers):
+            # İlk yanıt aynı satırda, sonrakiler bir alt satırda
+            # eğer her yanıtı ayrı satıra koymak istiyorsak:
+            current_row = answer_start_row + i
+            ws.cell(row=current_row, column=2, value=ans.answer_text)
+        
+        # Kaç tane yanıt varsa, bir sonraki soru
+        # son yanıtın altındaki satırdan başlasın
+        row_idx = answer_start_row + max(len(user_answers), 1)  # Yanıt yoksa da 1 satır ilerlet
+        row_idx += 1  # 1 satır boşluk bırakmak isterseniz
+        
+    # 5) HttpResponse ile Excel'i "attachment" olarak döndür
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    # Dosya ismini dilediğiniz gibi oluşturabilirsiniz
+    response['Content-Disposition'] = 'attachment; filename="entries.xlsx"'
+
+    wb.save(response)
+    return response
