@@ -1646,9 +1646,13 @@ def message_detail(request, username):
 
 @login_required
 def send_message_from_answer(request, answer_id):
-    from .models import Answer
     answer = get_object_or_404(Answer, id=answer_id)
     recipient = answer.user
+
+    # İlgili yanıta ait path ve tam URL
+    from django.urls import reverse
+    answer_url_path = reverse('single_answer', args=[answer.question.id, answer.id])
+    answer_full_url = request.build_absolute_uri(answer_url_path)
 
     if request.method == 'POST':
         form = MessageForm(request.POST)
@@ -1656,9 +1660,14 @@ def send_message_from_answer(request, answer_id):
             message = form.save(commit=False)
             message.sender = request.user
             message.recipient = recipient
+            # Sadece POST aşamasında, bir kere ekliyoruz:
+            message.body = f"{answer_full_url} {message.body}"
+            message.timestamp = timezone.now()
+            message.is_read = False
             message.save()
             return redirect('message_detail', username=recipient.username)
     else:
+        # GET aşamasında link eklemiyoruz, sadece boş bir form dönüyoruz.
         form = MessageForm(initial={'recipient': recipient})
 
     context = {
