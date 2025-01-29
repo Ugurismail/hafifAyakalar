@@ -14,9 +14,9 @@
                 <li class="d-flex justify-content-between align-items-center mt-2 baslik">
                     <a href="{% url 'question_detail' question.id %}"
                        class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
-                        {{ question.question_text }}
+                        <span>{{ question.question_text }}</span>
+                        <small class="ms-2">{{ question.answers_count }}</small>
                     </a>
-                    <small>{{ question.answers_count }}</small>
                 </li>
                 {% endfor %}
             </ul>
