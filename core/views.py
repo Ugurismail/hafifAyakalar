@@ -418,11 +418,23 @@ def get_invitation_tree(user):
 
 @login_required
 def question_detail(request, question_id):
-    question = get_object_or_404(Question, id=question_id)
-    # Tüm yanıtları çek, sıralama isterseniz (örn. en yeni yanıtlar en üstte)
-    all_answers = question.answers.all().order_by('created_at')
+    # 1) Soldaki “Tüm Sorular” listesini alalım:
+    all_questions = get_today_questions(request)  # Kendi fonksiyonunuz olduğunu varsayıyorum.
+    # soldaki soru listesi için pagination parametresi => "?q_page=..."
+    q_page_number = request.GET.get('q_page', 1)
+    q_paginator = Paginator(all_questions, 20)  # Sayfa başına 10 soru
+    all_questions_page = q_paginator.get_page(q_page_number)
 
-    # 1) Form Oluşturma & İşleme
+    # 2) İlgili question nesnesini çek
+    question = get_object_or_404(Question, id=question_id)
+
+    # 3) Orta kısımdaki yanıtlar için ayrı paginator => "?a_page=..."
+    all_answers = question.answers.all().order_by('created_at')  # kendi sıralamanıza göre
+    a_page_number = request.GET.get('a_page', 1)
+    a_paginator = Paginator(all_answers, 10)  # Örnek: her sayfada 5 yanıt
+    answers_page = a_paginator.get_page(a_page_number)
+
+    # 4) Yanıt formunu işleme (POST geldiyse)
     if request.method == 'POST':
         form = AnswerForm(request.POST)
         if form.is_valid():
@@ -430,72 +442,77 @@ def question_detail(request, question_id):
             new_answer.user = request.user
             new_answer.question = question
             new_answer.save()
+            # Yanıt eklendikten sonra tekrar question_detail'e yönlendir
             return redirect('question_detail', question_id=question.id)
     else:
         form = AnswerForm()
 
-    # 2) Yanıtlar için Paginator
-    page_number = request.GET.get('page')  # ?page=... parametresi
-    paginator = Paginator(all_answers, 10)  # Sayfa başına 10 yanıt
-    answers_page = paginator.get_page(page_number)  # veya get_page() [Django 2.0+]
-
-    # 3) Kullanıcının bu soruyu kaydedip kaydetmediğini kontrol et
+    # 5) Soruya dair “kaydetme” ve “oylama” bilgilerini al
     content_type_question = ContentType.objects.get_for_model(Question)
+    # Kullanıcı bu soruyu kaydetmiş mi?
     user_has_saved_question = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_question,
         object_id=question.id
     ).exists()
-
-    # 4) Soru için kaydedilme sayısını al
+    # Sorunun kaç kez kaydedildiği
     question_save_count = SavedItem.objects.filter(
         content_type=content_type_question,
         object_id=question.id
     ).count()
+    # Soruya kullanıcı oyu (Vote tablosundan)
+    # (İsterseniz question.user_vote_value gibi bir şey atayabilirsiniz.)
 
-    # 5) Kullanıcının oylarını al (sadece sayfada gösterilen yanıtlar için)
+    # 6) Yanıtlara dair “kaydetme” ve “oylama” bilgileri
+    #    (Sadece bu sayfada gözüken yanıtların IDs)
     content_type_answer = ContentType.objects.get_for_model(Answer)
-    page_answer_ids = [ans.id for ans in answers_page.object_list]
+    page_answer_ids = [ans.id for ans in answers_page]  # answers_page.object_list da kullanılabilir
+
+    # Kullanıcının oyları (Yanıtlar)
     user_votes = Vote.objects.filter(
         user=request.user,
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values('object_id', 'value')
     user_vote_dict = {vote['object_id']: vote['value'] for vote in user_votes}
-
-    # 6) Her yanıta `user_vote_value` ekle
-    for ans in answers_page:  # answers_page bir Page objesi, içindeki nesnelere loop atabiliriz
+    # Yanıtlarda user_vote_value’yı setle
+    for ans in answers_page:
         ans.user_vote_value = user_vote_dict.get(ans.id, 0)
 
-    # 7) Kullanıcının kaydettiği yanıtların ID'lerini al (sadece bu sayfada gösterilenler)
+    # Kaydedilen yanıtlar
     saved_answer_ids = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values_list('object_id', flat=True)
 
-    # 8) Yanıtların kaydedilme sayılarını al
+    # Yanıtların kaydedilme sayıları
     answer_save_counts = SavedItem.objects.filter(
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
 
-    # 9) Soldaki "Tüm Sorular" listesi (mevcut kodunuz)
-    all_questions = get_today_questions(request)
-
+    # 7) Template’e göndereceğimiz context
     context = {
         'question': question,
-        'answers': answers_page,  # Sayfalanmış yanıtlar
         'form': form,
+
+        # Soldaki soru listesi (sayfalanmış)
+        'all_questions_page': all_questions_page,  # <--- soldaki “Tüm Sorular”
+        # Orta kısım yanıtları (sayfalanmış)
+        'answers_page': answers_page,
+
+        # Soru Kaydetme/Oylama
         'user_has_saved_question': user_has_saved_question,
         'question_save_count': question_save_count,
+        
+        # Yanıt Kaydetme/Oylama
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
-        'all_questions': all_questions,
 
-        # Pagination için page_obj ismi:
-        'page_obj': answers_page,
+        # Eskiden 'all_questions' diye döndürüyordunuz, şimdi 'all_questions_page' var
+        # Bu ikisini template tarafında nasıl kullanacağınıza bağlı.
     }
     return render(request, 'core/question_detail.html', context)
 
@@ -922,16 +939,30 @@ def user_settings(request):
             profile.dropdown_hover_text_color = '#0056b3'
             profile.nav_link_hover_color = '#007bff'
             profile.nav_link_hover_bg = 'rgba(0, 0, 0, 0.05)'
+
             profile.pagination_background_color = '#ffffff'
             profile.pagination_text_color = '#000000'
-            profile.pagination_active_background_color = '#007bff'
-            profile.pagination_active_text_color = '#ffffff'
+            # profile.pagination_active_background_color = '#007bff'
+            # profile.pagination_active_text_color = '#ffffff'
+            
+            profile.cemil = '#ffffff'
+            profile.yanit_card='#ffffff' 
+            profile.secondary_button_background_color = '#6c757d'
+            profile.secondary_button_text_color = '#ffffff'
+            profile.secondary_button_hover_background_color= '#495057'
+
+            profile.font_family = 'EB Garamond'
             # Diğer renk alanlarını da varsayılan değerlere ayarlayın
             profile.save()
             messages.success(request, 'Renk ayarlarınız varsayılan değerlere döndürüldü.')
             return redirect('user_settings')
         else:
             # Formdan gelen değerleri kaydet
+            profile.cemil = request.POST.get('cemil','#ffffff')
+            profile.secondary_button_background_color = request.POST.get('secondary_button_background_color','#6c757d')
+            profile.secondary_button_text_color = request.POST.get('secondary_button_text_color','#ffffff')
+            profile.secondary_button_hover_background_color = request.POST.get('secondary_button_hover_background_color','#495057')
+
             profile.background_color = request.POST.get('background_color', '#F5F5F5')
             profile.text_color = request.POST.get('text_color', '#000000')
             profile.header_background_color = request.POST.get('header_background_color', '#ffffff')
@@ -955,10 +986,13 @@ def user_settings(request):
             profile.dropdown_hover_text_color = request.POST.get('dropdown_hover_text_color', '#0056b3')
             profile.nav_link_hover_color = request.POST.get('nav_link_hover_color', '#007bff')
             profile.nav_link_hover_bg = request.POST.get('nav_link_hover_bg', 'rgba(0, 0, 0, 0.05)')
+
             profile.pagination_background_color = request.POST.get('pagination_background_color', '#ffffff')
             profile.pagination_text_color = request.POST.get('pagination_text_color', '#000000')
-            profile.pagination_active_background_color = request.POST.get('pagination_active_background_color', '#007bff')
-            profile.pagination_active_text_color = request.POST.get('pagination_active_text_color', '#ffffff')
+            # profile.pagination_active_background_color = request.POST.get('pagination_active_background_color', '#007bff')
+            # profile.pagination_active_text_color = request.POST.get('pagination_active_text_color', '#ffffff')
+            profile.yanit_card= request.POST.get('yanit_card','#ffffff')
+            profile.font_family = request.POST.get('font_family', 'EB Garamond')
             # Diğer renk alanlarını da kaydedin
             profile.save()
             messages.success(request, 'Renk ayarlarınız güncellendi.')

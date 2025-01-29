@@ -16,7 +16,13 @@
     
     {% if user.is_authenticated %}
     <style>
+        @import url("https://fonts.googleapis.com/css?family={{ user.userprofile.font_family|urlencode }}");
       :root {
+        --cemil: {{ user.userprofile.cemil }};
+        --secondary-button-background_color : {{ user.userprofile.secondary_button_background_color }};
+        --secondary-button-hover-background-color : {{ user.userprofile.secondary_button_hover_background_color }};
+        --secondary-button-text-color : {{ user.userprofile.secondary_button_text_color }};
+
         --background-color: {{ user.userprofile.background_color }};
         --text-color: {{ user.userprofile.text_color }};
         --header-background-color: {{ user.userprofile.header_background_color }};
@@ -40,10 +46,14 @@
         --dropdown-hover-text-color: {{ user.userprofile.dropdown_hover_text_color }};
         --nav-link-hover-color: {{ user.userprofile.nav_link_hover_color }};
         --nav-link-hover-bg: {{ user.userprofile.nav_link_hover_bg }};
+
         --pagination-background-color: {{ user.userprofile.pagination_background_color }};
-        --pagination-text_color: {{ user.userprofile.pagination_text_color }};
-        --pagination-active-background-color: {{ user.userprofile.pagination_active_background_color }};
-        --pagination-active-text-color: {{ user.userprofile.pagination_active_text_color }};
+        --pagination-text-color: {{ user.userprofile.pagination_text_color }};
+        /* --pagination-active-background-color: {{ user.userprofile.pagination_active_background_color }};
+        --pagination-active-text-color: {{ user.userprofile.pagination_active_text_color }}; */
+        --body-font-family: "{{ user.userprofile.font_family }}";
+        --yanit-card-background-color: {{ user.userprofile.yanit_card }}
+        
         /* vs. diğer değişkenler */
       }
     </style>

@@ -123,7 +123,7 @@ class AnswerForm(forms.ModelForm):
         model = Answer
         fields = ['answer_text']
         widgets = {
-            'answer_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Yanıtınızı buraya yazın'}),
+            'answer_text': forms.Textarea(attrs={'class': 'form-control auto-expand', 'rows': 2, 'placeholder': 'Yanıtınızı buraya yazın'}),
         }
 
 class MessageForm(forms.ModelForm):

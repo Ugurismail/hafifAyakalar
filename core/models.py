@@ -33,15 +33,25 @@ class UserProfile(models.Model):
     photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
 
     # Renk ayarları alanları
-    background_color = models.CharField(max_length=7, default='#F5F5F5')
+    background_color = models.CharField(max_length=7, default='#F5F5F5') #genel arka plan
     text_color = models.CharField(max_length=7, default='#000000')
+
+    cemil = models.CharField(max_length=7, default='#ffffff')
+    yanit_card = models.CharField(max_length=7, default='#ffffff')
     header_background_color = models.CharField(max_length=7, default='#ffffff')
     header_text_color = models.CharField(max_length=7, default='#333333')
     link_color = models.CharField(max_length=7, default='#0d6efd')
     link_hover_color = models.CharField(max_length=7, default='#0056b3')
+
     button_background_color = models.CharField(max_length=7, default='#007bff')
     button_hover_background_color = models.CharField(max_length=7, default='#0056b3')
     button_text_color = models.CharField(max_length=7, default='#ffffff')
+
+    secondary_button_background_color = models.CharField(max_length=7, default='#6c757d')
+    secondary_button_hover_background_color = models.CharField(max_length=7, default='#495057')
+    secondary_button_text_color = models.CharField(max_length=7, default='#ffffff')
+
+
     hover_background_color = models.CharField(max_length=7, default='#f0f0f0')
     icon_color = models.CharField(max_length=7, default='#333333')
     icon_hover_color = models.CharField(max_length=7, default='#007bff')
@@ -56,10 +66,13 @@ class UserProfile(models.Model):
     dropdown_hover_text_color = models.CharField(max_length=7, default='#0056b3')
     nav_link_hover_color = models.CharField(max_length=7, default='#007bff')
     nav_link_hover_bg = models.CharField(max_length=7, default='rgba(0, 0, 0, 0.05)')
+
     pagination_background_color = models.CharField(max_length=7, default='#ffffff')
     pagination_text_color = models.CharField(max_length=7, default='#000000')
-    pagination_active_background_color = models.CharField(max_length=7, default='#007bff')
-    pagination_active_text_color = models.CharField(max_length=7, default='#ffffff')
+    # pagination_active_background_color = models.CharField(max_length=7, default='#007bff')
+    # pagination_active_text_color = models.CharField(max_length=7, default='#ffffff')
+
+    font_family = models.CharField(max_length=100, default='EB Garamond')
 
     # Diğer renk alanlarını da ekleyin
 

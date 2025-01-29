@@ -10,7 +10,7 @@
         <div class="col-md-2" style="border-right: 1px solid #ccc;">
             <h4>Tüm Sorular</h4>
             <ul class="list-unstyled">
-                {% for question in all_questions %}
+                {% for question in all_questions_page %}
                 <li class="d-flex justify-content-between align-items-center mt-2 baslik">
                     <a href="{% url 'question_detail' question.id %}"
                        class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
@@ -20,7 +20,7 @@
                 </li>
                 {% endfor %}
             </ul>
-            {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
+            {% include 'core/pagination.html' with page_obj=all_questions_page page_param='q_page' %}
         </div>
         <div class="col-md-8">
         <!-- SORU DETAYI (ORTA) -->
@@ -34,7 +34,7 @@
                         <i class="bi bi-geo-alt-fill"></i>
                     </a>
                 </h2>
-                {% include 'core/pagination.html' with page_obj=answers page_param='page' %}
+                
             </div>
 
             <!-- SORUYA OY ve KAYDET -->
@@ -67,17 +67,15 @@
                 </div>
             </div>
 </div>
-
-
             <!-- YANITLAR LİSTESİ -->
-            {% for answer in answers %}
+            {% for answer in answers_page %}
             <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
                 <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
                     <!-- Kısaltılmış Yanıt -->
                     <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|tanim_link|reference_link }}...</p>
                     <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|markdownify:"default:0"|tanim_link|reference_link }}</p>
+                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|tanim_link|reference_link }}</p>
                     <!-- "Tamamını oku" Linki -->
                     <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                 {% else %}
@@ -165,13 +163,13 @@
             {% empty %}
             <p>Henüz yanıt yok. İlk yanıtı siz verin!</p>
             {% endfor %}
-            {% include 'core/pagination.html' with page_obj=answers page_param='page' %}
+            {% include 'core/pagination.html' with page_obj=answers_page page_param='a_page' %}
             <!-- YANIT EKLEME FORMU -->
             <div class="card mt-4">
-                <div class="card-body answer-arkaRenk">
+                <div class="card-body yanit-card">
                     <form method="post">
                         {% csrf_token %}
-                        <div class="btn-toolbar mb-2" role="toolbar">
+                        <div class="btn-toolbar mb-2 yanit-card" role="toolbar">
 
                             <!-- Bold/Italic -->
                             <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
@@ -531,6 +529,28 @@ document.addEventListener('DOMContentLoaded', function() {
       })
     });
 </script>
-
+<!-- <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const textareas = document.querySelectorAll(".auto-expand");
+        textareas.forEach(function(textarea) {
+            // İlk açılışta bir kere yüksekliğini ayarlamak isterseniz
+            textarea.style.height = textarea.scrollHeight + "px";
     
+            // Kullanıcı yazdıkça (input event) yüksekliği güncelle
+            textarea.addEventListener("input", function() {
+                // Yüksekliği önce sıfırlayıp, içeriğin gerçek boyutuna göre ayarlıyoruz
+                textarea.style.height = "auto";
+                textarea.style.height = textarea.scrollHeight + "px";
+            });
+        });
+    });
+    </script>
+<script>
+textarea.addEventListener("focus", function() {
+    // tıklandığında yükseklik anında içeriğe göre ayarlansın
+    textarea.style.height = textarea.scrollHeight + "px";
+});
+</script> -->
+
+
 {% endblock %}
