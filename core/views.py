@@ -938,7 +938,7 @@ def user_settings(request):
             profile.dropdown_hover_background_color = '#f2f2f2'
             profile.dropdown_hover_text_color = '#0056b3'
             profile.nav_link_hover_color = '#007bff'
-            profile.nav_link_hover_bg = 'rgba(0, 0, 0, 0.05)'
+            profile.nav_link_hover_bg = '#f5f5f5'
 
             profile.pagination_background_color = '#ffffff'
             profile.pagination_text_color = '#000000'
@@ -985,7 +985,7 @@ def user_settings(request):
             profile.dropdown_hover_background_color = request.POST.get('dropdown_hover_background_color', '#f2f2f2')
             profile.dropdown_hover_text_color = request.POST.get('dropdown_hover_text_color', '#0056b3')
             profile.nav_link_hover_color = request.POST.get('nav_link_hover_color', '#007bff')
-            profile.nav_link_hover_bg = request.POST.get('nav_link_hover_bg', 'rgba(0, 0, 0, 0.05)')
+            profile.nav_link_hover_bg = request.POST.get('nav_link_hover_bg', '#f5f5f5')
 
             profile.pagination_background_color = request.POST.get('pagination_background_color', '#ffffff')
             profile.pagination_text_color = request.POST.get('pagination_text_color', '#000000')

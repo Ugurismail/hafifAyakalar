@@ -40,7 +40,7 @@ a:hover {
 .navbar .nav-link:hover,
 .navbar .dropdown-toggle:hover {
     color: var(--nav-link-hover-color, #ffffff) !important;
-    background-color: var(--nav-link-hover-bg, #495057);
+    background-color: var(--nav-link-hover-bg) !important;
 }
 
 .navbar .dropdown-menu {
@@ -96,6 +96,7 @@ a:hover {
     padding: 15px;
     margin-bottom: 15px;
     border-radius: 5px;
+    
 }
 
 .answer {

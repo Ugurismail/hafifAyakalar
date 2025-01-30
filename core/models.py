@@ -65,7 +65,8 @@ class UserProfile(models.Model):
     dropdown_hover_background_color = models.CharField(max_length=7, default='#f2f2f2')
     dropdown_hover_text_color = models.CharField(max_length=7, default='#0056b3')
     nav_link_hover_color = models.CharField(max_length=7, default='#007bff')
-    nav_link_hover_bg = models.CharField(max_length=7, default='rgba(0, 0, 0, 0.05)')
+
+    nav_link_hover_bg = models.CharField(max_length=7, default='#f5f5f5')
 
     pagination_background_color = models.CharField(max_length=7, default='#ffffff')
     pagination_text_color = models.CharField(max_length=7, default='#000000')
