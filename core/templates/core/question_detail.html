@@ -114,7 +114,7 @@
                         </div>
                         <div class="text-end">
                             <small class="text-muted me-2">
-                                <a class="action-user" href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                                <a class="" href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                                 | {{ answer.created_at|date:"Y-m-d H:i" }}
                                 {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
                                     {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
@@ -222,51 +222,67 @@
         <!-- SAĞ SÜTUN: ALT SORULAR -->
         <div class="col-md-2">
             <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div>
+                <div class="row g-2">  <!-- Satır ekledik, boşluk için g-2 kullanıldı -->
+                    {% if question.parent_questions.count == 0 %}
+                    <div class="col-12 d-grid">
                         <a href="{% url 'add_subquestion' question.id %}" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-chevron-double-down" title="Alt Soru Ekle"> Alt Soru Ekle</i>
                         </a>
-                        {% if question.parent_questions.count == 1 %}
-                            {% with parent=question.parent_questions.first %}
-                                <a href="{% url 'question_detail' parent.id %}" class="btn btn-outline-secondary btn-sm ms-2">
+                    </div>
+
+                    {% elif question.parent_questions.count > 0 %}
+                    <div class="col-6 d-grid">
+                        <a href="{% url 'add_subquestion' question.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-chevron-double-down" title="Alt Soru Ekle"> Alt Soru Ekle</i>
+                        </a>
+                    </div>
+                    {% endif %}
+
+
+                    {% if question.parent_questions.count == 1 %}
+                        {% with parent=question.parent_questions.first %}
+                            <div class="col-6 d-grid">
+                                <a href="{% url 'question_detail' parent.id %}" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-chevron-double-up" title="Üst Soruya Git"> Üst Soruya Git</i>
                                 </a>
-                            {% endwith %}
-                        {% elif question.parent_questions.count > 1 %}
-                            <button type="button" class="btn btn-outline-secondary btn-sm ms-2"
+                            </div>
+                        {% endwith %}
+                    {% elif question.parent_questions.count > 1 %}
+                        <div class="col-6 d-grid">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
                                     data-bs-toggle="modal" data-bs-target="#parentQuestionsModal">
                                 <i class="bi bi-chevron-double-up" title="Üst Soruya Git"> Üst Soruya Git</i>
                             </button>
-                            <div class="modal fade" id="parentQuestionsModal" tabindex="-1"
-                                 aria-labelledby="parentQuestionsModalLabel" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Üst Sorular</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Kapat"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <ul class="list-group">
-                                                {% for parent in question.parent_questions.all %}
-                                                    <li class="list-group-item">
-                                                        <a href="{% url 'question_detail' parent.id %}">
-                                                            {{ parent.question_text }}
-                                                        </a>
-                                                    </li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
+                        </div>
+                        
+                        <div class="modal fade" id="parentQuestionsModal" tabindex="-1"
+                             aria-labelledby="parentQuestionsModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Üst Sorular</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Kapat"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <ul class="list-group">
+                                            {% for parent in question.parent_questions.all %}
+                                                <li class="list-group-item">
+                                                    <a href="{% url 'question_detail' parent.id %}">
+                                                        {{ parent.question_text }}
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
-                        {% endif %}
-                    </div>
+                        </div>
+                    {% endif %}
                 </div>
-
+        
                 <!-- Subquestions List -->
-                <ul class="list-group">
+                <ul class="list-group mt-2">
                     {% if question.subquestions.all %}
                         {% for subquestion in question.subquestions.all %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -292,6 +308,7 @@
                 </ul>
             </div>
         </div>
+        
     </div>
 </div>
 
