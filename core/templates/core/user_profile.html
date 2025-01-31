@@ -586,21 +586,6 @@
                                    title="Kaydetmeyi kaldır">
                                     <i class="bi bi-bookmark-x fs-5"></i>
                                 </a>
-                      
-                                <!-- Eğer bu yanıt kullanıcın kendisine aitse, Sil ikonu -->
-                                {% if answer_obj.user == request.user %}
-                                <form action="{% url 'delete_answer' answer_obj.id %}?next={{ request.get_full_path|urlencode }}" 
-                                      method="post" 
-                                      class="d-inline ms-2">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                            class="btn btn-sm btn-link icon-black-white mt-3"
-                                            onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');"
-                                            title="Sil">
-                                        <i class="bi bi-trash fs-5"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
                             </div>
                         </div>
                         {% endwith %}

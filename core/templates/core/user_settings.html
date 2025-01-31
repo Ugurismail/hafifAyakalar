@@ -200,307 +200,40 @@
             </div>
         </div>
         <div class="mb-3">
-            <label for="font_family" class="form-label">Yazı Tipi (Google Font):</label>
+            <label for="font_family" class="form-label">Yazı Tipi:</label>
             <select name="font_family" id="font_family" class="form-select">
-                <option value="Times New Roman" {% if user_profile.font_family == "Times New Roman" %}selected{% endif %}>Times New Roman</option>
-                <option value="Helvetica" {% if user_profile.font_family == "Helvetica" %}selected{% endif %}>Helvetica</option>
-    
-                <!-- Arial -->
-                <option value="Arial" {% if user_profile.font_family == "Arial" %}selected{% endif %}>Arial</option>
-                
-                <!-- Segoe UI -->
-                <option value="Segoe+UI" {% if user_profile.font_family == "Segoe UI" %}selected{% endif %}>Segoe UI</option>
-                
-                <!-- San Francisco (SF Pro) -->
-                <option value="San+Francisco" {% if user_profile.font_family == "San Francisco" %}selected{% endif %}>San Francisco</option>
-                
-                <!-- Gotham -->
-                <option value="Gotham" {% if user_profile.font_family == "Gotham" %}selected{% endif %}>Gotham</option>
-                
-                <!-- Proxima Nova -->
-                <option value="Proxima+Nova" {% if user_profile.font_family == "Proxima Nova" %}selected{% endif %}>Proxima Nova</option>
-                
-                <!-- Futura -->
-                <option value="Futura" {% if user_profile.font_family == "Futura" %}selected{% endif %}>Futura</option>
-                
-                <!-- Calibri -->
-                <option value="Calibri" {% if user_profile.font_family == "Calibri" %}selected{% endif %}>Calibri</option>
-                
-                <!-- Tahoma -->
-                <option value="Tahoma" {% if user_profile.font_family == "Tahoma" %}selected{% endif %}>Tahoma</option>
-                
-                <!-- Verdana -->
-                <option value="Verdana" {% if user_profile.font_family == "Verdana" %}selected{% endif %}>Verdana</option>
-                
-                <!-- Georgia -->
-                <option value="Georgia" {% if user_profile.font_family == "Georgia" %}selected{% endif %}>Georgia</option>
-                
-                <!-- Century Gothic -->
-                <option value="Century+Gothic" {% if user_profile.font_family == "Century Gothic" %}selected{% endif %}>Century Gothic</option>
-                
-                <!-- Trebuchet MS -->
-                <option value="Trebuchet+MS" {% if user_profile.font_family == "Trebuchet MS" %}selected{% endif %}>Trebuchet MS</option>
-                
-                <!-- Lucida Grande -->
-                <option value="Lucida+Grande" {% if user_profile.font_family == "Lucida Grande" %}selected{% endif %}>Lucida Grande</option>
-                
-                <!-- Roboto Slab -->
+                <!-- Garamond -->
+                <option value="EB+Garamond" {% if user_profile.font_family == "EB Garamond" %}selected{% endif %}>EB Garamond (Varsayılan Font)</option>
+                <option value="Noto+Sans" {% if user_profile.font_family == "Noto Sans" %}selected{% endif %}>Noto Sans</option>
+                <option value="Noto+Serif" {% if user_profile.font_family == "Noto Serif" %}selected{% endif %}>Noto Serif</option>
+                <option value="Roboto" {% if user_profile.font_family == "Roboto" %}selected{% endif %}>Roboto</option>
                 <option value="Roboto+Slab" {% if user_profile.font_family == "Roboto Slab" %}selected{% endif %}>Roboto Slab</option>
-                <option value="Roboto"
-                    {% if user_profile.font_family == "Roboto" %}selected{% endif %}>
-                    Roboto
-                </option>
-                
-                <option value="Open+Sans"
-                    {% if user_profile.font_family == "Open+Sans" %}selected{% endif %}>
-                    Open Sans
-                </option>
-                
-                <option value="Lato"
-                    {% if user_profile.font_family == "Lato" %}selected{% endif %}>
-                    Lato
-                </option>
-        
-                <option value="Montserrat"
-                    {% if user_profile.font_family == "Montserrat" %}selected{% endif %}>
-                    Montserrat
-                </option>
-        
-                <option value="Oswald"
-                    {% if user_profile.font_family == "Oswald" %}selected{% endif %}>
-                    Oswald
-                </option>
-                
-                <option value="Source+Sans+Pro"
-                    {% if user_profile.font_family == "Source+Sans+Pro" %}selected{% endif %}>
-                    Source Sans Pro
-                </option>
-                
-                <option value="Poppins"
-                    {% if user_profile.font_family == "Poppins" %}selected{% endif %}>
-                    Poppins
-                </option>
-                
-                <option value="Raleway"
-                    {% if user_profile.font_family == "Raleway" %}selected{% endif %}>
-                    Raleway
-                </option>
-                
-                <option value="Slabo+27px"
-                    {% if user_profile.font_family == "Slabo+27px" %}selected{% endif %}>
-                    Slabo 27px
-                </option>
-                
-                <option value="Roboto+Condensed"
-                    {% if user_profile.font_family == "Roboto+Condensed" %}selected{% endif %}>
-                    Roboto Condensed
-                </option>
-                
-                <option value="Merriweather"
-                    {% if user_profile.font_family == "Merriweather" %}selected{% endif %}>
-                    Merriweather
-                </option>
-                
-                <option value="Nunito"
-                    {% if user_profile.font_family == "Nunito" %}selected{% endif %}>
-                    Nunito
-                </option>
-                
-                <option value="Nunito+Sans"
-                    {% if user_profile.font_family == "Nunito+Sans" %}selected{% endif %}>
-                    Nunito Sans
-                </option>
-                
-                <option value="PT+Sans"
-                    {% if user_profile.font_family == "PT+Sans" %}selected{% endif %}>
-                    PT Sans
-                </option>
-                
-                <option value="Ubuntu"
-                    {% if user_profile.font_family == "Ubuntu" %}selected{% endif %}>
-                    Ubuntu
-                </option>
-                
-                <option value="Playfair+Display"
-                    {% if user_profile.font_family == "Playfair+Display" %}selected{% endif %}>
-                    Playfair Display
-                </option>
-                
-                <option value="Fira+Sans"
-                    {% if user_profile.font_family == "Fira+Sans" %}selected{% endif %}>
-                    Fira Sans
-                </option>
-                
-                <option value="Mukta"
-                    {% if user_profile.font_family == "Mukta" %}selected{% endif %}>
-                    Mukta
-                </option>
-                
-                <option value="Rubik"
-                    {% if user_profile.font_family == "Rubik" %}selected{% endif %}>
-                    Rubik
-                </option>
-                
-                <option value="Inconsolata"
-                    {% if user_profile.font_family == "Inconsolata" %}selected{% endif %}>
-                    Inconsolata
-                </option>
-                
-                <option value="Lobster"
-                    {% if user_profile.font_family == "Lobster" %}selected{% endif %}>
-                    Lobster
-                </option>
-                
-                <option value="Quicksand"
-                    {% if user_profile.font_family == "Quicksand" %}selected{% endif %}>
-                    Quicksand
-                </option>
-                
-                <option value="Merriweather+Sans"
-                    {% if user_profile.font_family == "Merriweather+Sans" %}selected{% endif %}>
-                    Merriweather Sans
-                </option>
-                
-                <option value="Heebo"
-                    {% if user_profile.font_family == "Heebo" %}selected{% endif %}>
-                    Heebo
-                </option>
-                
-                <option value="Libre+Baskerville"
-                    {% if user_profile.font_family == "Libre+Baskerville" %}selected{% endif %}>
-                    Libre Baskerville
-                </option>
-                
-                <option value="Arimo"
-                    {% if user_profile.font_family == "Arimo" %}selected{% endif %}>
-                    Arimo
-                </option>
-                
-                <option value="Noto+Sans"
-                    {% if user_profile.font_family == "Noto+Sans" %}selected{% endif %}>
-                    Noto Sans
-                </option>
-                
-                <option value="Noto+Serif"
-                    {% if user_profile.font_family == "Noto+Serif" %}selected{% endif %}>
-                    Noto Serif
-                </option>
-                
-                <option value="Work+Sans"
-                    {% if user_profile.font_family == "Work+Sans" %}selected{% endif %}>
-                    Work Sans
-                </option>
-                
-                <option value="Anton"
-                    {% if user_profile.font_family == "Anton" %}selected{% endif %}>
-                    Anton
-                </option>
-                
-                <option value="Dancing+Script"
-                    {% if user_profile.font_family == "Dancing+Script" %}selected{% endif %}>
-                    Dancing Script
-                </option>
-                
-                <option value="Exo+2"
-                    {% if user_profile.font_family == "Exo+2" %}selected{% endif %}>
-                    Exo 2
-                </option>
-                
-                <option value="Titillium+Web"
-                    {% if user_profile.font_family == "Titillium+Web" %}selected{% endif %}>
-                    Titillium Web
-                </option>
-                
-                <option value="Amatic+SC"
-                    {% if user_profile.font_family == "Amatic+SC" %}selected{% endif %}>
-                    Amatic SC
-                </option>
-                
-                <option value="Josefin+Sans"
-                    {% if user_profile.font_family == "Josefin+Sans" %}selected{% endif %}>
-                    Josefin Sans
-                </option>
-                
-                <option value="Karla"
-                    {% if user_profile.font_family == "Karla" %}selected{% endif %}>
-                    Karla
-                </option>
-                
-                <option value="Open+Sans+Condensed"
-                    {% if user_profile.font_family == "Open+Sans+Condensed" %}selected{% endif %}>
-                    Open Sans Condensed
-                </option>
-                
-                <option value="Cabin"
-                    {% if user_profile.font_family == "Cabin" %}selected{% endif %}>
-                    Cabin
-                </option>
-                
-                <option value="Bebas+Neue"
-                    {% if user_profile.font_family == "Bebas+Neue" %}selected{% endif %}>
-                    Bebas Neue
-                </option>
-                
-                <option value="Zilla+Slab"
-                    {% if user_profile.font_family == "Zilla+Slab" %}selected{% endif %}>
-                    Zilla Slab
-                </option>
-                
-                <option value="Libre+Franklin"
-                    {% if user_profile.font_family == "Libre+Franklin" %}selected{% endif %}>
-                    Libre Franklin
-                </option>
-                
-                <option value="Varela+Round"
-                    {% if user_profile.font_family == "Varela+Round" %}selected{% endif %}>
-                    Varela Round
-                </option>
-                
-                <option value="Overpass"
-                    {% if user_profile.font_family == "Overpass" %}selected{% endif %}>
-                    Overpass
-                </option>
-                
-                <option value="Archivo"
-                    {% if user_profile.font_family == "Archivo" %}selected{% endif %}>
-                    Archivo
-                </option>
-                
-                <option value="Mulish"
-                    {% if user_profile.font_family == "Mulish" %}selected{% endif %}>
-                    Mulish
-                </option>
-                
-                <option value="Francois+One"
-                    {% if user_profile.font_family == "Francois+One" %}selected{% endif %}>
-                    Francois One
-                </option>
-                
-                <option value="Prompt"
-                    {% if user_profile.font_family == "Prompt" %}selected{% endif %}>
-                    Prompt
-                </option>
-                
-                <option value="Tajawal"
-                    {% if user_profile.font_family == "Tajawal" %}selected{% endif %}>
-                    Tajawal
-                </option>
-                
-                <option value="Assistant"
-                    {% if user_profile.font_family == "Assistant" %}selected{% endif %}>
-                    Assistant
-                </option>
-                
-                <option value="IBM+Plex+Sans"
-                    {% if user_profile.font_family == "IBM+Plex+Sans" %}selected{% endif %}>
-                    IBM Plex Sans
-                </option>
-                <option value="Creepster" {% if user_profile.font_family == "Creepster" %}selected{% endif %}>Creepster</option>
-                <option value="MedievalSharp" {% if user_profile.font_family == "MedievalSharp" %}selected{% endif %}>MedievalSharp</option>
-                <option value="Special Elite" {% if user_profile.font_family == "Special Elite" %}selected{% endif %}>Special Elite</option>
+                <option value="Open+Sans" {% if user_profile.font_family == "Open Sans" %}selected{% endif %}>Open Sans</option>
+                <option value="Lato" {% if user_profile.font_family == "Lato" %}selected{% endif %}>Lato</option>
+                <option value="Montserrat" {% if user_profile.font_family == "Montserrat" %}selected{% endif %}>Montserrat</option>
+                <option value="Oswald" {% if user_profile.font_family == "Oswald" %}selected{% endif %}>Oswald</option>
+                <option value="Source+Sans+Pro" {% if user_profile.font_family == "Source Sans Pro" %}selected{% endif %}>Source Sans Pro</option>
+                <option value="Poppins" {% if user_profile.font_family == "Poppins" %}selected{% endif %}>Poppins</option>
+                <option value="Merriweather" {% if user_profile.font_family == "Merriweather" %}selected{% endif %}>Merriweather</option>
+                <option value="PT+Sans" {% if user_profile.font_family == "PT Sans" %}selected{% endif %}>PT Sans</option>
+                <option value="PT+Serif" {% if user_profile.font_family == "PT Serif" %}selected{% endif %}>PT Serif</option>
+                <option value="Raleway" {% if user_profile.font_family == "Raleway" %}selected{% endif %}>Raleway</option>
+                <option value="Ubuntu" {% if user_profile.font_family == "Ubuntu" %}selected{% endif %}>Ubuntu</option>
+                <option value="Titillium+Web" {% if user_profile.font_family == "Titillium Web" %}selected{% endif %}>Titillium Web</option>
+                <option value="Dosis" {% if user_profile.font_family == "Dosis" %}selected{% endif %}>Dosis</option>
+                <option value="Cabin" {% if user_profile.font_family == "Cabin" %}selected{% endif %}>Cabin</option>
+                <option value="Fira+Sans" {% if user_profile.font_family == "Fira Sans" %}selected{% endif %}>Fira Sans</option>
+                <option value="Quicksand" {% if user_profile.font_family == "Quicksand" %}selected{% endif %}>Quicksand</option>
+                <option value="Work+Sans" {% if user_profile.font_family == "Work Sans" %}selected{% endif %}>Work Sans</option>
+                <option value="Rubik" {% if user_profile.font_family == "Rubik" %}selected{% endif %}>Rubik</option>
+                <option value="Mukta" {% if user_profile.font_family == "Mukta" %}selected{% endif %}>Mukta</option>
+                <option value="Arimo" {% if user_profile.font_family == "Arimo" %}selected{% endif %}>Arimo</option>
+                <option value="Heebo" {% if user_profile.font_family == "Heebo" %}selected{% endif %}>Heebo</option>
+                <option value="Cormorant+Garamond" {% if user_profile.font_family == "Cormorant Garamond" %}selected{% endif %}>Cormorant Garamond</option>
+                <option value="Source+Serif+Pro" {% if user_profile.font_family == "Source Serif Pro" %}selected{% endif %}>Source Serif Pro</option>
 
-  
-            </select>
+                            </select>
+            
           </div>
         <!-- Kaydet ve Varsayılanlara Dön Butonları -->
         <div class="mb-5">

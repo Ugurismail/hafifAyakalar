@@ -114,7 +114,7 @@
                         </div>
                         <div class="text-end">
                             <small class="text-muted me-2">
-                                <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                                <a class="action-user" href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                                 | {{ answer.created_at|date:"Y-m-d H:i" }}
                                 {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
                                     {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}

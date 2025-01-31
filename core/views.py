@@ -29,6 +29,7 @@ from django.shortcuts import get_object_or_404
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from urllib.parse import unquote
+from django.db.models.functions import Lower
 
 
 
@@ -546,10 +547,12 @@ def view_message(request, message_id):
         message.save()
     return render(request, 'core/view_message.html', {'message': message})
 
+
 @login_required
 def user_list(request):
-    users = User.objects.exclude(id=request.user.id)  # Exclude the current user
-    User.objects.exclude(id=request.user.id).order_by('username')
+    users = User.objects.exclude(id=request.user.id) \
+                        .annotate(username_lower=Lower('username')) \
+                        .order_by('username_lower')  # Küçük harfe göre sıralama
     return render(request, 'core/user_list.html', {'users': users})
 
 @login_required
