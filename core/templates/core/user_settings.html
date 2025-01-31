@@ -199,44 +199,50 @@
                 </div> -->
             </div>
         </div>
-        <div class="mb-3">
-            <label for="font_family" class="form-label">Yazı Tipi:</label>
-            <select name="font_family" id="font_family" class="form-select">
-                <!-- Garamond -->
-                <option value="EB+Garamond" {% if user_profile.font_family == "EB Garamond" %}selected{% endif %}>EB Garamond (Varsayılan Font)</option>
-                <option value="Noto+Sans" {% if user_profile.font_family == "Noto Sans" %}selected{% endif %}>Noto Sans</option>
-                <option value="Noto+Serif" {% if user_profile.font_family == "Noto Serif" %}selected{% endif %}>Noto Serif</option>
-                <option value="Roboto" {% if user_profile.font_family == "Roboto" %}selected{% endif %}>Roboto</option>
-                <option value="Roboto+Slab" {% if user_profile.font_family == "Roboto Slab" %}selected{% endif %}>Roboto Slab</option>
-                <option value="Open+Sans" {% if user_profile.font_family == "Open Sans" %}selected{% endif %}>Open Sans</option>
-                <option value="Lato" {% if user_profile.font_family == "Lato" %}selected{% endif %}>Lato</option>
-                <option value="Montserrat" {% if user_profile.font_family == "Montserrat" %}selected{% endif %}>Montserrat</option>
-                <option value="Oswald" {% if user_profile.font_family == "Oswald" %}selected{% endif %}>Oswald</option>
-                <option value="Source+Sans+Pro" {% if user_profile.font_family == "Source Sans Pro" %}selected{% endif %}>Source Sans Pro</option>
-                <option value="Poppins" {% if user_profile.font_family == "Poppins" %}selected{% endif %}>Poppins</option>
-                <option value="Merriweather" {% if user_profile.font_family == "Merriweather" %}selected{% endif %}>Merriweather</option>
-                <option value="PT+Sans" {% if user_profile.font_family == "PT Sans" %}selected{% endif %}>PT Sans</option>
-                <option value="PT+Serif" {% if user_profile.font_family == "PT Serif" %}selected{% endif %}>PT Serif</option>
-                <option value="Raleway" {% if user_profile.font_family == "Raleway" %}selected{% endif %}>Raleway</option>
-                <option value="Ubuntu" {% if user_profile.font_family == "Ubuntu" %}selected{% endif %}>Ubuntu</option>
-                <option value="Titillium+Web" {% if user_profile.font_family == "Titillium Web" %}selected{% endif %}>Titillium Web</option>
-                <option value="Dosis" {% if user_profile.font_family == "Dosis" %}selected{% endif %}>Dosis</option>
-                <option value="Cabin" {% if user_profile.font_family == "Cabin" %}selected{% endif %}>Cabin</option>
-                <option value="Fira+Sans" {% if user_profile.font_family == "Fira Sans" %}selected{% endif %}>Fira Sans</option>
-                <option value="Quicksand" {% if user_profile.font_family == "Quicksand" %}selected{% endif %}>Quicksand</option>
-                <option value="Work+Sans" {% if user_profile.font_family == "Work Sans" %}selected{% endif %}>Work Sans</option>
-                <option value="Rubik" {% if user_profile.font_family == "Rubik" %}selected{% endif %}>Rubik</option>
-                <option value="Mukta" {% if user_profile.font_family == "Mukta" %}selected{% endif %}>Mukta</option>
-                <option value="Arimo" {% if user_profile.font_family == "Arimo" %}selected{% endif %}>Arimo</option>
-                <option value="Heebo" {% if user_profile.font_family == "Heebo" %}selected{% endif %}>Heebo</option>
-                <option value="Cormorant+Garamond" {% if user_profile.font_family == "Cormorant Garamond" %}selected{% endif %}>Cormorant Garamond</option>
-                <option value="Source+Serif+Pro" {% if user_profile.font_family == "Source Serif Pro" %}selected{% endif %}>Source Serif Pro</option>
-
-                            </select>
-            
-          </div>
+        
+        <div class="row">
+            <div class="col-4 mb-3">
+                <label for="font_family" class="form-label">Yazı Tipi:</label>
+                <select name="font_family" id="font_family" class="form-select">
+                    <!-- Garamond -->
+                    <option value="EB+Garamond" {% if user_profile.font_family == "EB Garamond" %}selected{% endif %}>EB Garamond (Varsayılan Font)</option>
+                    <option value="Noto+Sans" {% if user_profile.font_family == "Noto Sans" %}selected{% endif %}>Noto Sans</option>
+                    <option value="Noto+Serif" {% if user_profile.font_family == "Noto Serif" %}selected{% endif %}>Noto Serif</option>
+                    <option value="Roboto" {% if user_profile.font_family == "Roboto" %}selected{% endif %}>Roboto</option>
+                    <option value="Roboto+Slab" {% if user_profile.font_family == "Roboto Slab" %}selected{% endif %}>Roboto Slab</option>
+                    <option value="Open+Sans" {% if user_profile.font_family == "Open Sans" %}selected{% endif %}>Open Sans</option>
+                    <option value="Lato" {% if user_profile.font_family == "Lato" %}selected{% endif %}>Lato</option>
+                    <option value="Montserrat" {% if user_profile.font_family == "Montserrat" %}selected{% endif %}>Montserrat</option>
+                    <option value="Oswald" {% if user_profile.font_family == "Oswald" %}selected{% endif %}>Oswald</option>
+                    <option value="Source+Sans+Pro" {% if user_profile.font_family == "Source Sans Pro" %}selected{% endif %}>Source Sans Pro</option>
+                    <option value="Poppins" {% if user_profile.font_family == "Poppins" %}selected{% endif %}>Poppins</option>
+                    <option value="Merriweather" {% if user_profile.font_family == "Merriweather" %}selected{% endif %}>Merriweather</option>
+                    <option value="PT+Sans" {% if user_profile.font_family == "PT Sans" %}selected{% endif %}>PT Sans</option>
+                    <option value="PT+Serif" {% if user_profile.font_family == "PT Serif" %}selected{% endif %}>PT Serif</option>
+                    <option value="Raleway" {% if user_profile.font_family == "Raleway" %}selected{% endif %}>Raleway</option>
+                    <option value="Ubuntu" {% if user_profile.font_family == "Ubuntu" %}selected{% endif %}>Ubuntu</option>
+                    <option value="Titillium+Web" {% if user_profile.font_family == "Titillium Web" %}selected{% endif %}>Titillium Web</option>
+                    <option value="Dosis" {% if user_profile.font_family == "Dosis" %}selected{% endif %}>Dosis</option>
+                    <option value="Cabin" {% if user_profile.font_family == "Cabin" %}selected{% endif %}>Cabin</option>
+                    <option value="Fira+Sans" {% if user_profile.font_family == "Fira Sans" %}selected{% endif %}>Fira Sans</option>
+                    <option value="Quicksand" {% if user_profile.font_family == "Quicksand" %}selected{% endif %}>Quicksand</option>
+                    <option value="Work+Sans" {% if user_profile.font_family == "Work Sans" %}selected{% endif %}>Work Sans</option>
+                    <option value="Rubik" {% if user_profile.font_family == "Rubik" %}selected{% endif %}>Rubik</option>
+                    <option value="Mukta" {% if user_profile.font_family == "Mukta" %}selected{% endif %}>Mukta</option>
+                    <option value="Arimo" {% if user_profile.font_family == "Arimo" %}selected{% endif %}>Arimo</option>
+                    <option value="Heebo" {% if user_profile.font_family == "Heebo" %}selected{% endif %}>Heebo</option>
+                    <option value="Cormorant+Garamond" {% if user_profile.font_family == "Cormorant Garamond" %}selected{% endif %}>Cormorant Garamond</option>
+                    <option value="Source+Serif+Pro" {% if user_profile.font_family == "Source Serif Pro" %}selected{% endif %}>Source Serif Pro</option>
+    
+                </select>
+            </div>
+            <div class="col-2 mb-3">
+                <label for="font_family" class="form-label">Yazı Boyutu:</label>
+                <input type="number" name="font_size" min="16" max="100" id="font_size" class="form-control form-control-color" value="{{ user_profile.font_size }}">
+            </div>
+        </div>
         <!-- Kaydet ve Varsayılanlara Dön Butonları -->
-        <div class="mb-5">
+        <div class="col-md-12 mb-3">
             <button type="submit" class="btn btn-primary">Kaydet</button>
             <button type="submit" name="reset" value="true" class="btn btn-secondary">Varsayılanlara Dön</button>
         </div>

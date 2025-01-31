@@ -51,6 +51,7 @@ class UserProfile(models.Model):
     secondary_button_hover_background_color = models.CharField(max_length=7, default='#495057')
     secondary_button_text_color = models.CharField(max_length=7, default='#ffffff')
 
+    font_size = models.IntegerField(default='16')
 
     hover_background_color = models.CharField(max_length=7, default='#f0f0f0')
     icon_color = models.CharField(max_length=7, default='#333333')
