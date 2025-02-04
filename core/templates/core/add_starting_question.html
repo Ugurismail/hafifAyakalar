@@ -240,6 +240,18 @@
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Sadece "auto-expand" sınıfına sahip textarea’ları seçiyoruz
+      var textarea = document.querySelector('textarea.auto-expand');
+      if (textarea) {
+          // İlk odaklanmada 'expanded' sınıfını ekle
+          textarea.addEventListener('focus', function() {
+              this.classList.add('expanded');
+          });
+      }
+  });
+</script>
 
 <!-- Geri Kalan (Okuma, Paylaş vs.) -->
 <script>

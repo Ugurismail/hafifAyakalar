@@ -73,15 +73,15 @@
                 <div class="card-body">
                 {% if answer.answer_text|length > 500 %}
                     <!-- Kısaltılmış Yanıt -->
-                    <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500"|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}                            ...</p>
+                    <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500"|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link|ref_link }}                            ...</p>
                     <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}
+                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link|ref_link }}
                     </p>
                     <!-- "Tamamını oku" Linki -->
                     <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                 {% else %}
                     <!-- Kısa Yanıt -->
-                    <p class="answer-text">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}</p>
+                    <p class="answer-text">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link|ref_link }}</p>
                 {% endif %}
                
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
@@ -547,28 +547,18 @@ document.addEventListener('DOMContentLoaded', function() {
       })
     });
 </script>
-<!-- <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const textareas = document.querySelectorAll(".auto-expand");
-        textareas.forEach(function(textarea) {
-            // İlk açılışta bir kere yüksekliğini ayarlamak isterseniz
-            textarea.style.height = textarea.scrollHeight + "px";
-    
-            // Kullanıcı yazdıkça (input event) yüksekliği güncelle
-            textarea.addEventListener("input", function() {
-                // Yüksekliği önce sıfırlayıp, içeriğin gerçek boyutuna göre ayarlıyoruz
-                textarea.style.height = "auto";
-                textarea.style.height = textarea.scrollHeight + "px";
-            });
-        });
-    });
-    </script>
 <script>
-textarea.addEventListener("focus", function() {
-    // tıklandığında yükseklik anında içeriğe göre ayarlansın
-    textarea.style.height = textarea.scrollHeight + "px";
-});
-</script> -->
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sadece "auto-expand" sınıfına sahip textarea’ları seçiyoruz
+        var textarea = document.querySelector('textarea.auto-expand');
+        if (textarea) {
+            // İlk odaklanmada 'expanded' sınıfını ekle
+            textarea.addEventListener('focus', function() {
+                this.classList.add('expanded');
+            });
+        }
+    });
+</script>
 
 
 {% endblock %}

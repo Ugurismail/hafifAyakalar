@@ -7,14 +7,9 @@ from .models import Poll, PollOption
 from django.utils import timezone
 import datetime
 from django.core.exceptions import ValidationError
-# core/forms.py
-# Diğer importların altına ekliyoruz
 
-
-
+# Kullanıcı adında boşluklar ve Türkçe karakterlere izin veren validator
 username_with_spaces_validator = RegexValidator(
-    # Burada \w (harf, rakam, altçizgi) haricinde Türkçe karakterleri de ekleyebilirsiniz.
-    # Örnek olarak, Latin-1 Supplement ve Latin Extended-A bloklarını ekledik:
     regex=r'^[\w.@+\-_/ \u00C0-\u017F]+$',
     message='Kullanıcı adı harf, rakam, @, ., +, -, _, /, boşluk ve Türkçe karakterleri içerebilir.'
 )
@@ -25,9 +20,9 @@ class RandomSentenceForm(forms.ModelForm):
         fields = ['sentence']
         widgets = {
             'sentence': forms.Textarea(attrs={
-                'rows':2, 
-                'class':'form-control', 
-                'placeholder':'Yeni random cümlenizi girin (max 280 karakter)'
+                'rows': 2,
+                'class': 'form-control',
+                'placeholder': 'Yeni random cümlenizi girin (max 280 karakter)'
             })
         }
         labels = {
@@ -54,12 +49,10 @@ class SignupForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '')
-        # Kendi validator'ınızı çalıştırıyorsunuz, model validator'ı yok artık.
         username_with_spaces_validator(username)
         return username
 
     def save(self):
-        # Bu metot ile User modelini manuel oluşturuyoruz.
         user = User(username=self.cleaned_data['username'])
         user.set_password(self.cleaned_data['password'])
         user.save()
@@ -86,7 +79,11 @@ class InvitationForm(forms.ModelForm):
 
 class QuestionForm(forms.ModelForm):
     answer_text = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Yanıtınızı buraya yazın'}),
+        widget=forms.Textarea(attrs={
+            'class': 'form-control auto-expand',
+            'rows': 4,
+            'placeholder': 'Yanıtınızı buraya yazın'
+        }),
         required=False
     )
 
@@ -94,7 +91,10 @@ class QuestionForm(forms.ModelForm):
         model = Question
         fields = ['question_text', 'answer_text']
         widgets = {
-            'question_text': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Soru metni girin'}),
+            'question_text': forms.TextInput(attrs={
+                'class': 'form-control auto-expand',
+                'placeholder': 'Soru metni girin'
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -105,25 +105,39 @@ class QuestionForm(forms.ModelForm):
         self.fields['question_text'].widget.attrs.update({'class': 'form-control'})
 
 class StartingQuestionForm(forms.ModelForm):
-    answer_text = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Yanıtınızı buraya yazın'}))
+    answer_text = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control auto-expand',
+            'rows': 4,
+            'placeholder': 'Yanıtınızı buraya yazın'
+        })
+    )
 
     class Meta:
         model = Question
         fields = ['question_text']
         widgets = {
-            'question_text': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Soru başlığı'}),
+            'question_text': forms.TextInput(attrs={
+                'class': 'form-control auto-expand',
+                'placeholder': 'Soru başlığı'
+            }),
         }
 
     def __init__(self, *args, **kwargs):
         super(StartingQuestionForm, self).__init__(*args, **kwargs)
-        self.fields['question_text'].widget.attrs.update({'class': 'form-control'})
+        self.fields['question_text'].widget.attrs.update({'class': 'form-control '})
 
 class AnswerForm(forms.ModelForm):
     class Meta:
         model = Answer
         fields = ['answer_text']
         widgets = {
-            'answer_text': forms.Textarea(attrs={'class': 'form-control auto-expand', 'rows': 2, 'placeholder': 'Yanıtınızı buraya yazın'}),
+            # Otomatik genişleme özelliğini sağlayacak 'auto-expand' sınıfı eklenmiştir.
+            'answer_text': forms.Textarea(attrs={
+                'class': 'form-control auto-expand',
+                'rows': 2,
+                'placeholder': 'Yanıtınızı buraya yazın'
+            }),
         }
 
 class MessageForm(forms.ModelForm):
@@ -139,22 +153,26 @@ class MessageForm(forms.ModelForm):
             }),
         }
 
-# Eksik olan ProfilePhotoForm tekrar tanımlanıyor.
 class ProfilePhotoForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['photo']
 
-
 class PollForm(forms.Form):
     question_text = forms.CharField(
         max_length=255, 
         label="Anket Sorusu",
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Anket sorusunu giriniz'})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Anket sorusunu giriniz'
+        })
     )
     end_date = forms.DateTimeField(
         label="Bitiş Tarihi (YYYY-MM-DD HH:MM)",
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+        widget=forms.DateTimeInput(attrs={
+            'type': 'datetime-local',
+            'class': 'form-control'
+        })
     )
     is_anonymous = forms.BooleanField(
         required=False, 
@@ -163,15 +181,17 @@ class PollForm(forms.Form):
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
 
-    # 10 seçenek alanı
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for i in range(1,11):
+        super(PollForm, self).__init__(*args, **kwargs)
+        for i in range(1, 11):
             self.fields[f'option_{i}'] = forms.CharField(
-                required=False, 
-                max_length=255, 
+                required=False,
+                max_length=255,
                 label=f"Seçenek {i}",
-                widget=forms.TextInput(attrs={'class': 'form-control mb-2', 'placeholder': f'Seçenek {i}'})
+                widget=forms.TextInput(attrs={
+                    'class': 'form-control mb-2',
+                    'placeholder': f'Seçenek {i}'
+                })
             )
 
     def clean(self):
@@ -179,13 +199,10 @@ class PollForm(forms.Form):
         end_date = cleaned_data.get('end_date')
         if end_date <= timezone.now():
             self.add_error('end_date', 'Bitiş tarihi gelecekte bir zaman olmalıdır.')
-        # 1 yıldan uzun mu
         if end_date and end_date > (timezone.now() + datetime.timedelta(days=365)):
             self.add_error('end_date', 'Bitiş tarihi 1 yıldan fazla olmamalıdır.')
-
-        # En az 2 seçenek kontrolü
         options = []
-        for i in range(1,11):
+        for i in range(1, 11):
             opt = cleaned_data.get(f'option_{i}', '').strip()
             if opt:
                 options.append(opt)
@@ -194,12 +211,7 @@ class PollForm(forms.Form):
         cleaned_data['options'] = options
         return cleaned_data
 
-
 class DefinitionForm(forms.ModelForm):
-    """
-    Kullanıcının 1000 karakteri aşmayacak şekilde tanım girmesini sağlayan form.
-    """
-
     class Meta:
         model = Definition
         fields = ['definition_text']
@@ -209,34 +221,20 @@ class DefinitionForm(forms.ModelForm):
         widgets = {
             'definition_text': forms.Textarea(attrs={
                 'rows': 4,
-                'maxlength': '1000',  # HTML tarafında da bir kontrol
-                'placeholder': 'En fazla 1000 karakterlik tanımınızı girin...',
+                'maxlength': '1000',
+                'placeholder': 'En fazla 1000 karakterlik tanımınızı girin...'
             }),
         }
 
     def clean_definition_text(self):
-        """
-        Tanımın sunucu tarafında da 1000 karakteri geçmediğinden emin olmak için
-        Django'nun form temizleme (clean) metodunu kullanır.
-        """
         data = self.cleaned_data.get('definition_text', '').strip()
-
-        # Sunucu tarafında da 1000 karakter limitini koruyoruz.
         if len(data) > 1000:
             raise ValidationError("Tanım 1000 karakterden uzun olamaz.")
-
-        # Örnek olarak, boşluk veya geçersiz karakterler varsa bunları da engelleyebilirsiniz:
         if not data:
             raise ValidationError("Tanım alanı boş olamaz.")
-
         return data
 
-
-
 class ReferenceForm(forms.ModelForm):
-    """
-    Kaynak eklerken kullanılan form.
-    """
     class Meta:
         model = Reference
         fields = [
@@ -257,7 +255,11 @@ class ReferenceForm(forms.ModelForm):
             'author_surname': forms.TextInput(attrs={'class': 'form-control'}),
             'author_name': forms.TextInput(attrs={'class': 'form-control'}),
             'year': forms.NumberInput(attrs={'class': 'form-control'}),
-            'rest': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'maxlength': '2000'}),
+            'rest': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'maxlength': '2000'
+            }),
             'abbreviation': forms.TextInput(attrs={'class': 'form-control'}),
         }
 

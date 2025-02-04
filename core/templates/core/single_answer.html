@@ -64,7 +64,7 @@
             <!-- Odaklanılan Yanıt -->
             <div class="card mb-3">
                 <div class="card-body">
-                    <p class="answer-text">{{ focused_answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
+                    <p class="answer-text">{{ focused_answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}</p>
                     <!-- Oylar, Kaydet, vs. -->
                     <div class="action d-flex justify-content-between align-items-center">
                         <div>
@@ -148,7 +148,7 @@
                     {% if answer.id != focused_answer.id %}
                     <div class="card mb-3">
                         <div class="card-body">
-                            <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link  }}</p>
+                            <p class="answer-text">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link|ref_link  }}</p>
                             <div class="action d-flex justify-content-between align-items-center">
                                 <div>
                                     <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"

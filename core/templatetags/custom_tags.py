@@ -39,9 +39,10 @@ def ref_link(text):
             return f'<a href="{url}" target="_blank" style="text-decoration: none;">{ref_text}</a>'
         except Question.DoesNotExist:
             create_url = reverse('add_question_from_search') + f'?q={ref_text}'
-            return f'<a href="{create_url}" target="_blank" text-decoration: none;">{ref_text}</a>'
+            return f'<a href="{create_url}" target="_blank" style="text-decoration: none;">{ref_text}</a>'
 
-    return re.sub(pattern, replace_ref, text)
+    # Sonucu mark_safe() ile işaretleyerek HTML'nin render edilmesini sağlıyoruz.
+    return mark_safe(re.sub(pattern, replace_ref, text))
 
 @register.filter
 def user_has_voted(options, user):
