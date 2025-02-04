@@ -71,16 +71,17 @@
             {% for answer in answers_page %}
             <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
                 <div class="card-body">
-                    {% if answer.answer_text|length > 500 %}
+                {% if answer.answer_text|length > 500 %}
                     <!-- Kısaltılmış Yanıt -->
-                    <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|linebreaksbr|slice:":500"|bkz_link|tanim_link|reference_link }}...</p>
+                    <p class="answer-text" id="answer-summary-{{ answer.id }}">{{ answer.answer_text|slice:":500"|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}                            ...</p>
                     <!-- Tam Yanıt (Başlangıçta Gizli) -->
-                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|linebreaksbr|bkz_link|tanim_link|reference_link }}</p>
+                    <p class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}
+                    </p>
                     <!-- "Tamamını oku" Linki -->
                     <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tamamını oku</a>
                 {% else %}
                     <!-- Kısa Yanıt -->
-                    <p class="answer-text">{{ answer.answer_text|linebreaksbr|bkz_link|ref_link|markdownify:"default"|tanim_link|reference_link }}</p>
+                    <p class="answer-text">{{ answer.answer_text|markdownify:"default"|linebreaksbr|bkz_link|tanim_link|reference_link }}</p>
                 {% endif %}
                
                     <!-- OY/KAYDET + KULLANICI BİLGİSİ -->
