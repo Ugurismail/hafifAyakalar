@@ -127,6 +127,10 @@
             <!-- Arama Sonuçları (List Group) -->
             <div class="list-group" id="kaynakListesi"></div>
 
+            <div class="mb-3">
+              <label for="kaynakSayfaInput" class="form-label">Sayfa Numarası (Opsiyonel)</label>
+              <input type="number" class="form-control" id="kaynakSayfaInput" placeholder="Sayfa numarası">
+            </div>
             <!-- Seçili Kaynağı Metne Ekle -->
             <button 
               type="button" 
@@ -235,6 +239,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const refId = secili.value;
     
+      // Opsiyonel sayfa numarası alanını alalım
+  const sayfaInput = document.getElementById('kaynakSayfaInput');
+  let sayfaStr = sayfaInput ? sayfaInput.value.trim() : '';
+
+
     // Yanıt textarea'sını bulalım (question_detail.html içinde <textarea id="id_answer_text">)
     const answerTextArea = document.getElementById('id_answer_text');
     if (!answerTextArea) {
@@ -242,7 +251,12 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     // Metnin sonuna (kaynak:REF_ID) formatını ekle
+      // Eğer sayfa numarası girilmişse, onu da ekleyelim
+  if (sayfaStr) {
+    answerTextArea.value += ` (kaynak:${refId}, sayfa:${sayfaStr}) `;
+  } else {
     answerTextArea.value += ` (kaynak:${refId}) `;
+  }
     const myModal = bootstrap.Modal.getInstance(document.getElementById('kaynakRefModal'));
     myModal.hide();
   });
