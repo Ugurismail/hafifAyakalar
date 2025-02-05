@@ -1,6 +1,8 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load instance_of %}
+{% load custom_tags %}
+{% load markdownify %}
 
 {% block content %}
 <div class="container mt-5">
@@ -63,18 +65,27 @@
                     </h6>
                     <div class="card-body">
                         {% if pinned_entry.answer.answer_text|length > 500 %}
-                            <p class="answer-text" id="answer-summary-{{ pinned_entry.answer.id }}">
-                                {{ pinned_entry.answer.answer_text|slice:":500" }}...
-                            </p>
-                            <p class="answer-text" id="answer-full-{{ pinned_entry.answer.id }}" style="display: none;">
-                                {{ pinned_entry.answer.answer_text|safe }}
-                            </p>
-                            <a href="#" class="read-more" data-answer-id="{{ pinned_entry.answer.id }}">Tamamını oku</a>
-                        {% else %}
-                            <p class="answer-text">
-                                {{ pinned_entry.answer.answer_text|safe }}
-                            </p>
-                        {% endif %}
+                        <!-- Kısaltılmış versiyon -->
+                        <div id="answer-summary-{{ pinned_entry.answer.id }}" class="answer-text">
+                            {{ pinned_entry.answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}...
+                        </div>
+                      
+                        <!-- Tam metin (gizli) -->
+                        <div id="answer-full-{{ pinned_entry.answer.id }}" class="answer-text" style="display: none;">
+                            {{ pinned_entry.answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
+                        </div>
+                      
+                        <!-- Tetikleyici link -->
+                        <a href="#" class="read-more" data-answer-id="{{ pinned_entry.answer.id }}">Tamamını oku</a>
+                      
+                      {% else %}
+                        <!-- 500 karakterden kısaysa direkt göster -->
+                        <div class="answer-text">
+                          {{ pinned_entry.answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
+                        </div>
+                      {% endif %}
+                      
+                    
                     </div>
                     {% if is_own_profile %}
                         <form action="{% url 'unpin_entry' %}" method="post">
@@ -180,8 +191,6 @@
 
     <!-- Sekme İçerikleri -->
     <div class="tab-content" id="profileTabContent">
-
-        <!-- Davetler Tab (Sadece kendi profilimiz) -->
         {% if is_own_profile %}
         <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}"
              id="davetler"
@@ -298,12 +307,10 @@
                         </p>
                         <p>{{ answer.answer_text|truncatewords:20 }}</p>
 
-                        <!-- Yanıt Sahibi İse Sil Butonu (POST formu) -->
                         {% if answer.user == request.user %}
                             <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
                                 {% csrf_token %}
-                                <button type="submit" 
-                                        class="btn btn-sm btn-danger float-end"
+                                <button type="submit" class="btn btn-sm btn-danger float-end"
                                         onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">
                                     Sil
                                 </button>
@@ -428,16 +435,18 @@
                 <h6>En Çok Upvote Alan Girdi:</h6>
                 {% if most_upvoted_entry %}
                     {% if most_upvoted_entry|instance_of:'Question' %}
-                        <p>Soru: 
+                        <p>Soru:
                             <a href="{% url 'question_detail' most_upvoted_entry.id %}">
                                 {{ most_upvoted_entry.question_text }}
-                            </a> ({{ most_upvoted_entry.upvotes }} upvotes)
+                            </a>
+                            ({{ most_upvoted_entry.upvotes }} upvotes)
                         </p>
                     {% elif most_upvoted_entry|instance_of:'Answer' %}
-                        <p>Yanıt: 
+                        <p>Yanıt:
                             <a href="{% url 'question_detail' most_upvoted_entry.question.id %}">
                                 {{ most_upvoted_entry.question.question_text }}
-                            </a> ({{ most_upvoted_entry.upvotes }} upvotes)
+                            </a>
+                            ({{ most_upvoted_entry.upvotes }} upvotes)
                         </p>
                     {% endif %}
                 {% else %}
@@ -447,16 +456,18 @@
                 <h6>En Çok Downvote Alan Girdi:</h6>
                 {% if most_downvoted_entry %}
                     {% if most_downvoted_entry|instance_of:'Question' %}
-                        <p>Soru: 
+                        <p>Soru:
                             <a href="{% url 'question_detail' most_downvoted_entry.id %}">
                                 {{ most_downvoted_entry.question_text }}
-                            </a> ({{ most_downvoted_entry.downvotes }} downvotes)
+                            </a>
+                            ({{ most_downvoted_entry.downvotes }} downvotes)
                         </p>
                     {% elif most_downvoted_entry|instance_of:'Answer' %}
-                        <p>Yanıt: 
+                        <p>Yanıt:
                             <a href="{% url 'question_detail' most_downvoted_entry.question.id %}">
                                 {{ most_downvoted_entry.question.question_text }}
-                            </a> ({{ most_downvoted_entry.downvotes }} downvotes)
+                            </a>
+                            ({{ most_downvoted_entry.downvotes }} downvotes)
                         </p>
                     {% endif %}
                 {% else %}
@@ -466,13 +477,13 @@
                 <h6>En Çok Kaydedilen Girdi:</h6>
                 {% if most_saved_entry %}
                     {% if most_saved_entry|instance_of:'Question' %}
-                        <p>Soru: 
+                        <p>Soru:
                             <a href="{% url 'question_detail' most_saved_entry.id %}">
                                 {{ most_saved_entry.question_text }}
                             </a>
                         </p>
                     {% elif most_saved_entry|instance_of:'Answer' %}
-                        <p>Yanıt: 
+                        <p>Yanıt:
                             <a href="{% url 'question_detail' most_saved_entry.question.id %}">
                                 {{ most_saved_entry.question.question_text }}
                             </a>
@@ -541,7 +552,6 @@
              aria-labelledby="kaydedilenler-tab">
             <div class="mt-4">
                 <h5>Kaydedilenler</h5>
-
                 {% if saved_items %}
                     {% for saved in saved_items %}
                         {% if saved.type == 'question' %}
@@ -654,7 +664,7 @@
     </div>
 </div>
 
-<!-- Diğer modal ve JS -->
+<!-- Modal ve JS Dahil Edilenler -->
 {% include 'core/link_modal.html' %}
 {% include 'core/kaynak_ref.html' %}
 {% include 'core/reference_modal.html' %}
@@ -667,18 +677,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
-
 {% endblock content %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
-<!-- Düzenlenmiş vote_save.js dosyası -->
 <script src="{% static 'js/vote_save.js' %}"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // URL parametreyle sekme seçimi
+    // 1) URL parametreyle sekme seçimi
     var params = new URLSearchParams(window.location.search);
     var initialTab = params.get('tab');
     if (initialTab) {
@@ -688,7 +696,6 @@ document.addEventListener('DOMContentLoaded', function() {
             tab.show();
         }
     }
-
     // Sekme değişince URL’yi güncelle
     var tabLinks = document.querySelectorAll('#profileTab .nav-link');
     tabLinks.forEach(function(link) {
@@ -700,27 +707,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Sabitlenmiş girdi "Tamamını oku" fonksiyonu
-    var readMoreLinks = document.querySelectorAll('.read-more');
-    readMoreLinks.forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            var answerId = link.getAttribute('data-answer-id');
-            var summary = document.getElementById('answer-summary-' + answerId);
-            var full = document.getElementById('answer-full-' + answerId);
-            if (summary && full) {
-                summary.style.display = 'none';
-                full.style.display = 'block';
-            }
-            link.style.display = 'none';
-        });
-    });
-
-    // Profil fotoğrafı önizleme
+    // 2) Profil fotoğrafı önizleme
     var fileInput = document.getElementById('id_photo');
     var previewContainer = document.getElementById('new-photo-preview-container');
     var previewImage = document.getElementById('new-photo-preview');
-
     if (fileInput) {
         fileInput.addEventListener('change', function() {
             var file = this.files[0];
@@ -737,6 +727,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // 3) Sabitlenmiş Girdi "read-more" Fonksiyonu
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    readMoreLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const answerId = link.getAttribute('data-answer-id');
+            const summary = document.getElementById('answer-summary-' + answerId);
+            const fullText = document.getElementById('answer-full-' + answerId);
+            console.log("summary =", summary, "fullText =", fullText); 
+
+            if (summary && fullText) {
+                if (summary.style.display === 'none') {
+                    summary.style.display = 'block';
+                    fullText.style.display = 'none';
+                    link.textContent = 'Tamamını oku';
+                } else {
+                    summary.style.display = 'none';
+                    fullText.style.display = 'block';
+                    link.textContent = 'Daha az göster';
+                }
+            }
+        });
+    });
 });
 </script>
 {% endblock extra_js %}
