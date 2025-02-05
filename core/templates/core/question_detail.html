@@ -349,91 +349,117 @@
     </div>
 </div>
 
+
 <!-- TANIM MODAL -->
 <div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg"> <!-- modal-lg: genişlik için -->
       <div class="modal-content">
-        <!-- Modal header -->
+  
+        <!-- Modal Başlık -->
         <div class="modal-header">
           <h5 class="modal-title" id="definitionModalLabel">Tanım</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
         </div>
   
-        <!-- Modal body with tabs -->
+        <!-- Modal Gövdesi (Sekmeler) -->
         <div class="modal-body">
           <ul class="nav nav-tabs" id="definitionTab" role="tablist">
-            <!-- 1) TANIM YAP -->
+            <!-- Sekme 1: TANIM YAP -->
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tanim-yap-tab" data-bs-toggle="tab"
-                      data-bs-target="#tanim-yap" type="button" role="tab"
-                      aria-controls="tanim-yap" aria-selected="true">
+              <button class="nav-link active"
+                      id="tanim-yap-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#tanim-yap"
+                      type="button"
+                      role="tab"
+                      aria-controls="tanim-yap"
+                      aria-selected="true">
                 Tanım Yap
               </button>
             </li>
-            <!-- 2) TANIMLARIM -->
+            <!-- Sekme 2: TANIMLARIM -->
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="tanim-bul-tab" data-bs-toggle="tab"
-                      data-bs-target="#tanim-bul" type="button" role="tab"
-                      aria-controls="tanim-bul" aria-selected="false">
+              <button class="nav-link"
+                      id="tanim-bul-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#tanim-bul"
+                      type="button"
+                      role="tab"
+                      aria-controls="tanim-bul"
+                      aria-selected="false">
                 Tanımlarım
               </button>
             </li>
-            <!-- 3) GENEL TANIM -->
+            <!-- Sekme 3: GENEL TANIM -->
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="genel-tanim-tab" data-bs-toggle="tab"
-                      data-bs-target="#genel-tanim" type="button" role="tab"
-                      aria-controls="genel-tanim" aria-selected="false">
+              <button class="nav-link"
+                      id="genel-tanim-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#genel-tanim"
+                      type="button"
+                      role="tab"
+                      aria-controls="genel-tanim"
+                      aria-selected="false">
                 Genel Tanımlar
               </button>
             </li>
           </ul>
   
-          <!-- Tab Content -->
+          <!-- Sekmelerin İçerikleri -->
           <div class="tab-content mt-3" id="definitionTabContent">
             
-            <!-- TAB 1: TANIM YAP -->
+            <!-- (1) TANIM YAP -->
             <div class="tab-pane fade show active" id="tanim-yap" role="tabpanel" aria-labelledby="tanim-yap-tab">
               <form id="createDefinitionForm">
                 <div class="mb-3">
                   <label for="definitionText" class="form-label">Tanım (max 1000 karakter):</label>
-                  <textarea class="form-control" id="definitionText" name="definition_text"
-                            rows="3" maxlength="1000"></textarea>
+                  <textarea class="form-control"
+                            id="definitionText"
+                            name="definition_text"
+                            rows="4"
+                            maxlength="1000"
+                            placeholder="Tanımınızı girin..."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">Kaydet</button>
               </form>
             </div>
             
-            <!-- TAB 2: TANIMLARIM -->
+            <!-- (2) TANIMLARIM (Sadece bu kullanıcının tanımları) -->
             <div class="tab-pane fade" id="tanim-bul" role="tabpanel" aria-labelledby="tanim-bul-tab">
-              <div class="mb-3">
-                <label for="definitionSelect" class="form-label">Kayıtlı Tanımlarım</label>
-                <select id="definitionSelect" class="form-select">
-                  <option value="">Bir tanım seçiniz...</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-success" id="insertDefinitionBtn">Tamam</button>
+              <!-- Arama Kutusu -->
+              <input type="text" class="form-control mb-2" id="userDefSearchInput" placeholder="Tanımlarımda ara..." />
+              <!-- Liste (radio) -->
+              <ul class="list-group" id="userDefinitionsList"></ul>
+              <!-- Sayfalama Alanı -->
+              <div id="userDefPagination" class="mt-2"></div>
+              <!-- Seçili Tanımı Ekle -->
+              <button type="button" class="btn btn-success mt-2" id="insertUserDefinitionBtn">Seçili Tanımı Ekle</button>
             </div>
             
-            <!-- TAB 3: GENEL TANIM -->
+            <!-- (3) GENEL TANIM (Tüm kullanıcıların tanımları) -->
             <div class="tab-pane fade" id="genel-tanim" role="tabpanel" aria-labelledby="genel-tanim-tab">
-              <div class="mb-3">
-                <label for="allDefSearchInput" class="form-label">Tüm Tanımlarda Ara</label>
-                <input type="text" class="form-control" id="allDefSearchInput"
-                       placeholder="Arama terimi giriniz..." />
-              </div>
-              <ul class="list-group" id="allDefinitionsList">
-                <!-- JS ile doldurulacak -->
-              </ul>
-              <button type="button" class="btn btn-success mt-2" id="insertGlobalDefinitionBtn">
-                Seçili Tanımı Ekle
-              </button>
+              <!-- Arama Kutusu -->
+              <input type="text" class="form-control mb-2" id="allDefSearchInput" placeholder="Tüm tanımlarda ara..." />
+              <!-- Liste (radio) -->
+              <ul class="list-group" id="allDefinitionsList"></ul>
+              <!-- Sayfalama Alanı -->
+              <div id="allDefPagination" class="mt-2"></div>
+              <!-- Seçili Tanımı Ekle -->
+              <button type="button" class="btn btn-success mt-2" id="insertGlobalDefinitionBtn">Seçili Tanımı Ekle</button>
             </div>
+            
+          </div> <!-- /.tab-content -->
+        </div> <!-- /.modal-body -->
   
-          </div><!-- tab-content -->
-        </div><!-- modal-body -->
-      </div><!-- modal-content -->
-    </div><!-- modal-dialog -->
-  </div>
+        <!-- Modal Footer (opsiyonel) -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+        </div>
+  
+      </div> <!-- /.modal-content -->
+    </div> <!-- /.modal-dialog -->
+  </div> <!-- /.modal -->
+  
   
  <!-- PAYLAŞIM MODAL -->
 <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
@@ -555,6 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
       })
     });
 </script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Sadece "auto-expand" sınıfına sahip textarea’ları seçiyoruz

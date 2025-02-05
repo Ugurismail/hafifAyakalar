@@ -2031,24 +2031,66 @@ def create_definition(request, question_id):
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
     return JsonResponse({'status': 'invalid_method'}, status=405)
 
+from django.core.paginator import Paginator
+
 @login_required
 def get_user_definitions(request):
-    """Kullanıcının yaptığı tanımların listesini JSON döndürür."""
+    """
+    Kullanıcının tanımlarını JSON olarak döndürür.
+    Arama + sayfalama + usage_count eklenmiştir.
+    ?q=abc  => Arama
+    ?page=2 => Sayfa numarası
+    """
     if request.method == 'GET':
-        user_defs = Definition.objects.filter(user=request.user).select_related('question')
-        # Aynı question_text tekrar tekrar gelmesin istersen distinct() yapabilirsin
-        # ama question_text tam olarak unique değil, user birden fazla tanım eklemiş olabilir. 
-        # Yine de genelde 1 başlık=1 tanım diyorsan, double-check.
-        
-        data = []
-        for d in user_defs:
-            data.append({
+        q = request.GET.get('q', '').strip()
+        page_num = request.GET.get('page', '1')
+
+        # Sadece kullanıcıya ait Definition’lar
+        defs = Definition.objects.filter(user=request.user)
+
+        # Arama (soru metninde veya tanım metninde?)
+        # d.question.question_text veya d.definition_text
+        if q:
+            defs = defs.filter(
+                Q(definition_text__icontains=q) |
+                Q(question__question_text__icontains=q)
+            )
+
+        # Alfabetik sıralama => question_text üzerinden
+        defs = defs.order_by('question__question_text')
+
+        # Sayfalama
+        paginator = Paginator(defs, 5)  # sayfa başına 5 kayıt
+        try:
+            page_obj = paginator.page(page_num)
+        except:
+            page_obj = paginator.page(1)
+
+        data_list = []
+        for d in page_obj.object_list:
+            usage_count_self = Answer.objects.filter(
+                user=request.user,
+                answer_text__icontains=f'(tanim:{d.question.question_text}:{d.id})'
+            ).count()
+            usage_count_all = Answer.objects.filter(
+                answer_text__icontains=f'(tanim:{d.question.question_text}:{d.id})'
+            ).count()
+
+            data_list.append({
                 'id': d.id,
                 'question_id': d.question.id,
                 'question_text': d.question.question_text,
-                'definition_text': d.definition_text[:100]  # Dropdown’da sadece 100 char göster? 
+                'definition_text': d.definition_text[:80] + '...' if len(d.definition_text) > 80 else d.definition_text,
+                'usage_count_self': usage_count_self,  # Bu tanımı bu kullanıcı kaç kere kullanmış
+                'usage_count_all': usage_count_all,    # Bu tanımı tüm kullanıcılar kaç kere kullanmış
             })
-        return JsonResponse({'definitions': data}, status=200)
+
+        response_data = {
+            'definitions': data_list,
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+        }
+        return JsonResponse(response_data, status=200)
     else:
         return JsonResponse({'error': 'invalid method'}, status=405)
 
@@ -2090,28 +2132,53 @@ def delete_definition(request, definition_id):
 def get_all_definitions(request):
     """
     Tüm kullanıcıların tanımlarını JSON döndürür.
-    ?q= parametresi ile hem question_text hem definition_text içinde arama yapılabilir.
+    ?q= => arama
+    ?page= => sayfa
+    Aynı şekilde usage_count içerir.
     """
-    q = request.GET.get('q', '').strip()
-    defs = Definition.objects.select_related('question', 'user').all()
+    if request.method == 'GET':
+        q = request.GET.get('q', '').strip()
+        page_num = request.GET.get('page', '1')
 
-    if q:
-        defs = defs.filter(
-            Q(definition_text__icontains=q) |
-            Q(question__question_text__icontains=q) |
-            Q(user__username__icontains=q)
-        )
+        defs = Definition.objects.select_related('question', 'user').all()
 
-    data = []
-    for d in defs:
-        data.append({
-            'id': d.id,
-            'question_text': d.question.question_text,
-            'definition_text': d.definition_text,
-            'username': d.user.username
-        })
-    
-    return JsonResponse({'definitions': data}, status=200)
+        if q:
+            defs = defs.filter(
+                Q(definition_text__icontains=q) |
+                Q(question__question_text__icontains=q) |
+                Q(user__username__icontains=q)
+            )
+
+        # Alfabetik sıralama
+        defs = defs.order_by('question__question_text')
+
+        # Sayfalama
+        paginator = Paginator(defs, 5)  # 5’erli
+        try:
+            page_obj = paginator.page(page_num)
+        except:
+            page_obj = paginator.page(1)
+
+        data_list = []
+        for d in page_obj.object_list:
+            usage_count_all = Answer.objects.filter(
+                answer_text__icontains=f'(tanim:{d.question.question_text}:{d.id})'
+            ).count()
+            data_list.append({
+                'id': d.id,
+                'question_text': d.question.question_text,
+                'definition_text': d.definition_text[:80] + '...' if len(d.definition_text) > 80 else d.definition_text,
+                'username': d.user.username,
+                'usage_count_all': usage_count_all,
+            })
+
+        return JsonResponse({
+            'definitions': data_list,
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+        }, status=200)
+    else:
+        return JsonResponse({'error': 'invalid method'}, status=405)
 
 @require_POST
 def create_reference(request):
