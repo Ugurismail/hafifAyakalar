@@ -147,3 +147,22 @@ def reference_link(text):
 
     new_text = re.sub(pattern, replace_reference, text)
     return mark_safe(new_text)
+
+
+
+@register.filter
+def highlight(text, keyword):
+    """
+    'text' içinde 'keyword' kelimesi geçiyorsa, 
+    <mark>...</mark> ile vurgulansın (case-insensitive).
+    """
+    if not keyword:
+        return text  # aranan kelime boşsa, değiştirmeden dön
+
+    # Tüm 'keyword' geçen yerleri bul, <mark> ekle
+    pattern = re.compile(re.escape(keyword), re.IGNORECASE)
+    highlighted = pattern.sub(
+        lambda m: f'<mark>{m.group(0)}</mark>',
+        text
+    )
+    return mark_safe(highlighted)

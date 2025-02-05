@@ -417,25 +417,59 @@ def get_invitation_tree(user):
             tree.append({'code': invite.code, 'children': []})
     return tree
 
+# core/views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.core.paginator import Paginator
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
+
 @login_required
 def question_detail(request, question_id):
-    # 1) Soldaki “Tüm Sorular” listesini alalım:
-    all_questions = get_today_questions(request)  # Kendi fonksiyonunuz olduğunu varsayıyorum.
-    # soldaki soru listesi için pagination parametresi => "?q_page=..."
+    # 1) Soldaki “Tüm Sorular” listesini alalım (varsayım: bu fonksiyon size ait olabilir)
+    all_questions = get_today_questions(request)  # Örneğin, o günün sorularını getiriyor.
     q_page_number = request.GET.get('q_page', 1)
-    q_paginator = Paginator(all_questions, 20)  # Sayfa başına 10 soru
+    q_paginator = Paginator(all_questions, 20)
     all_questions_page = q_paginator.get_page(q_page_number)
 
     # 2) İlgili question nesnesini çek
     question = get_object_or_404(Question, id=question_id)
 
-    # 3) Orta kısımdaki yanıtlar için ayrı paginator => "?a_page=..."
-    all_answers = question.answers.all().order_by('created_at')  # kendi sıralamanıza göre
+    # 3) --- FİLTRE PARAMETRELERİNİ AL --- 
+    my_answers = request.GET.get('my_answers')  # checkbox => "on" veya None
+    followed = request.GET.get('followed')      # checkbox => "on" veya None
+    username = request.GET.get('username', '').strip()
+    keyword  = request.GET.get('keyword', '').strip()
+
+    # Başlangıçta, bu soruya ait TÜM yanıtları al.
+    all_answers = question.answers.all().order_by('created_at')
+
+    # Filtre 1: Kullanıcının kendi yanıtları
+    if my_answers == 'on':
+        all_answers = all_answers.filter(user=request.user)
+    
+    # Filtre 2: Takip edilen kullanıcıların yanıtları
+    if followed == 'on':
+        # Burada takip modelinizi uyarlamanız lazım.
+        # Örnek: request.user.profile.following => ManyToMany
+        # followed_users = request.user.profile.following.all()
+        # all_answers = all_answers.filter(user__in=followed_users)
+        pass
+
+    # Filtre 3: Belirli bir kullanıcı adı
+    if username:
+        all_answers = all_answers.filter(user__username__iexact=username)
+
+    # Filtre 4: Yanıt metninde kelime arama
+    if keyword:
+        all_answers = all_answers.filter(answer_text__icontains=keyword)
+
+    # 4) Yanıtlar için pagination (?a_page=...)
     a_page_number = request.GET.get('a_page', 1)
-    a_paginator = Paginator(all_answers, 10)  # Örnek: her sayfada 5 yanıt
+    a_paginator = Paginator(all_answers, 10)
     answers_page = a_paginator.get_page(a_page_number)
 
-    # 4) Yanıt formunu işleme (POST geldiyse)
+    # 5) Yanıt ekleme formu (POST)
     if request.method == 'POST':
         form = AnswerForm(request.POST)
         if form.is_valid():
@@ -443,51 +477,42 @@ def question_detail(request, question_id):
             new_answer.user = request.user
             new_answer.question = question
             new_answer.save()
-            # Yanıt eklendikten sonra tekrar question_detail'e yönlendir
             return redirect('question_detail', question_id=question.id)
     else:
         form = AnswerForm()
 
-    # 5) Soruya dair “kaydetme” ve “oylama” bilgilerini al
+    # 6) Soru/yanıt kaydetme ve oylama bilgisi (örnek)
     content_type_question = ContentType.objects.get_for_model(Question)
-    # Kullanıcı bu soruyu kaydetmiş mi?
     user_has_saved_question = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_question,
         object_id=question.id
     ).exists()
-    # Sorunun kaç kez kaydedildiği
+
     question_save_count = SavedItem.objects.filter(
         content_type=content_type_question,
         object_id=question.id
     ).count()
-    # Soruya kullanıcı oyu (Vote tablosundan)
-    # (İsterseniz question.user_vote_value gibi bir şey atayabilirsiniz.)
 
-    # 6) Yanıtlara dair “kaydetme” ve “oylama” bilgileri
-    #    (Sadece bu sayfada gözüken yanıtların IDs)
     content_type_answer = ContentType.objects.get_for_model(Answer)
-    page_answer_ids = [ans.id for ans in answers_page]  # answers_page.object_list da kullanılabilir
+    page_answer_ids = [ans.id for ans in answers_page]
 
-    # Kullanıcının oyları (Yanıtlar)
     user_votes = Vote.objects.filter(
         user=request.user,
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values('object_id', 'value')
     user_vote_dict = {vote['object_id']: vote['value'] for vote in user_votes}
-    # Yanıtlarda user_vote_value’yı setle
+
     for ans in answers_page:
         ans.user_vote_value = user_vote_dict.get(ans.id, 0)
 
-    # Kaydedilen yanıtlar
     saved_answer_ids = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values_list('object_id', flat=True)
 
-    # Yanıtların kaydedilme sayıları
     answer_save_counts = SavedItem.objects.filter(
         content_type=content_type_answer,
         object_id__in=page_answer_ids
@@ -499,21 +524,19 @@ def question_detail(request, question_id):
         'question': question,
         'form': form,
 
-        # Soldaki soru listesi (sayfalanmış)
-        'all_questions_page': all_questions_page,  # <--- soldaki “Tüm Sorular”
-        # Orta kısım yanıtları (sayfalanmış)
-        'answers_page': answers_page,
+        'all_questions_page': all_questions_page,  # soldaki “Tüm Sorular”
+        'answers_page': answers_page,              # ortadaki (filtreli) yanıtlar
 
-        # Soru Kaydetme/Oylama
         'user_has_saved_question': user_has_saved_question,
         'question_save_count': question_save_count,
-        
-        # Yanıt Kaydetme/Oylama
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
 
-        # Eskiden 'all_questions' diye döndürüyordunuz, şimdi 'all_questions_page' var
-        # Bu ikisini template tarafında nasıl kullanacağınıza bağlı.
+        # Filtre formunda “önceki seçimleri” korumak için GET parametrelerini gönderebiliriz:
+        'my_answers': my_answers,
+        'followed': followed,
+        'filter_username': username,
+        'filter_keyword': keyword,
     }
     return render(request, 'core/question_detail.html', context)
 
@@ -2357,3 +2380,98 @@ def download_entries_xlsx(request, username):
 
     wb.save(response)
     return response
+
+
+# core/views.py
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+
+# core/views.py
+
+@login_required
+def filter_answers(request, question_id):
+    """
+    Ajax filtre endpoint'i.
+    Soruya ait yanıtları, my_answers / followed / username / keyword'e göre süzer
+    ve 'core/_answers_list.html' partial'ını döndürür.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    
+    # Parametreler
+    my_answers = request.GET.get('my_answers')
+    followed = request.GET.get('followed')
+    username = request.GET.get('username', '').strip()
+    keyword = request.GET.get('keyword', '').strip()
+
+    # Tüm yanıtlar (bu soru altındaki)
+    answers = question.answers.all().order_by('-created_at')  # güncelden eskiye
+
+    # 1) Kendi yanıtlarım
+    if my_answers == 'on':
+        answers = answers.filter(user=request.user)
+
+    # 2) Takip ettiklerim
+    if followed == 'on':
+        # UserProfile.following => diğer UserProfile'lar
+        # Bu profillerin user'larına ait yanıtlar
+        user_profile = request.user.userprofile
+        followed_profiles = user_profile.following.all()
+        # Yöntem 2: Liste halinde user'ları çıkarıyoruz
+        followed_users = [p.user for p in followed_profiles]
+        answers = answers.filter(user__in=followed_users)
+    
+    # 3) Kullanıcı adı (kısmi eşleşme)
+    if username:
+        # 'iexact' tam eşleşme yerine 'icontains' => kısmi
+        answers = answers.filter(user__username__icontains=username)
+    
+    # 4) Kelime arama
+    if keyword:
+        answers = answers.filter(answer_text__icontains=keyword)
+
+    # Kaydetme/Oylama bilgileri
+    content_type_answer = ContentType.objects.get_for_model(Answer)
+    answer_ids = answers.values_list('id', flat=True)
+
+    # Kaydedilme sayıları
+    saved_items = SavedItem.objects.filter(
+        content_type=content_type_answer,
+        object_id__in=answer_ids
+    ).values('object_id').annotate(count=Count('id'))
+    answer_save_dict = {item['object_id']: item['count'] for item in saved_items}
+
+    # Kullanıcının kaydettiği yanıtlar
+    saved_answer_ids = SavedItem.objects.filter(
+        user=request.user,
+        content_type=content_type_answer,
+        object_id__in=answer_ids
+    ).values_list('object_id', flat=True)
+
+    # Kullanıcının oy bilgisi
+    user_votes = Vote.objects.filter(
+        user=request.user,
+        content_type=content_type_answer,
+        object_id__in=answer_ids
+    ).values('object_id', 'value')
+    user_vote_dict = {v['object_id']: v['value'] for v in user_votes}
+
+    # up/down hesaplama
+    for ans in answers:
+        ans.user_vote_value = user_vote_dict.get(ans.id, 0)
+        ans.upvotes = Vote.objects.filter(object_id=ans.id, value=1).count()
+        ans.downvotes = Vote.objects.filter(object_id=ans.id, value=-1).count()
+
+    # partial HTML döndür
+    html_content = render_to_string(
+        'core/_answers_list.html',
+        {
+            'answers': answers,
+            'question': question,
+            'answer_save_dict': answer_save_dict,
+            'saved_answer_ids': saved_answer_ids,
+            'search_keyword': keyword,
+        },
+        request=request
+    )
+    return HttpResponse(html_content)

@@ -90,7 +90,8 @@ urlpatterns = [
     path('get-references/', views.get_references, name='get_references'),
     # path('profile/<str:username>/download_entries/', views.download_entries, name='download_entries'),
     path('profile/<str:username>/download_entries_json/', views.download_entries_json, name='download_entries_json'),
-    path('profile/<str:username>/download_entries_xlsx/', views.download_entries_xlsx, name='download_entries_xlsx')
+    path('profile/<str:username>/download_entries_xlsx/', views.download_entries_xlsx, name='download_entries_xlsx'),
+    path('question/<int:question_id>/filter_answers/', views.filter_answers, name='filter_answers'),
 ]
 
 handler404 = 'core.views.custom_404_view'
