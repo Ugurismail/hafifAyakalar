@@ -358,6 +358,12 @@
                                                     <a href="{% url 'question_detail' parent.id %}">
                                                         {{ parent.question_text }}
                                                     </a>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <a href="{% url 'user_profile' parent.user.username %}">
+                                                            {{ parent.user.username }}
+                                                        </a>
+                                                    </small>
                                                 </li>
                                             {% endfor %}
                                         </ul>
