@@ -1155,7 +1155,7 @@ def save_item(request):
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 def site_statistics(request):
-    # Toplam kullanıcı sayısı (en az bir soru veya yanıt yazmış olanlar)
+    # Kullanıcı sayısı (en az bir soru veya yanıt yazmış olanlar)
     user_count = User.objects.filter(
         Q(questions__isnull=False) | Q(answers__isnull=False)
     ).distinct().count()
@@ -1218,38 +1218,34 @@ def site_statistics(request):
         save_count=Count('saveditem')
     ).order_by('-save_count')[:5]
 
-    # Tüm soru ve yanıt metinlerini al
+    # Kelime analizi: Tüm soru ve yanıt metinlerini al, birleştirip küçük harfe çevir
     question_texts = Question.objects.values_list('question_text', flat=True)
     answer_texts = Answer.objects.values_list('answer_text', flat=True)
-
-    # Metinleri birleştir ve küçük harfe çevir
     all_texts = ' '.join(question_texts) + ' ' + ' '.join(answer_texts)
     all_texts = all_texts.lower()
-
-    # Kelimeleri ayıkla
     words = re.findall(r'\b\w+\b', all_texts)
-
-    # Kullanıcının hariç tutmak istediği kelimeleri al
     exclude_words_input = request.GET.get('exclude_words', '')
     if exclude_words_input:
-        # Virgülle ayrılmış kelimeleri listeye çevir
         exclude_words_list = re.split(r',\s*', exclude_words_input.strip())
         exclude_words = set(word.lower() for word in exclude_words_list)
     else:
         exclude_words = set()
-
-    # Kelimeleri filtrele
     filtered_words = [word for word in words if word not in exclude_words]
-
-    # Kelime sıklıklarını hesapla
     word_counts = Counter(filtered_words)
     top_words = word_counts.most_common(10)
-
-    # Kelime arama
     search_word = request.GET.get('search_word', '').strip().lower()
     search_word_count = None
     if search_word:
         search_word_count = word_counts.get(search_word, 0)
+
+    # --- Yeni: En Çok Kullanılan Kaynaklar ---
+    from .models import Reference  # Eğer Reference modeliniz aynı modülde değilse, uygun şekilde içe aktarın.
+    all_references = list(Reference.objects.all())
+    # Sıralama: get_usage_count metoduna göre azalan
+    all_references.sort(key=lambda ref: ref.get_usage_count(), reverse=True)
+    paginator_references = Paginator(all_references, 5)
+    reference_page_number = request.GET.get('reference_page', 1)
+    top_references = paginator_references.get_page(reference_page_number)
 
     context = {
         'user_count': user_count,
@@ -1272,11 +1268,10 @@ def site_statistics(request):
         'search_word': search_word,
         'exclude_words': ', '.join(sorted(exclude_words)),
         'exclude_words_input': exclude_words_input,
+        'top_references': top_references,
     }
 
     return render(request, 'core/site_statistics.html', context)
-
-
 def user_homepage(request):
     if not request.user.is_authenticated:
         return redirect('signup')
