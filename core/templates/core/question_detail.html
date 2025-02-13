@@ -589,68 +589,76 @@
 <!-- Geri Kalan (Okuma, Paylaş vs.) -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tamamını Oku / Daha Az
-    const readMoreLinks = document.querySelectorAll('.read-more');
-    readMoreLinks.forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            const answerId = this.getAttribute('data-answer-id');
-            const summary = document.getElementById('answer-summary-' + answerId);
-            const fullText = document.getElementById('answer-full-' + answerId);
-
-            if (summary.style.display === 'none') {
-                summary.style.display = 'block';
-                fullText.style.display = 'none';
-                this.textContent = 'Tamamını oku';
-            } else {
-                summary.style.display = 'none';
-                fullText.style.display = 'block';
-                this.textContent = 'Daha az göster';
-            }
-        });
+  // "read-more" linklerini seçelim
+  const readMoreLinks = document.querySelectorAll('.read-more');
+  readMoreLinks.forEach(function(link) {
+    link.addEventListener('click', function(event) {
+      event.preventDefault();
+      const answerId = this.getAttribute('data-answer-id');
+      const summary = document.getElementById('answer-summary-' + answerId);
+      const fullText = document.getElementById('answer-full-' + answerId);
+      if (!summary || !fullText) return;
+      
+      // Elementin gerçek (computed) stilini alalım
+      const summaryDisplay = window.getComputedStyle(summary).display;
+      
+      if (summaryDisplay !== 'none') {
+        // Eğer summary görünürse: gizle, fullText'i göster ve buton metnini güncelle
+        summary.style.display = 'none';
+        fullText.style.display = 'block';
+        this.textContent = 'Daha az göster';
+      } else {
+        // Eğer summary gizliyse: göster, fullText'i gizle ve buton metnini eski haline getir
+        summary.style.display = 'block';
+        fullText.style.display = 'none';
+        this.textContent = 'Tümünü Göster';
+      }
     });
-
-    // Link Kopyala
-    $('.copy-link-btn').click(function(e) {
-        e.preventDefault();
-        var url = $(this).data('url');
-        var tempInput = $("<input>");
-        $("body").append(tempInput);
-        var absoluteLink = window.location.origin + url;
-        tempInput.val(absoluteLink).select();
-        document.execCommand("copy");
-        tempInput.remove();
-        alert("Link kopyalandı!");
-    });
-
-    // Paylaş
-    var currentAnswerId;
-    $('.share-link').click(function(e) {
-        e.preventDefault();
-        currentAnswerId = $(this).data('answer-id');
-        $('#shareModal').modal('show');
-    });
-
-    $('#shareModal').on('shown.bs.modal', function () {
-        var link = "{% url 'single_answer' question.id 0 %}".replace('/0/', '/' + currentAnswerId + '/');
-        var absoluteLink = window.location.origin + link;
-        var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
-        var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
-        $('#shareTwitter').attr('href', twitterUrl);
-        $('#shareFacebook').attr('href', facebookUrl);
-    });
-
-    // Yanıt Silme
-    var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-    var deleteAnswerForm = document.getElementById('delete-answer-form');
-    deleteAnswerBtns.forEach(function(btn) {
-        btn.addEventListener('click', function(event) {
-            var answerId = this.getAttribute('data-answer-id');
-            deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
-        });
-    });
+  });
 });
-</script>
+
+  
+      // Link Kopyala
+      $('.copy-link-btn').click(function(e) {
+          e.preventDefault();
+          var url = $(this).data('url');
+          var tempInput = $("<input>");
+          $("body").append(tempInput);
+          var absoluteLink = window.location.origin + url;
+          tempInput.val(absoluteLink).select();
+          document.execCommand("copy");
+          tempInput.remove();
+          alert("Link kopyalandı!");
+      });
+  
+      // Paylaş
+      var currentAnswerId;
+      $('.share-link').click(function(e) {
+          e.preventDefault();
+          currentAnswerId = $(this).data('answer-id');
+          $('#shareModal').modal('show');
+      });
+  
+      $('#shareModal').on('shown.bs.modal', function () {
+  
+          var absoluteLink = window.location.origin + link;
+          var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
+          var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
+          $('#shareTwitter').attr('href', twitterUrl);
+          $('#shareFacebook').attr('href', facebookUrl);
+      });
+  
+      // Yanıt Silme
+      var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
+      var deleteAnswerForm = document.getElementById('delete-answer-form');
+      deleteAnswerBtns.forEach(function(btn) {
+          btn.addEventListener('click', function(event) {
+              var answerId = this.getAttribute('data-answer-id');
+              deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
+          });
+      });
+  });
+  </script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
