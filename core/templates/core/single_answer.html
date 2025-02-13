@@ -86,7 +86,7 @@
                                 <a href="{% url 'edit_answer' focused_answer.id %}" class="ms-2" title="Düzenle">
                                     <i class="bi bi-pencil-square icon-black-white"></i>
                                 </a>
-                                <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ focused_answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                <a href="#" class="ms-2 delete-answer-btn" data-answer-id="{{ focused_answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
                                     <i class="bi bi-trash icon-black-white"></i>
                                 </a>
                             {% endif %}
@@ -169,7 +169,7 @@
                                         <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                             <i class="bi bi-pencil-square icon-black-white"></i>
                                         </a>
-                                        <a href="#" class="ms-2 text-danger delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                                        <a href="#" class="ms-2 delete-answer-btn" data-answer-id="{{ answer.id }}" title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
                                             <i class="bi bi-trash icon-black-white"></i>
                                         </a>
                                     {% endif %}

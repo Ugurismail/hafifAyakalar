@@ -22,290 +22,288 @@
             </ul>
             {% include 'core/pagination.html' with page_obj=all_questions_page page_param='q_page' %}
         </div>
-<!-- ORTA SÜTUN -->
-<div class="col-md-8">
-  
-    <!-- Gizli input: question.id -->
-    <input type="hidden" id="answer_form_question_id" value="{{ question.id }}">
-  
-    <!-- Soru Başlık + Harita Linki + FİLTRE BUTONU -->
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      
-      <h2 class="h5 mb-0">
-        {{ question.question_text }}
-        <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
-           class="ms-2 text-secondary"
-           title="Haritada Gör">
-          <i class="bi bi-geo-alt-fill"></i>
-        </a>
-      </h2>
-      
-      <!-- Filtre / Huni Butonu (Bootstrap Dropdown) -->
-      <div class="dropdown">
-        <button class="btn btn-sm btn-outline-primary dropdown-toggle"
-                type="button"
-                id="filterDropdownBtn"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
-          <i class="bi bi-funnel"></i> 
-        </button>
-  
-        <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filterDropdownBtn"
-             style="min-width: 280px;">
-          <!-- Filtre Formu -->
-          <form id="filterForm" autocomplete="off">
+      <!-- ORTA SÜTUN -->
+        <div class="col-md-8">
+        
+          <!-- Gizli input: question.id -->
+          <input type="hidden" id="answer_form_question_id" value="{{ question.id }}">
+        
+          <!-- Soru Başlık + Harita Linki + FİLTRE BUTONU -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
             
-            <!-- Kendi Yanıtlarım & Takip Ettiklerim -->
-            <div class="mb-2 form-check">
-              <input class="form-check-input" type="checkbox"
-                     name="my_answers" value="on" id="myAnswersCheck"
-                     {% if my_answers == 'on' %}checked{% endif %}>
-              <label class="form-check-label" for="myAnswersCheck">
-                Benim Yanıtlarım
-              </label>
-            </div>
-            <div class="mb-2 form-check">
-              <input class="form-check-input" type="checkbox"
-                     name="followed" value="on" id="followedCheck"
-                     {% if followed == 'on' %}checked{% endif %}>
-              <label class="form-check-label" for="followedCheck">
-                Takip Ettiklerim
-              </label>
-            </div>
-  
-            <!-- Kullanıcı Adı -->
-            <div class="mb-2">
-              <input type="text"
-                     class="form-control form-control-sm"
-                     name="username"
-                     placeholder="Kullanıcı Adı"
-                     value="{{ filter_username|default_if_none:'' }}">
-            </div>
-  
-            <!-- Anahtar Kelime -->
-            <div class="mb-2">
-              <input type="text"
-                     class="form-control form-control-sm"
-                     name="keyword"
-                     placeholder="Kelime Ara"
-                     value="{{ filter_keyword|default_if_none:'' }}">
-            </div>
+            <h2 class="h5 mb-0">
+              {{ question.question_text }}
+              <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
+                class="ms-2 text-secondary"
+                title="Haritada Gör">
+                <i class="bi bi-geo-alt-fill"></i>
+              </a>
+            </h2>
             
-            <!-- Filtrele Butonu (isteğe göre gizleyebilirsiniz, 
-                 eğer tamamen canlı arama yapmak istiyorsanız. ) -->
-            <button type="submit" class="btn btn-sm btn-primary w-100">
-              Uygula
-            </button>
-          </form>
-        </div>
-      </div>
-      <!-- /Filtre Dropdown -->
-    </div>
-    <!-- /Soru Başlık Satırı -->
-  
-    <!-- Soruya Oy ve Kaydet -->
-    <div class="action d-flex justify-content-between align-items-center mb-3">
-      <div>
-        <!-- Oy Butonları -->
-        <a href="#"
-           class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
-           data-content-type="question" data-object-id="{{ question.id }}" data-value="1" title="Beğen">
-          <i class="bi bi-chevron-up"></i>
-        </a>
-        <span id="question-upvotes">{{ question.upvotes }}</span>
-  
-        <a href="#"
-           class="vote-btn ms-1 me-1 {% if question.user_vote_value == -1 %}voted-down{% endif %}"
-           data-content-type="question" data-object-id="{{ question.id }}" data-value="-1" title="Beğenme">
-          <i class="bi bi-chevron-down"></i>
-        </a>
-        <span id="question-downvotes">{{ question.downvotes }}</span>
-  
-        <!-- Kaydet -->
-        <a href="#"
-           class="save-btn icon-black-white ms-2"
-           data-content-type="question" data-object-id="{{ question.id }}" 
-           title="Kaydet">
-          <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
-        </a>
-        <span class="save-count">{{ question_save_count }}</span>
-      </div>
-      <div class="text-end">
-        <small class="text-muted">
-          <a href="{% url 'user_profile' question.user.username %}">
-            {{ question.user.username }}
-          </a> |
-          {{ question.created_at|date:"Y-m-d H:i" }}
-        </small>
-      </div>
-    </div>
-  
-    <!-- YANITLAR LİSTESİ (Kapsayıcı) -->
-    <div id="answersContainer">
-      {% for answer in answers_page %}
-        <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
-          <div class="card-body">
-            {% if answer.answer_text|length > 500 %}
-              <div class="answer-text" id="answer-summary-{{ answer.id }}">
-                {{ answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }} ...
+            <!-- Filtre / Huni Butonu (Bootstrap Dropdown) -->
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-primary dropdown-toggle"
+                      type="button"
+                      id="filterDropdownBtn"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false">
+                <i class="bi bi-funnel"></i> 
+              </button>
+        
+              <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filterDropdownBtn"
+                  style="min-width: 280px;">
+                <!-- Filtre Formu -->
+                <form id="filterForm" autocomplete="off">
+                  
+                  <!-- Kendi Yanıtlarım & Takip Ettiklerim -->
+                  <div class="mb-2 form-check">
+                    <input class="form-check-input" type="checkbox"
+                          name="my_answers" value="on" id="myAnswersCheck"
+                          {% if my_answers == 'on' %}checked{% endif %}>
+                    <label class="form-check-label" for="myAnswersCheck">
+                      Benim Yanıtlarım
+                    </label>
+                  </div>
+                  <div class="mb-2 form-check">
+                    <input class="form-check-input" type="checkbox"
+                          name="followed" value="on" id="followedCheck"
+                          {% if followed == 'on' %}checked{% endif %}>
+                    <label class="form-check-label" for="followedCheck">
+                      Takip Ettiklerim
+                    </label>
+                  </div>
+        
+                  <!-- Kullanıcı Adı -->
+                  <div class="mb-2">
+                    <input type="text"
+                          class="form-control form-control-sm"
+                          name="username"
+                          placeholder="Kullanıcı Adı"
+                          value="{{ filter_username|default_if_none:'' }}">
+                  </div>
+        
+                  <!-- Anahtar Kelime -->
+                  <div class="mb-2">
+                    <input type="text"
+                          class="form-control form-control-sm"
+                          name="keyword"
+                          placeholder="Kelime Ara"
+                          value="{{ filter_keyword|default_if_none:'' }}">
+                  </div>
+                  
+                  <!-- Filtrele Butonu (isteğe göre gizleyebilirsiniz, 
+                      eğer tamamen canlı arama yapmak istiyorsanız. ) -->
+                  <button type="submit" class="btn btn-sm btn-primary w-100">
+                    Uygula
+                  </button>
+                </form>
               </div>
-              <div class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
-              </div>
-              <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tümünü Göster</a>
-            {% else %}
-              <div class="answer-text">
-                {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
-              </div>
-            {% endif %}
-  
-            <!-- Oy/Kaydet + Kullanıcı Bilgisi -->
-            <div class="action d-flex justify-content-between align-items-center">
-              <div>
-                <!-- Oy butonları -->
-                <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
-                   data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" 
-                   title="Beğen">
-                  <i class="bi bi-chevron-up"></i>
-                </a>
-                <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
-  
-                <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
-                   data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" 
-                   title="Beğenme">
-                  <i class="bi bi-chevron-down"></i>
-                </a>
-                <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
-  
-                <a href="#" class="save-btn ms-2"
-                   data-content-type="answer" data-object-id="{{ answer.id }}" 
-                   title="Kaydet">
-                  <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
-                </a>
-                <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0" }}</span>
-  
-                {% if answer.user == request.user %}
-                  <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
-                    <i class="bi bi-pencil-square icon-black-white"></i>
-                  </a>
-                  <a href="#" class="ms-2 text-danger delete-answer-btn"
-                     data-answer-id="{{ answer.id }}" 
-                     data-delete-url="{% url 'delete_answer' answer.id %}?next={{ request.path|urlencode }}"
-                     title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
-                    <i class="bi bi-trash icon-black-white"></i>
-                  </a>
-                {% endif %}
-              </div>
-              <div class="text-end">
-                <small class="text-muted me-2">
-                  <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
-                  | {{ answer.created_at|date:"Y-m-d H:i" }}
-                  {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
-                    {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
-                      ~ {{ answer.updated_at|date:"H:i" }}
-                    {% else %}
-                      ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
-                    {% endif %}
-                  {% endif %}
-                </small>
-                <!-- Dropdown menü (Link Kopyala, Paylaş vb.) -->
-                <div class="dropdown d-inline">
-                  <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}"
-                     data-bs-toggle="dropdown" aria-expanded="false">
-                    &#8226;&#8226;&#8226;
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
-                    <li>
-                      <button class="dropdown-item copy-link-btn"
-                              data-url="{% url 'single_answer' question.id answer.id %}">
-                        <i class="bi bi-link-45deg"></i> Linki Kopyala
-                      </button>
-                    </li>
-                    <li>
-                      <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}">
-                        <i class="bi bi-share"></i> Paylaş
-                      </a>
-                    </li>
-                    <li>
-                      <form action="{% url 'pin_entry' answer_id=answer.id %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="dropdown-item">
-                          <i class="bi bi-pin-angle"></i> Profil Sabitle
-                        </button>
-                      </form>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="{% url 'send_message_from_answer' answer.id %}">
-                        <i class="bi bi-envelope"></i> Mesaj Gönder
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div> <!-- /.action -->
-          </div> <!-- /.card-body -->
-        </div> <!-- /.card -->
-      {% empty %}
-        <p>Henüz yanıt yok. İlk yanıtı siz verin!</p>
-      {% endfor %}
-    </div>
-    <!-- /YANITLAR LİSTESİ -->
-  
-    <!-- Sayfalama -->
-    {% include 'core/pagination.html' with page_obj=answers_page page_param='a_page' %}
-  
-    <!-- YANIT EKLEME FORMU -->
-    <div class="card mt-4">
-      <div class="card-body yanit-card">
-        <form method="post">
-          {% csrf_token %}
-          <div class="btn-toolbar mb-2 yanit-card" role="toolbar">
-            <!-- Bold/Italic -->
-            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
-                    data-format="bold" title="Kalınlaştır">
-              <i class="bi bi-type-bold"></i>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
-                    data-format="italic" title="İtalikleştir">
-              <i class="bi bi-type-italic"></i>
-            </button>
-            <!-- Harici Link Ekle -->
-            <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn me-2" 
-                    title="Harici WEB Linki Ekleyin">
-              <i class="bi bi-link-45deg"></i> Link Ekle
-            </button>
-            <!-- (bkz:soru) -->
-            <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2"
-                    title="Bir diğer Soru/başlığa referans ver">
-              (bkz:soru)
-            </button>
-            <!-- (ref:...) -->
-            <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2"
-                    title="Renklendir/Yönlendir">
-              <i class="bi bi-box-arrow-in-up-right"></i> hede
-            </button>
-            <!-- TANIM MODAL BUTONU -->
-            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn"
-                    title="Tanım">
-              <i class="bi bi-book"></i> Tanım
-            </button>
-            <!-- KAYNAK MODAL BUTONU -->
-            <button type="button" class="btn btn-sm btn-outline-secondary me-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#kaynakRefModal"
-                    title="Kaynak">
-              <i class="bi bi-journal"></i> Kaynak
-            </button>
+            </div>
+            <!-- /Filtre Dropdown -->
           </div>
-          {{ form.answer_text }}
-          <button type="submit" class="btn btn-primary mt-2">Yanıtla</button>
-        </form>
-      </div>
-    </div>
-  
-  </div>
-  <!-- /ORTA SÜTUN -->
-   <!-- col-md-7 -->
+          <!-- /Soru Başlık Satırı -->
+        
+          <!-- Soruya Oy ve Kaydet -->
+          <div class="action d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <!-- Oy Butonları -->
+              <a href="#"
+                class="vote-btn me-1 {% if question.user_vote_value == 1 %}voted-up{% endif %}"
+                data-content-type="question" data-object-id="{{ question.id }}" data-value="1" title="Beğen">
+                <i class="bi bi-chevron-up"></i>
+              </a>
+              <span id="question-upvotes">{{ question.upvotes }}</span>
+        
+              <a href="#"
+                class="vote-btn ms-1 me-1 {% if question.user_vote_value == -1 %}voted-down{% endif %}"
+                data-content-type="question" data-object-id="{{ question.id }}" data-value="-1" title="Beğenme">
+                <i class="bi bi-chevron-down"></i>
+              </a>
+              <span id="question-downvotes">{{ question.downvotes }}</span>
+        
+              <!-- Kaydet -->
+              <a href="#"
+                class="save-btn icon-black-white ms-2"
+                data-content-type="question" data-object-id="{{ question.id }}" 
+                title="Kaydet">
+                <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
+              </a>
+              <span class="save-count">{{ question_save_count }}</span>
+            </div>
+            <div class="text-end">
+              <small class="text-muted">
+                <a href="{% url 'user_profile' question.user.username %}">
+                  {{ question.user.username }}
+                </a> |
+                {{ question.created_at|date:"Y-m-d H:i" }}
+              </small>
+            </div>
+          </div>
+        
+          <!-- YANITLAR LİSTESİ (Kapsayıcı) -->
+          <div id="answersContainer">
+            {% for answer in answers_page %}
+              <div class="card mb-3 mt-2 answer" id="answer-{{ answer.id }}">
+                <div class="card-body">
+                  {% if answer.answer_text|length > 500 %}
+                    <div class="answer-text" id="answer-summary-{{ answer.id }}">
+                      {{ answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }} ...
+                    </div>
+                    <div class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
+                      {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
+                    </div>
+                    <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tümünü Göster</a>
+                  {% else %}
+                    <div class="answer-text">
+                      {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
+                    </div>
+                  {% endif %}
+        
+                  <!-- Oy/Kaydet + Kullanıcı Bilgisi -->
+                  <div class="action d-flex justify-content-between align-items-center">
+                    <div>
+                      <!-- Oy butonları -->
+                      <a href="#" class="vote-btn me-1 {% if answer.user_vote_value == 1 %}voted-up{% endif %}"
+                        data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" 
+                        title="Beğen">
+                        <i class="bi bi-chevron-up"></i>
+                      </a>
+                      <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
+        
+                      <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
+                        data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" 
+                        title="Beğenme">
+                        <i class="bi bi-chevron-down"></i>
+                      </a>
+                      <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
+        
+                      <a href="#" class="save-btn ms-2"
+                        data-content-type="answer" data-object-id="{{ answer.id }}" 
+                        title="Kaydet">
+                        <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
+                      </a>
+                      <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0" }}</span>
+        
+                      {% if answer.user == request.user %}
+                        <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
+                          <i class="bi bi-pencil-square icon-black-white"></i>
+                        </a>
+                        <a href="#" class="ms-2 delete-answer-btn"
+                          data-answer-id="{{ answer.id }}" 
+                          data-delete-url="{% url 'delete_answer' answer.id %}?next={{ request.path|urlencode }}"
+                          title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
+                          <i class="bi bi-trash icon-black-white"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+                    <div class="text-end">
+                      <small class="text-muted me-2">
+                        <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
+                        | {{ answer.created_at|date:"Y-m-d H:i" }}
+                        {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
+                          {% if answer.updated_at|date:"Y-m-d" == answer.created_at|date:"Y-m-d" %}
+                            ~ {{ answer.updated_at|date:"H:i" }}
+                          {% else %}
+                            ~ {{ answer.updated_at|date:"Y-m-d H:i" }}
+                          {% endif %}
+                        {% endif %}
+                      </small>
+                      <!-- Dropdown menü (Link Kopyala, Paylaş vb.) -->
+                      <div class="dropdown d-inline">
+                        <a href="#" class="text-decoration-none" id="dropdownMenu{{ answer.id }}"
+                          data-bs-toggle="dropdown" aria-expanded="false">
+                          &#8226;&#8226;&#8226;
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ answer.id }}">
+                          <li>
+                            <button class="dropdown-item copy-link-btn"
+                                    data-url="{% url 'single_answer' question.id answer.id %}">
+                              <i class="bi bi-link-45deg"></i> Linki Kopyala
+                            </button>
+                          </li>
+                          <li>
+                            <a class="dropdown-item share-link" href="#" data-answer-id="{{ answer.id }}">
+                              <i class="bi bi-share"></i> Paylaş
+                            </a>
+                          </li>
+                          <li>
+                            <form action="{% url 'pin_entry' answer_id=answer.id %}" method="post">
+                              {% csrf_token %}
+                              <button type="submit" class="dropdown-item">
+                                <i class="bi bi-pin-angle"></i> Profil Sabitle
+                              </button>
+                            </form>
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="{% url 'send_message_from_answer' answer.id %}">
+                              <i class="bi bi-envelope"></i> Mesaj Gönder
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div> <!-- /.action -->
+                </div> <!-- /.card-body -->
+              </div> <!-- /.card -->
+            {% empty %}
+              <p>Henüz yanıt yok. İlk yanıtı siz verin!</p>
+            {% endfor %}
+          </div>
+          <!-- /YANITLAR LİSTESİ -->
+        
+          <!-- Sayfalama -->
+          {% include 'core/pagination.html' with page_obj=answers_page page_param='a_page' %}
+        
+          <!-- YANIT EKLEME FORMU -->
+          <div class="card mt-4">
+            <div class="card-body yanit-card">
+              <form method="post">
+                {% csrf_token %}
+                <div class="btn-toolbar mb-2 yanit-card" role="toolbar">
+                  <!-- Bold/Italic -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
+                          data-format="bold" title="Kalınlaştır">
+                    <i class="bi bi-type-bold"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary format-btn me-2"
+                          data-format="italic" title="İtalikleştir">
+                    <i class="bi bi-type-italic"></i>
+                  </button>
+                  <!-- Harici Link Ekle -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary insert-link-btn me-2" 
+                          title="Harici WEB Linki Ekleyin">
+                    <i class="bi bi-link-45deg"></i> Link Ekle
+                  </button>
+                  <!-- (bkz:soru) -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary insert-reference-btn me-2"
+                          title="Bir diğer Soru/başlığa referans ver">
+                    (bkz:soru)
+                  </button>
+                  <!-- (ref:...) -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary insert-ref-link-btn me-2"
+                          title="Renklendir/Yönlendir">
+                    <i class="bi bi-box-arrow-in-up-right"></i> hede
+                  </button>
+                  <!-- TANIM MODAL BUTONU -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="showDefinitionModalBtn"
+                          title="Tanım">
+                    <i class="bi bi-book"></i> Tanım
+                  </button>
+                  <!-- KAYNAK MODAL BUTONU -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                          data-bs-toggle="modal"
+                          data-bs-target="#kaynakRefModal"
+                          title="Kaynak">
+                    <i class="bi bi-journal"></i> Kaynak
+                  </button>
+                </div>
+                {{ form.answer_text }}
+                <button type="submit" class="btn btn-primary mt-2">Yanıtla</button>
+              </form>
+            </div>
+          </div>
+        
+        </div>
         <!-- SAĞ SÜTUN: ALT SORULAR -->
         <div class="col-md-2">
             <div class="mb-4">

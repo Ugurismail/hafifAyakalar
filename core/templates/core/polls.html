@@ -115,49 +115,129 @@
     </div>
 </div>
 
-<!-- Anket Oluşturma Modal -->
+<!-- Anket Oluşturma Modal - Multi-Step Form -->
 <div class="modal fade" id="createPollModal" tabindex="-1" aria-labelledby="createPollModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form action="{% url 'create_poll' %}" method="post">
+      <form action="{% url 'create_poll' %}" method="post" id="pollForm">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="createPollModalLabel">Yeni Anket Oluştur</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
         </div>
         <div class="modal-body">
-            {{ form.non_field_errors }}
+          <!-- Adım 1: Anket Bilgileri -->
+          <div id="pollStep1">
             <div class="mb-3">
-                {{ form.question_text.label_tag }}
-                {{ form.question_text }}
+              {{ form.question_text.label_tag }}
+              {{ form.question_text }}
+              {% if form.question_text.errors %}
+                <div class="text-danger">{{ form.question_text.errors }}</div>
+              {% endif %}
             </div>
             <div class="mb-3">
-                {{ form.end_date.label_tag }}
-                {{ form.end_date }}
+              {{ form.end_date.label_tag }}
+              {{ form.end_date }}
+              {% if form.end_date.errors %}
+                <div class="text-danger">{{ form.end_date.errors }}</div>
+              {% endif %}
             </div>
             <div class="form-check mb-3">
-                {{ form.is_anonymous }}
-                {{ form.is_anonymous.label_tag }}
+              {{ form.is_anonymous }}
+              {{ form.is_anonymous.label_tag }}
+              {% if form.is_anonymous.errors %}
+                <div class="text-danger">{{ form.is_anonymous.errors }}</div>
+              {% endif %}
             </div>
-            <hr>
+            <button type="button" class="btn btn-primary" id="toStep2Btn">İleri</button>
+          </div>
+          <!-- Adım 2: Seçenekler -->
+          <div id="pollStep2" style="display: none;">
             <h6>Seçenekler:</h6>
-            {% for i in "1,2,3,4,5,6,7,8,9,10"|split:"," %}
+            <div id="optionsContainer">
+              <!-- Varsayılan olarak 2 seçenek alanı gösteriliyor -->
+              <div class="mb-2" id="optionField1">
+                {{ form.option_1.label_tag }}
+                {{ form.option_1 }}
+                {% if form.option_1.errors %}
+                  <div class="text-danger">{{ form.option_1.errors }}</div>
+                {% endif %}
+              </div>
+              <div class="mb-2" id="optionField2">
+                {{ form.option_2.label_tag }}
+                {{ form.option_2 }}
+                {% if form.option_2.errors %}
+                  <div class="text-danger">{{ form.option_2.errors }}</div>
+                {% endif %}
+              </div>
+              {# Diğer seçenek alanlarını döngü ile ekleyelim, başlangıçta gizli #}
+              {% for i in "3,4,5,6,7,8,9,10"|split:"," %}
                 {% with field_name="option_"|add:i %}
-                    {% with field=form|field_by_name:field_name %}
-                    <div class="mb-2">
-                        {{ field.label_tag }}
-                        {{ field }}
+                  {% with field=form|field_by_name:field_name %}
+                    <div class="mb-2 option-field" id="optionField{{ i }}" style="display: none;">
+                      {{ field.label_tag }}
+                      {{ field }}
+                      {% if field.errors %}
+                        <div class="text-danger">{{ field.errors }}</div>
+                      {% endif %}
                     </div>
-                    {% endwith %}
+                  {% endwith %}
                 {% endwith %}
-            {% endfor %}
-            <small class="text-muted">En az 2, en fazla 10 seçenek girebilirsiniz.</small>
+              {% endfor %}
+            </div>
+            <button type="button" class="btn btn-secondary" id="addOptionBtn">Seçenek Ekle</button>
+            <div class="mt-3 d-flex justify-content-between">
+              <button type="button" class="btn btn-secondary" id="backToStep1Btn">Geri</button>
+              <button type="submit" class="btn btn-primary">Anketi Oluştur</button>
+            </div>
+          </div>
         </div>        
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Oluştur</button>
-        </div>
       </form>
     </div>
   </div>
 </div>
-{% endblock %}
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // --- Anket Oluşturma Multi-Step Form ---
+  var step1 = document.getElementById('pollStep1');
+  var step2 = document.getElementById('pollStep2');
+  var toStep2Btn = document.getElementById('toStep2Btn');
+  var backToStep1Btn = document.getElementById('backToStep1Btn');
+
+  toStep2Btn.addEventListener('click', function() {
+    // Burada tarih veya diğer validasyon ekleyebilirsiniz.
+    step1.style.display = 'none';
+    step2.style.display = 'block';
+  });
+
+  if(backToStep1Btn) {
+    backToStep1Btn.addEventListener('click', function() {
+      step2.style.display = 'none';
+      step1.style.display = 'block';
+    });
+  }
+
+  // --- Seçenek Ekleme ---
+  var addOptionBtn = document.getElementById('addOptionBtn');
+  var maxOptions = 10;
+  var currentVisibleOptions = 2; // Başlangıçta 2 seçenek açık.
+  addOptionBtn.addEventListener('click', function() {
+    if (currentVisibleOptions < maxOptions) {
+      currentVisibleOptions++;
+      var nextOptionField = document.getElementById('optionField' + currentVisibleOptions);
+      if (nextOptionField) {
+        nextOptionField.style.display = 'block';
+      }
+      if (currentVisibleOptions === maxOptions) {
+        addOptionBtn.disabled = true;
+      }
+    }
+  });
+});
+</script>
+{% endblock extra_js %}
