@@ -2204,24 +2204,29 @@ def get_all_definitions(request):
         return JsonResponse({'error': 'invalid method'}, status=405)
 
 @require_POST
+@login_required
 def create_reference(request):
     """
     AJAX ile yeni bir Reference (Kaynak) oluşturmak için.
     """
     form = ReferenceForm(request.POST)
     if form.is_valid():
-        reference_obj = form.save()  # DB'ye kaydet
-        # Döndüreceğimiz veri: ID, str hali, vs.
+        # commit=False ile kaynağı oluşturuyoruz, ardından created_by alanını ekliyoruz
+        reference_obj = form.save(commit=False)
+        reference_obj.created_by = request.user
+        reference_obj.save()
         data = {
             'status': 'success',
             'reference': {
                 'id': reference_obj.id,
-                'display': str(reference_obj),  # __str__ metodu
+                'display': str(reference_obj),
             }
         }
         return JsonResponse(data, status=200)
     else:
         return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+    
 def get_references(request):
     """
     Tüm referans kayıtlarını, opsiyonel 'q' arama parametresi ile 
@@ -2258,6 +2263,31 @@ def get_references(request):
         })
     
     return JsonResponse({'references': data}, status=200)
+
+@login_required
+def edit_reference(request, reference_id):
+    # Yalnızca kaynağı oluşturan kullanıcı düzenleyebilsin
+    reference = get_object_or_404(Reference, id=reference_id, created_by=request.user)
+    if request.method == 'POST':
+        form = ReferenceForm(request.POST, instance=reference)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Kaynak başarıyla güncellendi.")
+            return redirect('user_profile', username=request.user.username)
+    else:
+        form = ReferenceForm(instance=reference)
+    return render(request, 'core/edit_reference.html', {'form': form})
+
+@login_required
+def delete_reference(request, reference_id):
+    # Yalnızca kaynağı oluşturan kullanıcı silebilsin
+    reference = get_object_or_404(Reference, id=reference_id, created_by=request.user)
+    if request.method == 'POST':
+        reference.delete()
+        messages.success(request, "Kaynak başarıyla silindi.")
+        return redirect('user_profile', username=request.user.username)
+    return render(request, 'core/confirm_delete_reference.html', {'reference': reference})
+
 
 def download_entries_json(request, username):
     target_user = get_object_or_404(User, username=username)

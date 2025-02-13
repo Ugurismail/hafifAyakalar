@@ -56,7 +56,7 @@
       </div>
     </div>
     
-    <!-- Sağ Panel: Sabit İçerik ve Sekmeler -->
+    <!-- Sağ Panel: Sabit İçerik ve Profil Sekmeleri -->
     <div class="col-md-9">
       {% if pinned_entry and pinned_entry.answer %}
       <div class="card mb-4 shadow-sm">
@@ -95,7 +95,7 @@
       <p class="mb-4">Sabitlenmiş içerik bulunamadı.</p>
       {% endif %}
       
-      <!-- Sekmeler -->
+      <!-- Profil Sekmeleri -->
       <ul class="nav nav-tabs" id="profileTab" role="tablist">
         <li class="nav-item" role="presentation">
           <a class="nav-link {% if active_tab == 'sorular' %}active{% endif %}"
@@ -139,6 +139,13 @@
              id="tanimlar-tab" data-bs-toggle="tab" href="#tanimlar" role="tab"
              aria-controls="tanimlar" aria-selected="{% if active_tab == 'tanimlar' %}true{% else %}false{% endif %}">
              Tanımlarım
+          </a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link {% if active_tab == 'kaynaklarim' %}active{% endif %}"
+             id="kaynaklarim-tab" data-bs-toggle="tab" href="#kaynaklarim" role="tab"
+             aria-controls="kaynaklarim" aria-selected="{% if active_tab == 'kaynaklarim' %}true{% else %}false{% endif %}">
+             Kaynaklarım
           </a>
         </li>
         <li class="nav-item" role="presentation">
@@ -356,7 +363,6 @@
             </div>
           </div>
         </div>
-
         
         <!-- İstatistikler Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'istatistikler' %}show active{% endif %}" id="istatistikler" role="tabpanel" aria-labelledby="istatistikler-tab">
@@ -462,6 +468,51 @@
                 {% endfor %}
               </tbody>
             </table>
+          </div>
+        </div>
+        
+        <!-- Kaynaklarım Sekmesi -->
+        <div class="tab-pane fade {% if active_tab == 'kaynaklarim' %}show active{% endif %}" id="kaynaklarim" role="tabpanel" aria-labelledby="kaynaklarim-tab">
+          <div class="mt-3">
+            <h5>Kaynaklarım</h5>
+            {% if user.references.all %}
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Yazar Soyadı</th>
+                    <th>Yazar Adı</th>
+                    <th>Yıl</th>
+                    <th>Ek Bilgiler</th>
+                    <th>Kısaltma</th>
+                    <th>Kullanım Sayısı</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ref in user.references.all %}
+                  <tr>
+                    <td>{{ ref.author_surname }}</td>
+                    <td>{{ ref.author_name }}</td>
+                    <td>{{ ref.year }}</td>
+                    <td>{{ ref.rest }}</td>
+                    <td>{{ ref.abbreviation }}</td>
+                    <td>{{ ref.get_usage_count }}</td>
+                    <td>
+                      <a href="{% url 'edit_reference' ref.id %}" class="btn btn-sm btn-primary" title="Düzenle">
+                        <i class="bi bi-pencil-square"></i>
+                      </a>
+                      <a href="{% url 'delete_reference' ref.id %}" class="btn btn-sm btn-danger" 
+                         title="Sil" onclick="return confirm('Bu kaynağı silmek istediğinize emin misiniz?');">
+                        <i class="bi bi-trash"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p>Henüz kaynak eklemediniz.</p>
+            {% endif %}
           </div>
         </div>
         

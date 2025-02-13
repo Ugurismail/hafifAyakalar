@@ -8,6 +8,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 import datetime
 from django.conf import settings
+import re
 
 
 
@@ -267,27 +268,56 @@ class Definition(models.Model):
 
     def __str__(self):
         return f"{self.question.question_text} / {self.user.username}"
-
-
-
+    
 class Reference(models.Model):
-    """
-    Kullanıcıların eklediği kaynak bilgilerini tutar.
-    Tüm kullanıcılar tarafından evrensel olarak erişilebilir.
-    """
     author_surname = models.CharField(max_length=100, verbose_name="Yazar Soyadı")
     author_name = models.CharField(max_length=100, verbose_name="Yazar Adı")
     year = models.PositiveIntegerField(verbose_name="Yıl")
     rest = models.TextField(max_length=2000, verbose_name="Künyenin Kalanı")
-    abbreviation = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True, 
-        verbose_name="Kısaltma (Opsiyonel)"
-    )
+    abbreviation = models.CharField(max_length=255, blank=True, null=True, verbose_name="Kısaltma (Opsiyonel)")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='references')
 
     def __str__(self):
-        """ Örnek gösterim: Bellah, R. N. (2017) - 'bellah ve din' """
         if self.abbreviation:
             return f"{self.author_surname}, {self.author_name} ({self.year}) - {self.abbreviation}"
         return f"{self.author_surname}, {self.author_name} ({self.year})"
+
+    def get_usage_count(self):
+        """
+        Answer modelindeki answer_text alanında, hem (kaynak:REF_ID) 
+        hem de (kaynak:REF_ID, sayfa:NUM) şeklinde geçen ifadeleri sayar.
+        """
+        from .models import Answer  # Lokal import döngüsel importları önlemek için.
+        # Regex deseni: 
+        # \(kaynak:REF_ID     -> literal olarak "(kaynak:REF_ID"
+        # (?:,\s*sayfa:\d+)?   -> opsiyonel olarak ", sayfa:" ile başlayan ve sonrasında bir veya daha fazla rakam
+        # \)                   -> kapanış parantezi
+        pattern = re.compile(r'\(kaynak:{}(?:,\s*sayfa:\d+)?\)'.format(self.id))
+        count = 0
+        # İlk filtre, answer_text içerisinde "(kaynak:REF_ID" ifadesi geçiyorsa getiriyor
+        answers = Answer.objects.filter(answer_text__icontains=f"(kaynak:{self.id}")
+        for answer in answers:
+            matches = pattern.findall(answer.answer_text)
+            count += len(matches)
+        return count
+# class Reference(models.Model):
+#     """
+#     Kullanıcıların eklediği kaynak bilgilerini tutar.
+#     Tüm kullanıcılar tarafından evrensel olarak erişilebilir.
+#     """
+#     author_surname = models.CharField(max_length=100, verbose_name="Yazar Soyadı")
+#     author_name = models.CharField(max_length=100, verbose_name="Yazar Adı")
+#     year = models.PositiveIntegerField(verbose_name="Yıl")
+#     rest = models.TextField(max_length=2000, verbose_name="Künyenin Kalanı")
+#     abbreviation = models.CharField(
+#         max_length=255, 
+#         blank=True, 
+#         null=True, 
+#         verbose_name="Kısaltma (Opsiyonel)"
+#     )
+
+#     def __str__(self):
+#         """ Örnek gösterim: Bellah, R. N. (2017) - 'bellah ve din' """
+#         if self.abbreviation:
+#             return f"{self.author_surname}, {self.author_name} ({self.year}) - {self.abbreviation}"
+#         return f"{self.author_surname}, {self.author_name} ({self.year})"
