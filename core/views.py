@@ -182,17 +182,21 @@ def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
     user_profile = profile_user.userprofile
     active_tab = request.GET.get('tab', 'sorular')
-
     is_own_profile = (request.user == profile_user)
-    definitions = Definition.objects.filter(user=profile_user).select_related('question')
+
+    # -- Tanımlar --
+    definitions_qs = Definition.objects.filter(user=profile_user).select_related('question')
+    def_page = request.GET.get('d_page', 1)
+    def_paginator = Paginator(definitions_qs, 5)
+    try:
+        definitions_page = def_paginator.page(def_page)
+    except PageNotAnInteger:
+        definitions_page = def_paginator.page(1)
+    except EmptyPage:
+        definitions_page = def_paginator.page(def_paginator.num_pages)
 
     # -- SORULAR --
     questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
-
-    # -- YANITLAR --
-    answers_list = Answer.objects.filter(user=profile_user).order_by('-created_at')
-
-    # -- Sorular sayfalama --
     question_page = request.GET.get('question_page', 1)
     question_paginator = Paginator(questions_list, 10)
     try:
@@ -202,7 +206,8 @@ def user_profile(request, username):
     except EmptyPage:
         questions = question_paginator.page(question_paginator.num_pages)
 
-    # -- Yanıtlar sayfalama --
+    # -- YANITLAR --
+    answers_list = Answer.objects.filter(user=profile_user).order_by('-created_at')
     answer_page = request.GET.get('answer_page', 1)
     answer_paginator = Paginator(answers_list, 10)
     try:
@@ -212,18 +217,14 @@ def user_profile(request, username):
     except EmptyPage:
         answers = answer_paginator.page(answer_paginator.num_pages)
 
-    # -- Kelimeler sekmesi verileri --
-    import re
-    from collections import Counter
-
+    # -- Kelimeler sekmesi --
     question_texts = questions_list.values_list('question_text', flat=True)
     answer_texts = answers_list.values_list('answer_text', flat=True)
     all_texts = (' '.join(question_texts) + ' ' + ' '.join(answer_texts)).lower()
     words = re.findall(r'\b\w+\b', all_texts)
-
     exclude_words_str = request.GET.get('exclude_words', '')
     exclude_words_list = [w.strip() for w in exclude_words_str.split(',') if w.strip()]
-    exclude_words_set = set(exclude_words_list)
+    exclude_words_set = set(word.lower() for word in exclude_words_list)
 
     exclude_word = request.GET.get('exclude_word', '').strip().lower()
     if exclude_word:
@@ -245,19 +246,17 @@ def user_profile(request, username):
     if search_word:
         search_word_count = word_counts.get(search_word, 0)
 
-    # -- İstatistikler sekmesi verileri --
+    # -- İstatistikler --
     total_upvotes = (
-        questions_list.aggregate(total=Coalesce(Sum('upvotes'), 0))['total']
-        + answers_list.aggregate(total=Coalesce(Sum('upvotes'), 0))['total']
+        questions_list.aggregate(total=Sum('upvotes'))['total'] or 0
+        + answers_list.aggregate(total=Sum('upvotes'))['total'] or 0
     )
     total_downvotes = (
-        questions_list.aggregate(total=Coalesce(Sum('downvotes'), 0))['total']
-        + answers_list.aggregate(total=Coalesce(Sum('downvotes'), 0))['total']
+        questions_list.aggregate(total=Sum('downvotes'))['total'] or 0
+        + answers_list.aggregate(total=Sum('downvotes'))['total'] or 0
     )
-
     content_type_question = ContentType.objects.get_for_model(Question)
     content_type_answer = ContentType.objects.get_for_model(Answer)
-
     total_saves_questions = SavedItem.objects.filter(
         content_type=content_type_question, object_id__in=questions_list
     ).count()
@@ -266,7 +265,6 @@ def user_profile(request, username):
     ).count()
     total_saves = total_saves_questions + total_saves_answers
 
-    # En çok upvote alan entry
     most_upvoted_question = questions_list.order_by('-upvotes').first()
     most_upvoted_answer = answers_list.order_by('-upvotes').first()
     most_upvoted_entry = max(
@@ -274,8 +272,6 @@ def user_profile(request, username):
         key=lambda x: x.upvotes,
         default=None
     )
-
-    # En çok downvote alan entry
     most_downvoted_question = questions_list.order_by('-downvotes').first()
     most_downvoted_answer = answers_list.order_by('-downvotes').first()
     most_downvoted_entry = max(
@@ -283,8 +279,6 @@ def user_profile(request, username):
         key=lambda x: x.downvotes,
         default=None
     )
-
-    # En çok kaydedilen entry
     most_saved_question = questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
     most_saved_answer = answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
     most_saved_entry = max(
@@ -296,8 +290,6 @@ def user_profile(request, username):
     # -- Takip / takipçi sayıları --
     follower_count = user_profile.followers.count()
     following_count = user_profile.following.count()
-
-    # Bu profili takip ediyor muyum?
     is_following = False
     if request.user.is_authenticated and request.user != profile_user:
         is_following = request.user.userprofile.following.filter(user=profile_user).exists()
@@ -320,65 +312,72 @@ def user_profile(request, username):
         used_invitations = 0
         remaining_invitations = 0
 
-    # -- KAYDEDİLENLER sekmesi --
-    # Artık "kaydedilenler"i her zaman (eğer profil sahibiyse) yüklüyoruz.
-    saved_items = []
+    # -- Kaydedilenler sekmesi: Paginate saved items --
+    saved_items_list = []
     if is_own_profile:
         user_saved = SavedItem.objects.filter(user=profile_user).select_related('content_type').order_by('-saved_at')
         for item in user_saved:
             ct_model = item.content_type.model  # 'question' veya 'answer'
             try:
                 instance = item.content_type.get_object_for_this_type(id=item.object_id)
-                saved_items.append({
+                saved_items_list.append({
                     'type': ct_model,
                     'object': instance
                 })
-            except:
+            except Exception:
                 pass
+        s_page = request.GET.get('s_page', 1)
+        saved_paginator = Paginator(saved_items_list, 5)
+        try:
+            saved_items_page = saved_paginator.page(s_page)
+        except PageNotAnInteger:
+            saved_items_page = saved_paginator.page(1)
+        except EmptyPage:
+            saved_items_page = saved_paginator.page(saved_paginator.num_pages)
+    else:
+        saved_items_page = None
+
+    # -- Kaynaklarım sekmesi: Paginate references --
+    user_references = Reference.objects.filter(created_by=profile_user)
+    r_page = request.GET.get('r_page', 1)
+    ref_paginator = Paginator(user_references, 5)
+    try:
+        references_page = ref_paginator.page(r_page)
+    except PageNotAnInteger:
+        references_page = ref_paginator.page(1)
+    except EmptyPage:
+        references_page = ref_paginator.page(ref_paginator.num_pages)
 
     context = {
         'profile_user': profile_user,
         'user_profile': user_profile,
         'is_own_profile': is_own_profile,
         'is_following': is_following,
-
-        # Sorular & Yanıtlar (sayfalandırılmış)
         'questions': questions,
         'answers': answers,
-
-        # Kelimeler sekmesi
         'top_words': top_words,
         'exclude_words': exclude_words_str,
         'search_word': search_word,
         'search_word_count': search_word_count,
         'exclude_words_list': exclude_words_list,
-
-        # İstatistikler sekmesi
         'total_upvotes': total_upvotes,
         'total_downvotes': total_downvotes,
         'total_saves': total_saves,
         'most_upvoted_entry': most_upvoted_entry,
         'most_downvoted_entry': most_downvoted_entry,
         'most_saved_entry': most_saved_entry,
-
-        'definitions': definitions,
+        'definitions': definitions_qs,  # or you can use definitions_page.object_list in template if desired
+        'definitions_page': definitions_page,
         'pinned_entry': pinned_entry,
-
-        # Davetiyeler
         'invitations': invitations,
         'total_invitations': total_invitations,
         'used_invitations': used_invitations,
         'remaining_invitations': remaining_invitations,
-
-        # Takip sayıları
         'follower_count': follower_count,
         'following_count': following_count,
-
-        # Sekme
         'active_tab': active_tab,
-
-        # Kaydedilenler sekmesi
-        'saved_items': saved_items
+        'saved_items_page': saved_items_page,
+        'references_page': references_page,
     }
 
     return render(request, 'core/user_profile.html', context)
