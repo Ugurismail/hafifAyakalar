@@ -587,5 +587,27 @@
       })
     });
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // "Tüm yanıtları göster" butonunun işlevselliği
+        const showAllAnswersBtn = document.getElementById('show-all-answers');
+        if (showAllAnswersBtn) {
+            showAllAnswersBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                const allAnswersDiv = document.getElementById('all-answers');
+                // Eğer all-answers gizliyse (display: none veya boş) göster; aksi halde gizle.
+                if (allAnswersDiv.style.display === 'none' || allAnswersDiv.style.display === '') {
+                    allAnswersDiv.style.display = 'block';
+                    showAllAnswersBtn.textContent = 'Tüm yanıtları gizle';
+                } else {
+                    allAnswersDiv.style.display = 'none';
+                    showAllAnswersBtn.textContent = 'Tüm yanıtları göster';
+                }
+            });
+        }
+    });
+    </script>
+    
 {% endblock %}
 

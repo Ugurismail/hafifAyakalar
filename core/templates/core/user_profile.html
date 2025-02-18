@@ -258,7 +258,10 @@
                     {{ answer.question.question_text }}
                   </a>
                 </p>
-                <p>{{ answer.answer_text|truncatewords:20 }}</p>
+                <a href="{% url 'single_answer' answer.question.id answer.id %}" class="text-decoration-none">
+                  {{ answer.answer_text|truncatewords:20 }}
+                </a>
+                
                 {% if answer.user == request.user %}
                   <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
                     {% csrf_token %}

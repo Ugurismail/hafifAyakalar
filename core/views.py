@@ -247,14 +247,11 @@ def user_profile(request, username):
         search_word_count = word_counts.get(search_word, 0)
 
     # -- İstatistikler --
-    total_upvotes = (
-        questions_list.aggregate(total=Sum('upvotes'))['total'] or 0
-        + answers_list.aggregate(total=Sum('upvotes'))['total'] or 0
-    )
-    total_downvotes = (
-        questions_list.aggregate(total=Sum('downvotes'))['total'] or 0
-        + answers_list.aggregate(total=Sum('downvotes'))['total'] or 0
-    )
+    total_upvotes = ((questions_list.aggregate(total=Sum('upvotes'))['total'] or 0) +
+                 (answers_list.aggregate(total=Sum('upvotes'))['total'] or 0))
+
+    total_downvotes = ((questions_list.aggregate(total=Sum('downvotes'))['total'] or 0) +
+                   (answers_list.aggregate(total=Sum('downvotes'))['total'] or 0))
     content_type_question = ContentType.objects.get_for_model(Question)
     content_type_answer = ContentType.objects.get_for_model(Answer)
     total_saves_questions = SavedItem.objects.filter(

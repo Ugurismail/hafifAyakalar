@@ -277,23 +277,21 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Mevcut tüm [data-bs-toggle="tooltip"] öğelerini seç
+        // Tooltip'leri başlat
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        // Hepsini Bootstrap Tooltip olarak başlat
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
-    </script>
+</script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
 
-
-<!-- Geri Kalan (Okuma, Paylaş vs.) -->
+<!-- Okuma, Kopyala, Paylaş, Sil ve Filtreleme İşlevleri -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tamamını Oku / Daha Az
+    // Okuma (Read More) İşlevi
     const readMoreLinks = document.querySelectorAll('.read-more');
     readMoreLinks.forEach(function(link) {
         link.addEventListener('click', function(event) {
@@ -301,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const answerId = this.getAttribute('data-answer-id');
             const summary = document.getElementById('answer-summary-' + answerId);
             const fullText = document.getElementById('answer-full-' + answerId);
-
+            if (!summary || !fullText) return;
             if (summary.style.display === 'none') {
                 summary.style.display = 'block';
                 fullText.style.display = 'none';
@@ -314,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Link Kopyala
+    // Link Kopyala İşlevi
     $('.copy-link-btn').click(function(e) {
         e.preventDefault();
         var url = $(this).data('url');
@@ -327,24 +325,28 @@ document.addEventListener('DOMContentLoaded', function() {
         alert("Link kopyalandı!");
     });
 
-    // Paylaş
+    // Paylaş İşlevi (Düzeltilmiş)
     var currentAnswerId;
+    var currentQuestionId;
     $('.share-link').click(function(e) {
         e.preventDefault();
+        // Her share link elementinde data-question-id ve data-answer-id tanımlı olmalı
         currentAnswerId = $(this).data('answer-id');
+        currentQuestionId = $(this).data('question-id');
         $('#shareModal').modal('show');
     });
 
     $('#shareModal').on('shown.bs.modal', function () {
-
-        var absoluteLink = window.location.origin + link;
+        // URL desenimiz: /question/<question_id>/answer/<answer_id>/
+        var shareUrl = '/question/' + currentQuestionId + '/answer/' + currentAnswerId + '/';
+        var absoluteLink = window.location.origin + shareUrl;
         var twitterUrl = "https://twitter.com/intent/tweet?url=" + encodeURIComponent(absoluteLink);
         var facebookUrl = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(absoluteLink);
         $('#shareTwitter').attr('href', twitterUrl);
         $('#shareFacebook').attr('href', facebookUrl);
     });
 
-    // Yanıt Silme
+    // Yanıt Silme İşlevi
     var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
     var deleteAnswerForm = document.getElementById('delete-answer-form');
     deleteAnswerBtns.forEach(function(btn) {
@@ -357,28 +359,89 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-      var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl, {
-          html: true,
-          container: 'body',
-        })
-      })
+document.addEventListener('DOMContentLoaded', function() {
+    // Popover'ları başlat
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, { html: true, container: 'body' });
     });
+});
 </script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Sadece "auto-expand" sınıfına sahip textarea’ları seçiyoruz
-        var textarea = document.querySelector('textarea.auto-expand');
-        if (textarea) {
-            // İlk odaklanmada 'expanded' sınıfını ekle
-            textarea.addEventListener('focus', function() {
-                this.classList.add('expanded');
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-expand: "auto-expand" sınıfına sahip textarea'ya odaklanınca genişlet
+    var textarea = document.querySelector('textarea.auto-expand');
+    if (textarea) {
+        textarea.addEventListener('focus', function() {
+            this.classList.add('expanded');
+        });
+    }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm  = document.getElementById('filterForm');
+    const answersDiv  = document.getElementById('answersContainer');
+    const questionId  = document.getElementById('answer_form_question_id').value;
+
+    // Filtre formundaki input'lara change/keyup event ekle
+    filterForm.querySelectorAll('input').forEach(function(elem) {
+        if (elem.type === 'text') {
+            elem.addEventListener('keyup', doFilterAjax);
+        } else {
+            elem.addEventListener('change', doFilterAjax);
         }
     });
+
+    // "Uygula" butonuna basıldığında form submit'ini engelle
+    filterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        doFilterAjax();
+    });
+
+    function doFilterAjax() {
+        const formData = new FormData(filterForm);
+        const queryParams = new URLSearchParams(formData);
+        const url = `/question/${questionId}/filter_answers/?` + queryParams.toString();
+        fetch(url, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(htmlData => {
+            answersDiv.innerHTML = htmlData;
+            reinitReadMore();
+        })
+        .catch(err => {
+            console.error('Filtreleme hatası:', err);
+        });
+    }
+
+    function reinitReadMore() {
+        const readMoreLinks = answersDiv.querySelectorAll('.read-more');
+        readMoreLinks.forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const answerId = this.getAttribute('data-answer-id');
+                const summary = document.getElementById('answer-summary-' + answerId);
+                const fullText = document.getElementById('answer-full-' + answerId);
+                if (!summary || !fullText) return;
+                if (summary.style.display === 'none') {
+                    summary.style.display = 'block';
+                    fullText.style.display = 'none';
+                    this.textContent = 'Tamamını oku';
+                } else {
+                    summary.style.display = 'none';
+                    fullText.style.display = 'block';
+                    this.textContent = 'Daha az göster';
+                }
+            });
+        });
+    }
+
+    reinitReadMore();
+});
 </script>
-
-
 {% endblock %}
