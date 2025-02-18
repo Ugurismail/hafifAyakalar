@@ -2015,10 +2015,8 @@ def poll_question_redirect(request, poll_id):
         poll.save()
         return redirect('question_detail', question_id=q.id)
     
-
 def create_definition(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-
     if request.method == 'POST':
         body = request.body.decode('utf-8')
         data = json.loads(body)
@@ -2030,11 +2028,14 @@ def create_definition(request, question_id):
             definition_obj.save()
 
             # TANIMI AYNI ZAMANDA ANSWER OLARAK DA KAYDET
-            Answer.objects.create(
+            answer_obj = Answer.objects.create(
                 question=question,
                 user=request.user,
                 answer_text=definition_obj.definition_text
             )
+            # Oluşturulan answer'ı tanıma bağlayın
+            definition_obj.answer = answer_obj
+            definition_obj.save()
 
             return JsonResponse({
                 'status': 'success',
@@ -2107,26 +2108,41 @@ def get_user_definitions(request):
         return JsonResponse(response_data, status=200)
     else:
         return JsonResponse({'error': 'invalid method'}, status=405)
-
 @login_required
 def edit_definition(request, definition_id):
     definition = get_object_or_404(Definition, id=definition_id, user=request.user)
     if request.method == 'POST':
-        body = request.body.decode('utf-8')
-        data = json.loads(body) if request.headers.get('Content-Type') == 'application/json' else request.POST
-        # Veya form-encoded gönderecekseniz normal request.POST kullanabilirsiniz.
-
+        # İçerik JSON veya form-data olabilir:
+        if request.headers.get('Content-Type') == 'application/json':
+            import json
+            data = json.loads(request.body.decode('utf-8'))
+        else:
+            data = request.POST
         form = DefinitionForm(data, instance=definition)
         if form.is_valid():
             form.save()
+            # Tanı nesnesini DB'den tazeleyelim
+            definition.refresh_from_db()
+            if definition.answer:
+                definition.answer.answer_text = definition.definition_text
+                definition.answer.save()
+            else:
+                # Eğer tanıya bağlı Answer yoksa yeni oluştur
+                new_answer = Answer.objects.create(
+                    question=definition.question,
+                    user=definition.user,
+                    answer_text=definition.definition_text
+                )
+                definition.answer = new_answer
+                definition.save()
             messages.success(request, 'Tanım güncellendi.')
-            return redirect(f"{reverse('user_profile', args=[request.user.username])}?tab=tanimlar")
+            # Değişikliklerin hemen görünmesi için, düzenlemeden sonra ilgili soru detayına yönlendirebilirsiniz:
+            return redirect('question_detail', question_id=definition.question.id)
         else:
             messages.error(request, 'Form hataları: %s' % form.errors)
     else:
         form = DefinitionForm(instance=definition)
     
-    # Burada bir template (edit_definition.html) ile formu gösterelim:
     return render(request, 'core/edit_definition.html', {
         'form': form,
         'definition': definition,

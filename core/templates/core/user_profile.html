@@ -550,7 +550,10 @@
                           {{ answer_obj.question.question_text|truncatewords:20 }}
                         </a>
                       </p>
-                      <p>{{ answer_obj.answer_text|truncatewords:40 }}</p>
+                      <a href="{% url 'single_answer' answer_obj.question.id answer_obj.id %}" class="text-decoration-none">
+                        {{ answer_obj.answer_text|truncatewords:20 }}
+                      </a>
+                      
                       <div class="position-absolute top-0 end-0 me-2 mt-2">
                         <a href="#" class="save-btn btn btn-sm btn-link icon-black-white" data-content-type="answer" data-object-id="{{ answer_obj.id }}" title="Kaydetmeyi kaldır">
                           <i class="bi bi-bookmark-x fs-5"></i>

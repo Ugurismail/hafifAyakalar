@@ -265,6 +265,7 @@ class Definition(models.Model):
     question = models.ForeignKey('Question', on_delete=models.CASCADE, related_name='definitions')
     definition_text = models.TextField(max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True)
+    answer = models.OneToOneField('Answer', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.question.question_text} / {self.user.username}"
