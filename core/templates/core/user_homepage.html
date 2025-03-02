@@ -38,12 +38,12 @@
                     {% if answer.answer_text|length > 500 %}
                     <!-- Kısaltılmış Yanıt -->
                     <div class="answer-text" id="answer-summary-{{ answer.id }}">
-                        {{ answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }} ...
+                        {{ answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link }} ...
                     </div>
                 
                     <!-- Tam Yanıt (başlangıçta gizli) -->
                     <div class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
+                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link }}
                     </div>
                 
                     <!-- "Tümünü göster" / "Tamamını oku" linki -->
@@ -51,7 +51,7 @@
                 {% else %}
                     <!-- 500 karakterden kısaysa doğrudan gösteriyoruz -->
                     <div class="answer-text">
-                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
+                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link }}
                     </div>
                 {% endif %}
                     <!-- Actions and User Info -->
