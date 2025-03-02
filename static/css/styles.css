@@ -12,6 +12,11 @@ a {
     text-decoration: none;
 }
 
+
+.mesaj-listesi{
+    background-color: red;
+}
+
 .container{
     max-width: 100%;
 }
@@ -136,16 +141,37 @@ mark{
 }
 
 /* Pagination */
-
+/* Pagination için custom ayarları uygula */
 .custom-pagination .page-link,
-.custom-pagination .page-item.active .page-link,
-.custom-pagination .page-item.disabled .page-link,
-.custom-pagination .form-select option[selected],
-.custom-pagination .form-select {
-    color: var(--pagination-text-color) !important;
+.custom-pagination .page-link > span {
     background-color: var(--pagination-background-color) !important;
-    border-color: var(--pagination-text-color)
+    color: var(--pagination-text-color) !important;
+    border: 1px solid var(--pagination-background-color) !important;
 }
+
+/* Aktif sayfa için (istenirse farklı renkler de tanımlayabilirsiniz) */
+.custom-pagination .page-item.active .page-link {
+    background-color: var(--pagination-active-background-color, var(--pagination-background-color)) !important;
+    color: var(--pagination-active-text-color, var(--pagination-text-color)) !important;
+    border-color: var(--pagination-active-background-color, var(--pagination-background-color)) !important;
+}
+
+/* Disabled (pasif) düğmeler için */
+.custom-pagination .page-item.disabled .page-link {
+    background-color: var(--pagination-background-color) !important;
+    color: var(--pagination-text-color) !important;
+    border-color: var(--pagination-background-color) !important;
+}
+
+/* Select ve Option elemanları için */
+.custom-pagination .form-select,
+.custom-pagination .form-select option {
+    background-color: var(--pagination-background-color) !important;
+    color: var(--pagination-text-color) !important;
+    border: 1px solid var(--pagination-background-color) !important;
+}
+
+
 .yanit-card{
     background-color: var(--yanit-card-background-color) !important;
 }

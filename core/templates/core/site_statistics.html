@@ -69,29 +69,29 @@
 
         <!-- Genel Tab -->
         <div class="tab-pane fade" id="general" role="tabpanel" aria-labelledby="general-tab">
-            <ul class="list-group">
-                <li class="list-group-item">Kullanıcı Sayısı (Soru/Yanıt Giren): {{ user_count }}</li>
-                <li class="list-group-item">Toplam Soru Sayısı: {{ total_questions }}</li>
-                <li class="list-group-item">Toplam Yanıt Sayısı: {{ total_answers }}</li>
-                <li class="list-group-item">Toplam Beğeni Sayısı: {{ total_likes }}</li>
-                <li class="list-group-item">Toplam Beğenmeme Sayısı: {{ total_dislikes }}</li>
+            <ul class="">
+                <li class="">Kullanıcı Sayısı (Soru/Yanıt Giren): {{ user_count }}</li>
+                <li class="-item">Toplam Soru Sayısı: {{ total_questions }}</li>
+                <li class="-item">Toplam Yanıt Sayısı: {{ total_answers }}</li>
+                <li class="-item">Toplam Beğeni Sayısı: {{ total_likes }}</li>
+                <li class="-item">Toplam Beğenmeme Sayısı: {{ total_dislikes }}</li>
             </ul>
         </div>
 
         <!-- Kullanıcılar Tab -->
         <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
             <h3 class="mt-3">En Çok Soru Soran Kullanıcılar</h3>
-            <ul class="list-group mb-4">
+            <ul class=" mb-4">
                 {% for user in top_question_users %}
-                    <li class="list-group-item">
+                    <li class="">
                         <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.question_count }} soru
                     </li>
                 {% endfor %}
             </ul>
             <h3>En Çok Yanıt Veren Kullanıcılar</h3>
-            <ul class="list-group">
+            <ul class="">
                 {% for user in top_answer_users %}
-                    <li class="list-group-item">
+                    <li class="">
                         <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.answer_count }} yanıt
                     </li>
                 {% endfor %}
@@ -101,17 +101,17 @@
         <!-- Sorular & Yanıtlar Tab -->
         <div class="tab-pane fade" id="questions-answers" role="tabpanel" aria-labelledby="questions-answers-tab">
             <h3 class="mt-3">En Çok Beğenilen Sorular</h3>
-            <ul class="list-group mb-4">
+            <ul class=" mb-4">
                 {% for question in top_liked_questions %}
-                    <li class="list-group-item">
+                    <li class="">
                         <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a> - {{ question.like_count }} beğeni
                     </li>
                 {% endfor %}
             </ul>
             <h3>En Çok Beğenilen Yanıtlar</h3>
-            <ul class="list-group">
+            <ul class="">
                 {% for answer in top_liked_answers %}
-                    <li class="list-group-item">
+                    <li class="">
                         {{ answer.answer_text|truncatewords:20 }} - {{ answer.like_count }} beğeni
                     </li>
                 {% endfor %}
@@ -121,17 +121,17 @@
         <!-- Beğeniler & Kaydetmeler Tab -->
         <div class="tab-pane fade" id="likes-saves" role="tabpanel" aria-labelledby="likes-saves-tab">
             <h3 class="mt-3">En Çok Kaydedilen Sorular</h3>
-            <ul class="list-group mb-4">
+            <ul class=" mb-4">
                 {% for question in top_saved_questions %}
-                    <li class="list-group-item">
+                    <li class="">
                         <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a> - {{ question.save_count }} kez kaydedildi
                     </li>
                 {% endfor %}
             </ul>
             <h3>En Çok Kaydedilen Yanıtlar</h3>
-            <ul class="list-group">
+            <ul class="">
                 {% for answer in top_saved_answers %}
-                    <li class="list-group-item">
+                    <li class="">
                         {{ answer.answer_text|truncatewords:20 }} - {{ answer.save_count }} kez kaydedildi
                     </li>
                 {% endfor %}
@@ -167,10 +167,10 @@
                 </tbody>
               </table>
               <!-- Pagination for references -->
-              <nav aria-label="References Pagination">
-                <ul class="pagination">
+              <nav aria-label="References Pagination" class="">
+                <ul class="pagination custom-pagination ">
                   {% if top_references.has_previous %}
-                    <li class="page-item">
+                    <li class="page-item ">
                       <a class="page-link" href="?reference_page={{ top_references.previous_page_number }}&tab=references" aria-label="Önceki">&laquo;</a>
                     </li>
                   {% else %}
@@ -178,17 +178,17 @@
                   {% endif %}
                   {% for num in top_references.paginator.page_range %}
                     {% if top_references.number == num %}
-                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                      <li class="page-item active"><span class="page-link ">{{ num }}</span></li>
                     {% else %}
-                      <li class="page-item"><a class="page-link" href="?reference_page={{ num }}&tab=references">{{ num }}</a></li>
+                      <li class="page-item"><a class="page-link " href="?reference_page={{ num }}&tab=references">{{ num }}</a></li>
                     {% endif %}
                   {% endfor %}
                   {% if top_references.has_next %}
-                    <li class="page-item">
-                      <a class="page-link" href="?reference_page={{ top_references.next_page_number }}&tab=references" aria-label="Sonraki">&raquo;</a>
+                    <li class="page-item ">
+                      <a class="page-link " href="?reference_page={{ top_references.next_page_number }}&tab=references" aria-label="Sonraki">&raquo;</a>
                     </li>
                   {% else %}
-                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    <li class="page-item disabled "><span class="page-link ">&raquo;</span></li>
                   {% endif %}
                 </ul>
               </nav>

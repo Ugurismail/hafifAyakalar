@@ -19,10 +19,10 @@
             </ul>
             {% include 'core/pagination.html' with page_obj=all_questions page_param='page' %}
         </div>
-        <div class="col-md-10">
+        <div class="col-md-10 mesaj-listesi">
             <h2>Mesajlar</h2>
             {% if conversations %}
-                <ul class="list-group">
+                <ul class="list-group mesaj-listesi">
                     {% for other_user, convo_data in conversations.items %}
                         {% with latest_message=convo_data.messages.0 %}
                         <a href="{% url 'message_detail' other_user.username %}" class="text-decoration-none text-dark">
