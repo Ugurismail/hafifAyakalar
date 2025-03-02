@@ -2514,3 +2514,143 @@ def filter_answers(request, question_id):
         request=request
     )
     return HttpResponse(html_content)
+
+
+from docx import Document
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from io import BytesIO
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.models import User
+from .models import Question, Answer
+
+def insert_toc(paragraph):
+    """
+    Bu fonksiyon, verilen paragraf içerisine TOC (İçindekiler) alanı ekler.
+    Word dosyası açıldığında, kullanıcı 'Update Field' (alanı güncelle) seçeneğini kullanabilir.
+    """
+    fldChar1 = OxmlElement('w:fldChar')
+    fldChar1.set(qn('w:fldCharType'), 'begin')
+    
+    instrText = OxmlElement('w:instrText')
+    instrText.set(qn('xml:space'), 'preserve')
+    instrText.text = 'TOC \\o "1-3" \\h \\z \\u'
+    
+    fldChar2 = OxmlElement('w:fldChar')
+    fldChar2.set(qn('w:fldCharType'), 'separate')
+    
+    fldChar3 = OxmlElement('w:fldChar')
+    fldChar3.set(qn('w:fldCharType'), 'end')
+    
+    run = paragraph.add_run()
+    run._r.append(fldChar1)
+    run._r.append(instrText)
+    run._r.append(fldChar2)
+    run._r.append(fldChar3)
+
+@login_required
+def download_entries_docx(request, username):
+    target_user = get_object_or_404(User, username=username)
+    if request.user != target_user and not request.user.is_superuser:
+         return JsonResponse({'error': 'Bu işlemi yapmaya yetkiniz yok.'}, status=403)
+    
+    user_questions = Question.objects.filter(user=target_user).order_by('created_at')
+    
+    document = Document()
+    
+    # Belge başlığı
+    document.add_heading(f"{target_user.username} Entries", 0)
+    
+    # TOC (İçindekiler Tablosu) alanını ekleyelim
+    toc_paragraph = document.add_paragraph()
+    insert_toc(toc_paragraph)
+    
+    # Kullanıcılara talimat veren bir paragraf ekleyelim
+    instruction_text = (
+        "Belgeyi açtıktan sonra içindekiler bölümünü görmek için, Word içerisinde "
+        "alanı (veya tüm belgeyi) güncellemeniz gerekir (sağ tıklayıp 'Update Field' veya Ctrl+A ardından F9'a basabilirsiniz)."
+    )
+    document.add_paragraph(instruction_text)
+    
+    # Bir sayfa sonu ekleyelim
+    document.add_page_break()
+    
+    # Her soru için Heading 1; yanıt tarihleri Heading 2, altına yanıt metni normal paragraf
+    for question in user_questions:
+        document.add_heading(question.question_text, level=1)
+        user_answers = question.answers.filter(user=target_user).order_by('created_at')
+        for answer in user_answers:
+            date_str = answer.created_at.strftime("%Y-%m-%d %H:%M")
+            document.add_heading(date_str, level=2)
+            document.add_paragraph(answer.answer_text)
+        row_idx = 0  # Sadece görsel ayrım için, boş satır ekleyebilirsiniz.
+        document.add_paragraph("")  # Boş satır
+        
+    f = BytesIO()
+    document.save(f)
+    f.seek(0)
+    
+    response = HttpResponse(
+        f.read(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{target_user.username}_entries.docx"'
+    return response
+    """
+    Bu view, belirtilen kullanıcının (username) oluşturduğu tüm soruları ve
+    bu sorulara kendisinin verdiği yanıtları Word formatında indirir.
+    
+    Format:
+      - Her soru "Heading 1" olarak (başlık) eklenir.
+      - Soruya ait her yanıt için, yanıtın oluşturulma tarihi "Heading 2" olarak eklenir;
+        hemen altında da yanıt metni normal paragraf olarak eklenir.
+      - En üstte, otomatik güncellenebilecek bir TOC alanı eklenir.
+    """
+    target_user = get_object_or_404(User, username=username)
+    # Sadece kendi verilerine erişim veya süper kullanıcılar için izin veriyoruz.
+    if request.user != target_user and not request.user.is_superuser:
+         return JsonResponse({'error': 'Bu işlemi yapmaya yetkiniz yok.'}, status=403)
+    
+    # Kullanıcının oluşturduğu soruları, oluşturulma tarihine göre sıralıyoruz.
+    user_questions = Question.objects.filter(user=target_user).order_by('created_at')
+    
+    document = Document()
+    
+    # Başlık ekleyelim
+    document.add_heading(f"{target_user.username} Entries", 0)
+    
+    # TOC (içindekiler) ekleyelim; Word'de alanı güncellemek gerekebilir.
+    toc_paragraph = document.add_paragraph()
+    insert_toc(toc_paragraph)
+    
+    # Bir sayfa sonu ekleyelim
+    document.add_page_break()
+    
+    # Her soruyu ve soruya ait yanıtları ekleyelim.
+    for question in user_questions:
+        # Soru başlığını Heading 1 olarak ekle
+        document.add_heading(question.question_text, level=1)
+        
+        # Soruya ait, bu kullanıcı tarafından yazılmış yanıtları alalım (oluşturulma tarihine göre artan)
+        user_answers = question.answers.filter(user=target_user).order_by('created_at')
+        for answer in user_answers:
+            # Yanıt tarihini Heading 2 olarak ekleyelim (örneğin "2023-03-15 14:30")
+            date_str = answer.created_at.strftime("%Y-%m-%d %H:%M")
+            document.add_heading(date_str, level=2)
+            # Yanıt metnini normal paragraf olarak ekle
+            document.add_paragraph(answer.answer_text)
+    
+    # Belgeyi hafızada tutup HTTP yanıtı olarak döndürelim.
+    f = BytesIO()
+    document.save(f)
+    f.seek(0)
+    
+    response = HttpResponse(
+        f.read(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{target_user.username}_entries.docx"'
+    return response

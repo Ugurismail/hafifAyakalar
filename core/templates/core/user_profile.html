@@ -35,6 +35,9 @@
               <a href="{% url 'download_entries_xlsx' profile_user.username %}" class="btn btn-outline-secondary btn-sm">
                 Tüm Entry’lerimi (Excel) İndir
               </a>
+              <a href="{% url 'download_entries_docx' profile_user.username %}" class="btn btn-outline-secondary btn-sm">
+                Tüm Entry’lerimi (Word) İndir
+              </a>
             </div>
           {% else %}
             {% if request.user.is_authenticated %}
