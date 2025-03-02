@@ -274,14 +274,26 @@ class Reference(models.Model):
     author_surname = models.CharField(max_length=100, verbose_name="Yazar Soyadı")
     author_name = models.CharField(max_length=100, verbose_name="Yazar Adı")
     year = models.PositiveIntegerField(verbose_name="Yıl")
+    metin_ismi = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Metin İsmi (Opsiyonel)"
+    )
     rest = models.TextField(max_length=2000, verbose_name="Künyenin Kalanı")
-    abbreviation = models.CharField(max_length=255, blank=True, null=True, verbose_name="Kısaltma (Opsiyonel)")
+    abbreviation = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Kısaltma (Opsiyonel)"
+    )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='references')
 
     def __str__(self):
+        metin = f", {self.metin_ismi}" if self.metin_ismi else ""
         if self.abbreviation:
-            return f"{self.author_surname}, {self.author_name} ({self.year}) - {self.abbreviation}"
-        return f"{self.author_surname}, {self.author_name} ({self.year})"
+            return f"{self.author_surname}, {self.author_name} ({self.year}){metin} - {self.abbreviation}"
+        return f"{self.author_surname}, {self.author_name} ({self.year}){metin}"
 
     def get_usage_count(self):
         """

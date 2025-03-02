@@ -2247,11 +2247,13 @@ def get_references(request):
             Q(author_surname__icontains=q) |
             Q(author_name__icontains=q) |
             Q(rest__icontains=q) |
-            Q(abbreviation__icontains=q)
+            Q(abbreviation__icontains=q)|
+            Q(metin_ismi__icontains=q)|
+            Q(year__iexact=q)
             # Yıl alanında arama yapmak isterseniz (IntegerField olduğu için tam eşleşmede kullanabilirsiniz)
             # veya q yalnızca sayıysa year__icontains gibi bir yaklaşımla handle edebilirsiniz.
             # Örnek:
-            # Q(year__iexact=q)
+            # 
         )
     
     # Sıralama

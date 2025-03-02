@@ -241,6 +241,7 @@ class ReferenceForm(forms.ModelForm):
             'author_surname',
             'author_name',
             'year',
+            'metin_ismi',
             'rest',
             'abbreviation'
         ]
@@ -248,6 +249,7 @@ class ReferenceForm(forms.ModelForm):
             'author_surname': 'Yazar Soyadı',
             'author_name': 'Yazar Adı',
             'year': 'Yıl',
+            'metin_ismi': 'Metin İsmi',
             'rest': 'Künyenin Kalanı',
             'abbreviation': 'Kısaltma (Opsiyonel)',
         }
@@ -255,6 +257,7 @@ class ReferenceForm(forms.ModelForm):
             'author_surname': forms.TextInput(attrs={'class': 'form-control'}),
             'author_name': forms.TextInput(attrs={'class': 'form-control'}),
             'year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'metin_ismi': forms.TextInput(attrs={'class': 'form-control'}),
             'rest': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
