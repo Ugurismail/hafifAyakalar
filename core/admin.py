@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.http import HttpResponseRedirect
-from .models import Reference
+from .models import Reference, Definition, Answer
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
 
@@ -191,3 +191,20 @@ class ReferenceAdmin(admin.ModelAdmin):
 Mevcut admin.py'nizde en alta (veya uygun bir yere) ekleyin:
 (Invitation, UserProfile, SavedItem vs. kaydettiğiniz gibi.)
 """
+
+
+
+# Eğer Definition modeline bağlı Answer'ı inline olarak göstermek isterseniz:
+class AnswerInline(admin.StackedInline):
+    model = Answer
+    extra = 0  # Ekstra boş inline form göstermesin
+
+@admin.register(Definition)
+class DefinitionAdmin(admin.ModelAdmin):
+    list_display = ['question', 'user', 'created_at', 'get_answer']
+    search_fields = ['definition_text', 'question__question_text', 'user__username']
+    list_filter = ['created_at', 'user']
+
+    def get_answer(self, obj):
+        return obj.answer.answer_text if obj.answer else '-'
+    get_answer.short_description = 'Yanıt'
