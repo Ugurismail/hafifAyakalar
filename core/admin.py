@@ -1,23 +1,22 @@
 from django.contrib import admin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.http import HttpResponseRedirect
-from .models import Reference, Definition, Answer
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django import forms
 
-
-from .models import (
+from core.models import (
     Invitation, UserProfile, Question, Answer, 
     Poll, PollOption, PollVote, SavedItem, Vote, PinnedEntry, 
-    Entry, RandomSentence, Message
+    Entry, RandomSentence, Message, Definition, Reference
 )
 
-# -------------------------------------
-# 1) Standart Admin Kaydı
-# -------------------------------------
+# =============================================================================
+# 1) Standart Admin Kaydı (Invitation, UserProfile, SavedItem, Vote, PinnedEntry, Entry, RandomSentence)
+# =============================================================================
 admin.site.register(Invitation)
 admin.site.register(UserProfile)
 admin.site.register(SavedItem)
@@ -26,6 +25,176 @@ admin.site.register(PinnedEntry)
 admin.site.register(Entry)
 admin.site.register(RandomSentence)
 
+# =============================================================================
+# 2) Kullanıcı Admin – Mesaj Gönderme, Grupların Gösterimi ve Filtrelenmesi
+# =============================================================================
+
+# Mesaj gönderme formu
+class MassMessageForm(forms.Form):
+    _selected_action = forms.CharField(widget=forms.HiddenInput)
+    message_body = forms.CharField(
+        label="Mesajınız",
+        widget=forms.Textarea(attrs={"rows": 4, "cols": 60}),
+        required=True
+    )
+
+# Custom UserAdmin: 
+# - list_display’e "display_groups" ekleyip, kullanıcıya ait grupları virgülle gösteriyoruz.
+# - list_filter’e "groups" ekleyerek filtreleme yapabiliyoruz.
+# - Ayrıca, admin action ile seçili kullanıcılara mesaj gönderme işlevini de koruyoruz.
+class CustomUserAdmin(UserAdmin):
+    list_display = UserAdmin.list_display + ('display_groups',)
+    list_filter = UserAdmin.list_filter + ('groups',)
+    
+    def display_groups(self, obj):
+        return ", ".join(g.name for g in obj.groups.all())
+    display_groups.short_description = "Gruplar"
+
+    actions = ["send_message_to_selected_users"]
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'send-messages/',
+                self.admin_site.admin_view(self.send_messages_intermediate),
+                name='send_messages_intermediate',
+            )
+        ]
+        return custom_urls + urls
+
+    def send_message_to_selected_users(self, request, queryset):
+        if not queryset.exists():
+            self.message_user(request, "Hiç kullanıcı seçmediniz!", level=messages.WARNING)
+            return
+        selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
+        return redirect(f"send-messages/?ids={','.join(selected)}")
+
+    send_message_to_selected_users.short_description = "Seçili kullanıcılara mesaj gönder"
+
+    def send_messages_intermediate(self, request):
+        from core.models import Message
+        ids_param = request.GET.get('ids', '')
+        if not ids_param:
+            self.message_user(request, "Kullanıcı seçilmedi veya geçersiz ID.", level=messages.ERROR)
+            return redirect("..")
+        user_ids = ids_param.split(',')
+        selected_users = User.objects.filter(pk__in=user_ids)
+        if request.method == 'POST':
+            form = MassMessageForm(request.POST)
+            if form.is_valid():
+                message_body = form.cleaned_data['message_body']
+                admin_user = request.user
+                count = 0
+                for user in selected_users:
+                    if user != admin_user:
+                        Message.objects.create(
+                            sender=admin_user,
+                            recipient=user,
+                            body=message_body
+                        )
+                        count += 1
+                self.message_user(request, f"{count} kullanıcıya mesaj gönderildi.")
+                return redirect("/admin/auth/user/")
+        else:
+            initial_data = {'_selected_action': ids_param}
+            form = MassMessageForm(initial=initial_data)
+        return render(request, 'admin/send_message_form.html', {
+            'form': form,
+            'selected_users': selected_users,
+        })
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
+
+# =============================================================================
+# 3) Grup Admin – Mesaj Gönderme, Üye Listesi (Inline) ve Üyelerin Yönetimi
+# =============================================================================
+
+# Inline: Kullanıcı-Group ilişkisini yönetmek için User.groups.through modelini kullanıyoruz.
+class UserGroupInline(admin.TabularInline):
+    model = User.groups.through
+    extra = 0
+    verbose_name = "Üye"
+    verbose_name_plural = "Üyeler"
+
+# Grup mesajı gönderme formu
+class GroupMassMessageForm(forms.Form):
+    selected_action = forms.CharField(widget=forms.HiddenInput)
+    message_body = forms.CharField(
+        label="Mesajınız",
+        widget=forms.Textarea(attrs={"rows": 4, "cols": 60}),
+        required=True
+    )
+
+# Custom GroupAdmin: 
+# - Grup listesinden seçili gruplara mesaj göndermek için admin action ekleniyor.
+# - Değişim (change) sayfasında üye listesi inline olarak gösteriliyor, böylece üyeleri görüntüleyip çıkartabiliyoruz.
+class CustomGroupAdmin(admin.ModelAdmin):
+    actions = ["send_message_to_group"]
+    inlines = [UserGroupInline]
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'send-group-messages/',
+                self.admin_site.admin_view(self.send_group_messages_intermediate),
+                name='send_group_messages_intermediate',
+            )
+        ]
+        return custom_urls + urls
+
+    def send_message_to_group(self, request, queryset):
+        if not queryset.exists():
+            self.message_user(request, "Hiç grup seçmediniz!", level=messages.WARNING)
+            return
+        selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
+        return redirect(f"send-group-messages/?ids={','.join(selected)}")
+
+    send_message_to_group.short_description = "Seçili gruplara mesaj gönder"
+
+    def send_group_messages_intermediate(self, request):
+        from core.models import Message
+        ids_param = request.GET.get('ids', '')
+        if not ids_param:
+            self.message_user(request, "Grup seçilmedi veya geçersiz ID.", level=messages.ERROR)
+            return redirect("..")
+        group_ids = ids_param.split(',')
+        selected_groups = Group.objects.filter(pk__in=group_ids)
+        if request.method == "POST":
+            form = GroupMassMessageForm(request.POST)
+            if form.is_valid():
+                message_body = form.cleaned_data["message_body"]
+                users_set = set()
+                for group in selected_groups:
+                    for user in group.user_set.all():
+                        users_set.add(user)
+                count = 0
+                for user in users_set:
+                    Message.objects.create(
+                        sender=request.user,
+                        recipient=user,
+                        body=message_body
+                    )
+                    count += 1
+                self.message_user(request, f"{count} kullanıcıya mesaj gönderildi.")
+                return redirect("/admin/auth/group/")
+        else:
+            initial_data = {'selected_action': ','.join(str(g.id) for g in selected_groups)}
+            form = GroupMassMessageForm(initial=initial_data)
+        return render(request, "admin/send_group_message.html", {
+            "groups": selected_groups,
+            "form": form,
+            "title": "Seçili gruplara mesaj gönder"
+        })
+
+admin.site.unregister(Group)
+admin.site.register(Group, CustomGroupAdmin)
+
+# =============================================================================
+# 4) Soru, Yanıt, Anket ve Referans Admin Kayıtları
+# =============================================================================
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     search_fields = ['question_text']
@@ -63,141 +232,19 @@ class PollVoteAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'option__option_text']
     list_filter = ['voted_at']
 
-
-# -------------------------------------
-# 2) Kullanıcıları Seçip Mesaj Gönderme
-#    Ara Sayfa Kullanarak
-# -------------------------------------
-
-# a) Önce default User kaydını kaldır:
-admin.site.unregister(User)
-
-
-# b) Mesaj Formu: Ara sayfa (intermediate) için basit bir Django Form
-from django import forms
-from django.contrib import admin
-
-class MassMessageForm(forms.Form):
-    _selected_action = forms.CharField(widget=forms.HiddenInput)
-    message_body = forms.CharField(
-        label="Mesajınız",
-        widget=forms.Textarea(attrs={"rows":4, "cols":60}),
-        required=True
-    )
-
-
-# c) Yeni Admin Sınıfı
-class CustomUserAdmin(UserAdmin):
-    actions = ["send_message_to_selected_users"]
-
-    def get_urls(self):
-        """
-        'Seçili kullanıcılara mesaj gönder' action'ı için
-        özel bir ara sayfa URL'si ekliyoruz.
-        """
-        urls = super().get_urls()
-        custom_urls = [
-            path(
-                'send-messages/',
-                self.admin_site.admin_view(self.send_messages_intermediate),
-                name='send_messages_intermediate',
-            )
-        ]
-        return custom_urls + urls
-
-    def send_message_to_selected_users(self, request, queryset):
-        """
-        Admin action: seçili kullanıcılara mesaj göndermek için
-        bir ara sayfa formuna yönlendireceğiz.
-        """
-        # Eğer hiç kullanıcı seçilmediyse, doğrudan uyarı verip dönelim
-        if not queryset.exists():
-            self.message_user(request, "Hiç kullanıcı seçmediniz!", level=messages.WARNING)
-            return
-
-        # Seçili kullanıcıların PK'lerini al
-        selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
-        # Ara sayfa url'sine yönlendiriyoruz (send_messages_intermediate)
-        return redirect(
-            f"send-messages/?ids={','.join(selected)}"
-        )
-
-    send_message_to_selected_users.short_description = "Seçili kullanıcılara mesaj gönder"
-
-    def send_messages_intermediate(self, request):
-        """
-        Ara sayfa: burada message_body'yi gireceğiz ve
-        'apply' dediğimizde asıl mesaj gönderme işlemine geçeceğiz.
-        """
-        from .models import Message
-
-        # URL'deki param: ?ids=1,2,3
-        ids_param = request.GET.get('ids', '')
-        if not ids_param:
-            self.message_user(request, "Kullanıcı seçilmedi veya geçersiz ID.", level=messages.ERROR)
-            return redirect("..")  # Kullanıcı yoksa geri dön
-
-        # Virgülle ayrılmış PK'lerden queryset oluştur
-        user_ids = ids_param.split(',')
-        selected_users = User.objects.filter(pk__in=user_ids)
-
-        if request.method == 'POST':
-            form = MassMessageForm(request.POST)
-            if form.is_valid():
-                message_body = form.cleaned_data['message_body']
-                admin_user = request.user
-                count = 0
-                for user in selected_users:
-                    if user != admin_user:  # Gerekirse
-                        Message.objects.create(
-                            sender=admin_user,
-                            recipient=user,
-                            body=message_body
-                        )
-                        count += 1
-                self.message_user(request, f"{count} kullanıcıya mesaj gönderildi.")
-                return redirect("/admin/auth/user/")  # Veya user listesinin URL'i
-
-        else:
-            # GET isteği => formu göster
-            initial_data = {
-                '_selected_action': ids_param
-            }
-            form = MassMessageForm(initial=initial_data)
-
-        return render(request, 'admin/send_message_form.html', {
-            'form': form,
-            'selected_users': selected_users,
-        })
-
-
-# d) Kayıt: User modelini CustomUserAdmin ile
-admin.site.register(User, CustomUserAdmin)
-
 @admin.register(Reference)
 class ReferenceAdmin(admin.ModelAdmin):
-    # Kullanıcı dostu bir liste görünümü için arama, filtre vb.
     search_fields = ['author_surname', 'author_name', 'year', 'rest', 'abbreviation']
     list_display = ['author_surname', 'author_name', 'year', 'abbreviation', 'short_rest']
     list_filter = ['year']
 
     def short_rest(self, obj):
-        # rest alanını liste görünümünde kısaltabilirsiniz (opsiyonel)
         return (obj.rest[:50] + "...") if len(obj.rest) > 50 else obj.rest
     short_rest.short_description = "Ek Bilgiler (kısaltılmış)"
 
-
-"""
-Mevcut admin.py'nizde en alta (veya uygun bir yere) ekleyin:
-(Invitation, UserProfile, SavedItem vs. kaydettiğiniz gibi.)
-"""
-
-
-
-# Eğer Definition modeline bağlı Answer'ı inline olarak göstermek isterseniz:
 class AnswerInline(admin.StackedInline):
     model = Answer
-    extra = 0  # Ekstra boş inline form göstermesin
+    extra = 0
 
 @admin.register(Definition)
 class DefinitionAdmin(admin.ModelAdmin):

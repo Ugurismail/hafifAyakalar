@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <form method="post" action="">{% csrf_token %}
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+    <div>
+      {{ form.message_body.label_tag }}
+      {{ form.message_body }}
+    </div>
+    <input type="hidden" name="action" value="send_message_to_group">
+    <button type="submit" name="apply" class="default">Gönder</button>
+    <a href="{{ request.get_full_path }}" class="button cancel-link">İptal</a>
+  </form>
+{% endblock %}

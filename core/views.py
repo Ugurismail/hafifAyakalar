@@ -191,7 +191,7 @@ def user_profile(request, username):
     user_profile = profile_user.userprofile
     active_tab = request.GET.get('tab', 'sorular')
     is_own_profile = (request.user == profile_user)
-
+    invitation_tree = get_invitation_tree(request.user) if request.user == profile_user else None
     # -- Tanımlar --
     definitions_qs = Definition.objects.filter(user=profile_user).select_related('question')
     def_page = request.GET.get('d_page', 1)
@@ -203,6 +203,10 @@ def user_profile(request, username):
     except EmptyPage:
         definitions_page = def_paginator.page(def_paginator.num_pages)
 
+    invitation_tree = None
+    if is_own_profile:
+        invitation_tree = get_invitation_tree(request.user)
+        
     # -- SORULAR --
     questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
     question_page = request.GET.get('question_page', 1)
@@ -383,6 +387,7 @@ def user_profile(request, username):
         'active_tab': active_tab,
         'saved_items_page': saved_items_page,
         'references_page': references_page,
+        'invitation_tree': invitation_tree,
     }
 
     return render(request, 'core/user_profile.html', context)

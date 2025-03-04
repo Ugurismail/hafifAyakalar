@@ -115,6 +115,9 @@
              Davetler
           </a>
         </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link {% if active_tab == 'davet_aagac' %}active{% endif %}" id="davet-aagac-tab" data-bs-toggle="tab" data-bs-target="#davet_aagac" type="button" role="tab">Davet Ağaç</button>
+        </li>
         {% endif %}
         <li class="nav-item" role="presentation">
           <a class="nav-link {% if active_tab == 'yanitlar' %}active{% endif %}"
@@ -209,6 +212,9 @@
             <p>Gönderilen Davetiye Sayısı: {{ total_invitations }}</p>
             <p>Kullanılan Davetiye Sayısı: {{ used_invitations }}</p>
             <p>Kalan Davetiye Sayısı: {{ remaining_invitations }}</p>
+
+
+
             {% if remaining_invitations > 0 %}
               <form action="{% url 'create_invitation' %}" method="post" class="mb-3">
                 {% csrf_token %}
@@ -221,6 +227,8 @@
             {% else %}
               <p>Davetiye kotanız dolmuştur.</p>
             {% endif %}
+
+            <!-- Halihazırdaki davetiye tablosu -->
             <table class="table table-sm">
               <thead>
                 <tr>
@@ -250,7 +258,25 @@
           </div>
         </div>
         {% endif %}
-        
+                
+        {% if is_own_profile %}
+      <!-- Davet Ağaç Sekmesi -->
+      <div class="tab-pane fade {% if active_tab == 'davet_aagac' %}show active{% endif %}" id="davet_aagac" role="tabpanel" aria-labelledby="davet-aagac-tab">
+        <h5>Davet Ağaç</h5>
+        {% if invitation_tree %}
+          <div class="invitation-tree">
+            <ul class="list-unstyled">
+              {% for node in invitation_tree %}
+                {% include 'core/invitation_node.html' with node=node %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% else %}
+          <p>Henüz davetiye gönderilmedi.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
         <!-- Yanıtlar Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'yanitlar' %}show active{% endif %}" id="yanitlar" role="tabpanel" aria-labelledby="yanitlar-tab">
           <div class="mt-3">
