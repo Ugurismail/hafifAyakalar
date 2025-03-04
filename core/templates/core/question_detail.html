@@ -123,7 +123,7 @@
           
                 <!-- Kaydet -->
                 <a href="#"
-                  class="save-btn icon-black-white ms-2"
+                  class="save-btn ms-2"
                   data-content-type="question" data-object-id="{{ question.id }}" 
                   title="Kaydet">
                   <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
@@ -188,11 +188,11 @@
                         {% if answer.user == request.user %}
                           {% if answer.definition %}
                               <a href="{% url 'edit_definition' answer.definition.id %}?tab=tanimlar" class="ms-2" title="Tanımı Düzenle">
-                                  <i class="bi bi-pencil-square icon-black-white"></i>
+                                  <i class="bi bi-pencil-square "></i>
                               </a>
                           {% else %}
                               <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Yanıtı Düzenle">
-                                  <i class="bi bi-pencil-square icon-black-white"></i>
+                                  <i class="bi bi-pencil-square "></i>
                               </a>
                           {% endif %}
                       {% endif %}
@@ -200,7 +200,7 @@
                             data-answer-id="{{ answer.id }}" 
                             data-delete-url="{% url 'delete_answer' answer.id %}?next={{ request.path|urlencode }}"
                             title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">
-                            <i class="bi bi-trash icon-black-white"></i>
+                            <i class="bi bi-trash "></i>
                           </a>
                         {% endif %}
                       </div>
@@ -438,8 +438,6 @@
           </div>
       </div>
   </div>
-
-
   <!-- TANIM MODAL -->
   <div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg"> <!-- modal-lg: genişlik için -->
@@ -549,8 +547,6 @@
         </div> <!-- /.modal-content -->
       </div> <!-- /.modal-dialog -->
     </div> <!-- /.modal -->
-    
-    
   <!-- PAYLAŞIM MODAL -->
   <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
       <div class="modal-dialog">

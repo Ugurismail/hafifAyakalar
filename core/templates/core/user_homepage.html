@@ -78,10 +78,10 @@
                             <!-- Edit and Delete Buttons (Only for Content Owner) -->
                             {% if answer.user == request.user %}
                                 <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
-                                    <i class="bi bi-pencil-square icon-black-white"></i>
+                                    <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <!-- Silme Butonu -->
-                                <a href="#" class="ms-2 delete-answer-btn icon-black-white" 
+                                <a href="#" class="ms-2 delete-answer-btn" 
                                 data-answer-id="{{ answer.id }}" 
                                 data-delete-url="{% url 'delete_answer' answer.id %}?next={{ request.path|urlencode }}"
                                 title="Sil" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal">

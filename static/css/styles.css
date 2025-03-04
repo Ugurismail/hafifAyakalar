@@ -474,3 +474,8 @@ textarea.auto-expand.expanded {
     background-color: var(--background-color) !important;
     border-color: var(--text-color) !important;
 }
+
+a.ms-2 i.bi-pencil-square,
+a.ms-2 i.bi-trash {
+    color: var(--icon-color, #000) !important;
+}
