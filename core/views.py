@@ -66,15 +66,23 @@ def signup(request):
                 messages.error(request, 'Geçersiz veya kullanılmış davet kodu.')
                 return render(request, 'core/signup.html', {'form': form})
 
-            user = form.save()  # Artık ModelForm yerine normal Form kullanıyoruz.
-            
-            # Davetiye kodunu kullanılmış olarak işaretle
+            user = form.save()  # Kullanıcı oluşturuldu
+
+            # UserProfile'ı kontrol edip oluşturun, eğer yoksa
+            try:
+                user_profile = user.userprofile
+            except UserProfile.DoesNotExist:
+                if user.is_superuser:
+                    quota = 999999999
+                else:
+                    quota = 0
+                user_profile = UserProfile.objects.create(user=user, invitation_quota=quota)
+
+            # Davetiye kodunu kullanılmış olarak işaretle ve quota güncelle
             invitation.is_used = True
             invitation.used_by = user
             invitation.save()
 
-            # Kullanıcının profilindeki davetiye kotasını güncelle
-            user_profile = user.userprofile
             user_profile.invitation_quota += invitation.quota_granted
             user_profile.save()
 

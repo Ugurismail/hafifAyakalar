@@ -12,6 +12,7 @@ import re
 
 
 
+
 class Invitation(models.Model):
     code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     sender = models.ForeignKey(
