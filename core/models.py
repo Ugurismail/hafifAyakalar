@@ -37,8 +37,9 @@ class UserProfile(models.Model):
     # Renk ayarları alanları
     background_color = models.CharField(max_length=7, default='#F5F5F5') #genel arka plan
     text_color = models.CharField(max_length=7, default='#000000')
+    message_bubble_color = models.CharField(max_length=7, default='#d1e7ff')
+    tbas_color=models.CharField(max_length=7, default='#000000')
 
-    cemil = models.CharField(max_length=7, default='#ffffff')
     yanit_card = models.CharField(max_length=7, default='#ffffff')
     header_background_color = models.CharField(max_length=7, default='#ffffff')
     header_text_color = models.CharField(max_length=7, default='#333333')

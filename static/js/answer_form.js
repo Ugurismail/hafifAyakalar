@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <strong>${d.question_text}</strong>
                     <em>(${shortDef})</em>
                     <small class="text-muted">by ${d.username}</small>
-                    <small class="text-info ms-2">[${d.usage_count_all} kez kullanılmış]</small>
+                    <small class="ms-2">[${d.usage_count_all} kez kullanılmış]</small>
                   </label>
                 </div>
               `;

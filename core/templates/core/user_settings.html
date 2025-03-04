@@ -13,20 +13,34 @@
         <div class="card p-3 mb-3 cemil">
             <h4>Genel Renkler</h4>
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="background_color" class="form-label">Arka Plan Rengi:</label>
                     <input type="color" id="background_color" name="background_color" class="form-control form-control-color" value="{{ user_profile.background_color }}">
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label for="text_color" class="form-label">Metin Rengi:</label>
+                <div class="col-md-3 mb-3">
+                    <label for="text_color" class="form-label">Genel Metin ve Sınır Rengi:</label>
                     <input type="color" id="text_color" name="text_color" class="form-control form-control-color" value="{{ user_profile.text_color }}">
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label for="cemil" class="form-label">Bu Alanın Rengi:</label>
-                    <input type="color" id="cemil" name="cemil" class="form-control form-control-color" value="{{ user_profile.cemil }}">
+                <div class="col-md-3 mb-3">
+                    <label for="message_bubble_color" class="form-label">Mesaj Baloncuk Rengi</label>
+                    <input type="color" id="message_bubble_color" name="message_bubble_color" class="form-control form-control-color" value="{{ user_profile.message_bubble_color }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="tbas_color" class="form-label">Sol Başlıkların Rengi</label>
+                    <input type="color" id="tbas_color" name="tbas_color" class="form-control form-control-color" value="{{ user_profile.tbas_color }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="link_color" class="form-label">Link Rengi:</label>
+                    <input type="color" id="link_color" name="link_color" class="form-control form-control-color" value="{{ user_profile.link_color }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="link_hover_color" class="form-label">Link Hover Rengi:</label>
+                    <input type="color" id="link_hover_color" name="link_hover_color" class="form-control form-control-color" value="{{ user_profile.link_hover_color }}">
                 </div>
             </div>
         </div>
+
+
 
         <!-- Navbar Renkleri -->
         <div class="card p-3 mb-3 cemil">
@@ -51,20 +65,6 @@
             </div>
         </div>
 
-        <!-- Link Renkleri -->
-        <div class="card p-3 mb-3 cemil">
-            <h4>Link Renkleri</h4>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="link_color" class="form-label">Link Rengi:</label>
-                    <input type="color" id="link_color" name="link_color" class="form-control form-control-color" value="{{ user_profile.link_color }}">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="link_hover_color" class="form-label">Link Hover Rengi:</label>
-                    <input type="color" id="link_hover_color" name="link_hover_color" class="form-control form-control-color" value="{{ user_profile.link_hover_color }}">
-                </div>
-            </div>
-        </div>
 
         <!-- Buton Renkleri -->
         <div class="card p-3 mb-3 cemil">

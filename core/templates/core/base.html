@@ -18,12 +18,13 @@
     <style>
         @import url("https://fonts.googleapis.com/css?family={{ user.userprofile.font_family|urlencode }}");
       :root {
-        --cemil: {{ user.userprofile.cemil }};
         --secondary-button-background-color : {{ user.userprofile.secondary_button_background_color }};
         --secondary-button-hover-background-color : {{ user.userprofile.secondary_button_hover_background_color }};
         --secondary-button-text-color : {{ user.userprofile.secondary_button_text_color }};
         --font-size: {{ user.userprofile.font_size }}px;
 
+        --message-bubble: {{ user.userprofile.message_bubble_color }};
+        --tbas-color: {{ user.userprofile.tbas_color }};
         --background-color: {{ user.userprofile.background_color }};
         --text-color: {{ user.userprofile.text_color }};
         --header-background-color: {{ user.userprofile.header_background_color }};

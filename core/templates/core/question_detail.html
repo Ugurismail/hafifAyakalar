@@ -13,7 +13,7 @@
                   {% for question in all_questions_page %}
                   <li class="d-flex justify-content-between align-items-center mt-2 baslik">
                       <a href="{% url 'question_detail' question.id %}"
-                        class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                        class="tbas-color text-decoration-none d-flex justify-content-between align-items-center w-100">
                           <span>{{ question.question_text }}</span>
                           <small class="ms-2">{{ question.answers_count }}</small>
                       </a>
@@ -31,18 +31,18 @@
             <!-- Soru Başlık + Harita Linki + FİLTRE BUTONU -->
             <div class="d-flex justify-content-between align-items-center mb-2">
               
-              <h2 class="h5 mb-0">
+              <h1 class="h1 mb-0">
                 {{ question.question_text }}
                 <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
                   class="ms-2 text-secondary"
                   title="Haritada Gör">
                   <i class="bi bi-geo-alt-fill"></i>
                 </a>
-              </h2>
+              </h1>
               
               <!-- Filtre / Huni Butonu (Bootstrap Dropdown) -->
               <div class="dropdown">
-                <button class="btn btn-sm btn-outline-primary dropdown-toggle"
+                <button class="btn btn-sm dropdown-toggle"
                         type="button"
                         id="filterDropdownBtn"
                         data-bs-toggle="dropdown"
@@ -402,7 +402,7 @@
                               </li>
                           {% endfor %}
                       {% else %}
-                          <li class="list-group-item">Bu sorunun henüz alt sorusu yok.</li>
+                          <li class="list-group-item btn-secondary">Bu sorunun henüz alt sorusu yok.</li>
                       {% endif %}
                   </ul>
               </div>
@@ -523,7 +523,7 @@
                 <!-- Sayfalama Alanı -->
                 <div id="userDefPagination" class="mt-2"></div>
                 <!-- Seçili Tanımı Ekle -->
-                <button type="button" class="btn btn-success mt-2" id="insertUserDefinitionBtn">Seçili Tanımı Ekle</button>
+                <button type="button" class="btn btn-primary mt-2" id="insertUserDefinitionBtn">Seçili Tanımı Ekle</button>
               </div>
               
               <!-- (3) GENEL TANIM (Tüm kullanıcıların tanımları) -->
@@ -535,7 +535,7 @@
                 <!-- Sayfalama Alanı -->
                 <div id="allDefPagination" class="mt-2"></div>
                 <!-- Seçili Tanımı Ekle -->
-                <button type="button" class="btn btn-success mt-2" id="insertGlobalDefinitionBtn">Seçili Tanımı Ekle</button>
+                <button type="button" class="btn btn-primary mt-2" id="insertGlobalDefinitionBtn">Seçili Tanımı Ekle</button>
               </div>
               
             </div> <!-- /.tab-content -->

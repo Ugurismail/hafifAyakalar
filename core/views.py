@@ -953,7 +953,7 @@ def user_settings(request):
             # Varsayılan değerlere dön
             profile.background_color = '#F5F5F5'
             profile.text_color = '#000000'
-            profile.header_background_color = '#ffffff'
+            profile.header_background_color = '#F5F5F5'
             profile.header_text_color = '#333333'
             profile.link_color = '#0d6efd'
             profile.link_hover_color = '#0056b3'
@@ -975,6 +975,10 @@ def user_settings(request):
             profile.nav_link_hover_color = '#007bff'
             profile.nav_link_hover_bg = '#f5f5f5'
 
+            #benim eklediklerim
+            profile.message_bubble_color="#d1e7ff"
+            profile.tbas_color="#000000"
+
             profile.font_size='16'
 
             profile.pagination_background_color = '#ffffff'
@@ -995,16 +999,18 @@ def user_settings(request):
             return redirect('user_settings')
         else:
             # Formdan gelen değerleri kaydet
-            profile.cemil = request.POST.get('cemil','#ffffff')
             profile.secondary_button_background_color = request.POST.get('secondary_button_background_color','#6c757d')
             profile.secondary_button_text_color = request.POST.get('secondary_button_text_color','#ffffff')
             profile.secondary_button_hover_background_color = request.POST.get('secondary_button_hover_background_color','#495057')
 
             profile.font_size = int(request.POST.get('font_size', 16))  # Sayıya çeviriyoruz
 
+            #benim eklediklerim
+            profile.message_bubble_color = request.POST.get('message_bubble_color', '#d1e7ff')
+            profile.tbas_color = request.POST.get('tbas_color', '#000000')
             profile.background_color = request.POST.get('background_color', '#F5F5F5')
             profile.text_color = request.POST.get('text_color', '#000000')
-            profile.header_background_color = request.POST.get('header_background_color', '#ffffff')
+            profile.header_background_color = request.POST.get('header_background_color', '#F5F5F5')
             profile.header_text_color = request.POST.get('header_text_color', '#333333')
             profile.link_color = request.POST.get('link_color', '#0d6efd')
             profile.link_hover_color = request.POST.get('link_hover_color', '#0056b3')
