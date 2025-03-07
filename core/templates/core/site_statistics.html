@@ -11,30 +11,30 @@
     <!-- Nav Tabs -->
     <ul class="nav nav-tabs" id="statisticsTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="word-analysis-tab" data-bs-toggle="tab" data-bs-target="#word-analysis" type="button" role="tab" aria-controls="word-analysis" aria-selected="true">Kelime Analizi</button>
+            <button class="nav-link {% if active_tab == 'word-analysis' %}active{% endif %}" id="word-analysis-tab" data-bs-toggle="tab" data-bs-target="#word-analysis" type="button" role="tab" aria-controls="word-analysis" aria-selected="{% if active_tab == 'word-analysis' %}true{% else %}false{% endif %}">Kelime Analizi</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="false">Genel</button>
+            <button class="nav-link {% if active_tab == 'general' %}active{% endif %}" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="{% if active_tab == 'general' %}true{% else %}false{% endif %}">Genel</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="false">Kullanıcılar</button>
+            <button class="nav-link {% if active_tab == 'users' %}active{% endif %}" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="{% if active_tab == 'users' %}true{% else %}false{% endif %}">Kullanıcılar</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="questions-answers-tab" data-bs-toggle="tab" data-bs-target="#questions-answers" type="button" role="tab" aria-controls="questions-answers" aria-selected="false">Sorular & Yanıtlar</button>
+            <button class="nav-link {% if active_tab == 'questions-answers' %}active{% endif %}" id="questions-answers-tab" data-bs-toggle="tab" data-bs-target="#questions-answers" type="button" role="tab" aria-controls="questions-answers" aria-selected="{% if active_tab == 'questions-answers' %}true{% else %}false{% endif %}">Sorular & Yanıtlar</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="likes-saves-tab" data-bs-toggle="tab" data-bs-target="#likes-saves" type="button" role="tab" aria-controls="likes-saves" aria-selected="false">Beğeniler & Kaydetmeler</button>
+            <button class="nav-link {% if active_tab == 'likes-saves' %}active{% endif %}" id="likes-saves-tab" data-bs-toggle="tab" data-bs-target="#likes-saves" type="button" role="tab" aria-controls="likes-saves" aria-selected="{% if active_tab == 'likes-saves' %}true{% else %}false{% endif %}">Beğeniler & Kaydetmeler</button>
         </li>
-        <!-- Yeni Kaynaklar Sekmesi -->
+        <!-- Kaynaklar sekmesi için <a> etiketi kullanılıyor -->
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="references-tab" data-bs-toggle="tab" data-bs-target="#references" type="button" role="tab" aria-controls="references" aria-selected="false">Kaynaklar</button>
+            <a class="nav-link {% if active_tab == 'references' %}active{% endif %}" id="references-tab" data-bs-toggle="tab" href="#references" role="tab" aria-controls="references" aria-selected="{% if active_tab == 'references' %}true{% else %}false{% endif %}">Kaynaklar</a>
         </li>
     </ul>
 
     <!-- Tab Content -->
     <div class="tab-content mt-3" id="statisticsTabContent">
         <!-- Kelime Analizi Tab -->
-        <div class="tab-pane fade show active" id="word-analysis" role="tabpanel" aria-labelledby="word-analysis-tab">
+        <div class="tab-pane fade {% if active_tab == 'word-analysis' %}show active{% endif %}" id="word-analysis" role="tabpanel" aria-labelledby="word-analysis-tab">
             <h3 class="mt-3">Kelime Arama</h3>
             <!-- Kelime Arama Formu -->
             <form method="get" action="{% url 'site_statistics' %}" class="mb-4">
@@ -50,15 +50,12 @@
                 </div>
                 <button type="submit" class="btn btn-primary mt-2">Ara</button>
             </form>
-
             {% if search_word %}
                 <p><strong>"{{ search_word }}"</strong> kelimesi {{ search_word_count }} kez geçiyor.</p>
             {% endif %}
-
             {% if exclude_words %}
                 <p><strong>Hariç Tutulan Kelimeler:</strong> {{ exclude_words }}</p>
             {% endif %}
-
             <h3>En Sık Geçen Kelimeler</h3>
             <ol>
                 {% for word, count in top_words %}
@@ -68,137 +65,135 @@
         </div>
 
         <!-- Genel Tab -->
-        <div class="tab-pane fade" id="general" role="tabpanel" aria-labelledby="general-tab">
-            <ul class="">
-                <li class="">Kullanıcı Sayısı (Soru/Yanıt Giren): {{ user_count }}</li>
-                <li class="-item">Toplam Soru Sayısı: {{ total_questions }}</li>
-                <li class="-item">Toplam Yanıt Sayısı: {{ total_answers }}</li>
-                <li class="-item">Toplam Beğeni Sayısı: {{ total_likes }}</li>
-                <li class="-item">Toplam Beğenmeme Sayısı: {{ total_dislikes }}</li>
+        <div class="tab-pane fade {% if active_tab == 'general' %}show active{% endif %}" id="general" role="tabpanel" aria-labelledby="general-tab">
+            <ul>
+                <li>Kullanıcı Sayısı (Soru/Yanıt Giren): {{ user_count }}</li>
+                <li>Toplam Soru Sayısı: {{ total_questions }}</li>
+                <li>Toplam Yanıt Sayısı: {{ total_answers }}</li>
+                <li>Toplam Beğeni Sayısı: {{ total_likes }}</li>
+                <li>Toplam Beğenmeme Sayısı: {{ total_dislikes }}</li>
             </ul>
         </div>
 
         <!-- Kullanıcılar Tab -->
-        <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+        <div class="tab-pane fade {% if active_tab == 'users' %}show active{% endif %}" id="users" role="tabpanel" aria-labelledby="users-tab">
             <h3 class="mt-3">En Çok Soru Soran Kullanıcılar</h3>
-            <ul class=" mb-4">
+            <ul class="mb-4">
                 {% for user in top_question_users %}
-                    <li class="">
-                        <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.question_count }} soru
-                    </li>
+                    <li><a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.question_count }} soru</li>
                 {% endfor %}
             </ul>
             <h3>En Çok Yanıt Veren Kullanıcılar</h3>
-            <ul class="">
+            <ul>
                 {% for user in top_answer_users %}
-                    <li class="">
-                        <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.answer_count }} yanıt
-                    </li>
+                    <li><a href="{% url 'user_profile' user.username %}">{{ user.username }}</a> - {{ user.answer_count }} yanıt</li>
                 {% endfor %}
             </ul>
         </div>
 
         <!-- Sorular & Yanıtlar Tab -->
-        <div class="tab-pane fade" id="questions-answers" role="tabpanel" aria-labelledby="questions-answers-tab">
+        <div class="tab-pane fade {% if active_tab == 'questions-answers' %}show active{% endif %}" id="questions-answers" role="tabpanel" aria-labelledby="questions-answers-tab">
             <h3 class="mt-3">En Çok Beğenilen Sorular</h3>
-            <ul class=" mb-4">
+            <ul class="mb-4">
                 {% for question in top_liked_questions %}
-                    <li class="">
-                        <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a> - {{ question.like_count }} beğeni
-                    </li>
+                    <li><a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a> - {{ question.like_count }} beğeni</li>
                 {% endfor %}
             </ul>
             <h3>En Çok Beğenilen Yanıtlar</h3>
-            <ul class="">
+            <ul>
                 {% for answer in top_liked_answers %}
-                    <li class="">
-                        {{ answer.answer_text|truncatewords:20 }} - {{ answer.like_count }} beğeni
-                    </li>
+                    <li>{{ answer.answer_text|truncatewords:20 }} - {{ answer.like_count }} beğeni</li>
                 {% endfor %}
             </ul>
         </div>
 
         <!-- Beğeniler & Kaydetmeler Tab -->
-        <div class="tab-pane fade" id="likes-saves" role="tabpanel" aria-labelledby="likes-saves-tab">
+        <div class="tab-pane fade {% if active_tab == 'likes-saves' %}show active{% endif %}" id="likes-saves" role="tabpanel" aria-labelledby="likes-saves-tab">
             <h3 class="mt-3">En Çok Kaydedilen Sorular</h3>
-            <ul class=" mb-4">
+            <ul class="mb-4">
                 {% for question in top_saved_questions %}
-                    <li class="">
-                        <a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a> - {{ question.save_count }} kez kaydedildi
-                    </li>
+                    <li><a href="{% url 'question_detail' question.id %}">{{ question.question_text }}</a> - {{ question.save_count }} kez kaydedildi</li>
                 {% endfor %}
             </ul>
             <h3>En Çok Kaydedilen Yanıtlar</h3>
-            <ul class="">
+            <ul>
                 {% for answer in top_saved_answers %}
-                    <li class="">
-                        {{ answer.answer_text|truncatewords:20 }} - {{ answer.save_count }} kez kaydedildi
-                    </li>
+                    <li>{{ answer.answer_text|truncatewords:20 }} - {{ answer.save_count }} kez kaydedildi</li>
                 {% endfor %}
             </ul>
         </div>
 
-        <!-- Kaynaklar Tab (Yeni Sekme) -->
-        <div class="tab-pane fade" id="references" role="tabpanel" aria-labelledby="references-tab">
+        <!-- Kaynaklar Tab -->
+        <div class="tab-pane fade {% if active_tab == 'references' %}show active{% endif %}" id="references" role="tabpanel" aria-labelledby="references-tab">
             <h3 class="mt-3">En Çok Kullanılan Kaynaklar</h3>
             {% if top_references.object_list %}
-            <table class="table custom-table">
-                <thead >
-                  <tr>
-                    <th>Yazar Soyadı</th>
-                    <th>Yazar Adı</th>
-                    <th>Yıl</th>
-                    <th>Ek Bilgiler</th>
-                    <th>Kısaltma</th>
-                    <th>Kullanım Sayısı</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for ref in top_references.object_list %}
-                  <tr>
-                    <td>{{ ref.author_surname }}</td>
-                    <td>{{ ref.author_name }}</td>
-                    <td>{{ ref.year }}</td>
-                    <td>{{ ref.rest }}</td>
-                    <td>{{ ref.abbreviation }}</td>
-                    <td>{{ ref.get_usage_count }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-              <!-- Pagination for references -->
-              <nav aria-label="References Pagination" class="">
-                <ul class="pagination custom-pagination ">
-                  {% if top_references.has_previous %}
-                    <li class="page-item ">
-                      <a class="page-link" href="?reference_page={{ top_references.previous_page_number }}&tab=references" aria-label="Önceki">&laquo;</a>
-                    </li>
-                  {% else %}
-                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                  {% endif %}
-                  {% for num in top_references.paginator.page_range %}
-                    {% if top_references.number == num %}
-                      <li class="page-item active"><span class="page-link ">{{ num }}</span></li>
-                    {% else %}
-                      <li class="page-item"><a class="page-link " href="?reference_page={{ num }}&tab=references">{{ num }}</a></li>
-                    {% endif %}
-                  {% endfor %}
-                  {% if top_references.has_next %}
-                    <li class="page-item ">
-                      <a class="page-link " href="?reference_page={{ top_references.next_page_number }}&tab=references" aria-label="Sonraki">&raquo;</a>
-                    </li>
-                  {% else %}
-                    <li class="page-item disabled "><span class="page-link ">&raquo;</span></li>
-                  {% endif %}
-                </ul>
-              </nav>
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Yazar Soyadı</th>
+                            <th>Yazar Adı</th>
+                            <th>Yıl</th>
+                            <th>Ek Bilgiler</th>
+                            <th>Kısaltma</th>
+                            <th>Kullanım Sayısı</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ref in top_references.object_list %}
+                            <tr>
+                                <td>{{ ref.author_surname }}</td>
+                                <td>{{ ref.author_name }}</td>
+                                <td>{{ ref.year }}</td>
+                                <td>{{ ref.rest }}</td>
+                                <td>{{ ref.abbreviation }}</td>
+                                <td>{{ ref.get_usage_count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <!-- Pagination for References (Dropdown ile) -->
+                <nav aria-label="References Pagination">
+                    <ul class="pagination custom-pagination">
+                        {% if top_references.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?reference_page={{ top_references.previous_page_number }}&tab=references" aria-label="Önceki">&laquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+                        
+                        <li class="page-item">
+                            <select class="form-select" id="referencePageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
+                                {% for num in top_references.paginator.page_range %}
+                                    <option value="{{ num }}" {% if top_references.number == num %}selected{% endif %}>
+                                        {{ num }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </li>
+                        
+                        {% if top_references.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?reference_page={{ top_references.next_page_number }}&tab=references" aria-label="Sonraki">&raquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                <script>
+                    document.getElementById('referencePageSelect').addEventListener('change', function() {
+                        var selectedPage = this.value;
+                        window.location.href = "?reference_page=" + selectedPage + "&tab=references";
+                    });
+                </script>
             {% else %}
-              <p>Henüz kaynak kullanılmamış.</p>
+                <p>Henüz kaynak kullanılmamış.</p>
             {% endif %}
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -206,66 +201,66 @@
 <script src="{% static 'js/vote_save.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Sekme seçim ve URL güncelleme
-  var params = new URLSearchParams(window.location.search);
-  var initialTab = params.get('tab');
-  if (initialTab) {
-      var tabTriggerEl = document.querySelector('.nav-link[href="#' + initialTab + '"]');
-      if (tabTriggerEl) {
-          var tab = new bootstrap.Tab(tabTriggerEl);
-          tab.show();
-      }
-  }
-  var tabLinks = document.querySelectorAll('#profileTab .nav-link');
-  tabLinks.forEach(function(link) {
-      link.addEventListener('shown.bs.tab', function(e) {
-          var href = e.target.getAttribute('href');
-          var newTab = href.replace('#', '');
-          var newUrl = window.location.pathname + '?tab=' + newTab;
-          history.pushState({}, '', newUrl);
-      });
-  });
-  // Profil fotoğrafı önizleme
-  var fileInput = document.getElementById('id_photo');
-  var previewContainer = document.getElementById('new-photo-preview-container');
-  var previewImage = document.getElementById('new-photo-preview');
-  if (fileInput) {
-      fileInput.addEventListener('change', function() {
-          var file = this.files[0];
-          if (file) {
-              var reader = new FileReader();
-              reader.onload = function(e) {
-                  previewContainer.style.display = 'block';
-                  previewImage.src = e.target.result;
-              }
-              reader.readAsDataURL(file);
-          } else {
-              previewContainer.style.display = 'none';
-              previewImage.src = '#';
-          }
-      });
-  }
-  // Sabitlenmiş girdi "read-more" işlevi
-  const readMoreLinks = document.querySelectorAll('.read-more');
-  readMoreLinks.forEach(function(link) {
-      link.addEventListener('click', function(event) {
-          event.preventDefault();
-          const answerId = link.getAttribute('data-answer-id');
-          const summary = document.getElementById('answer-summary-' + answerId);
-          const fullText = document.getElementById('answer-full-' + answerId);
-          if (summary && fullText) {
-              if (summary.style.display === 'none') {
-                  summary.style.display = 'block';
-                  fullText.style.display = 'none';
-                  link.textContent = 'Tamamını oku';
-              } else {
-                  summary.style.display = 'none';
-                  fullText.style.display = 'block';
-                  link.textContent = 'Daha az göster';
-              }
-          }
-      });
-  });
+    // Sekme seçim ve URL güncelleme
+    var params = new URLSearchParams(window.location.search);
+    var initialTab = params.get('tab') || 'word-analysis';
+    var tabTriggerEl = document.querySelector('.nav-link[href="#' + initialTab + '"]');
+    if (tabTriggerEl) {
+        var tab = new bootstrap.Tab(tabTriggerEl);
+        tab.show();
+    }
+    var tabLinks = document.querySelectorAll('#statisticsTab .nav-link');
+    tabLinks.forEach(function(link) {
+        link.addEventListener('shown.bs.tab', function(e) {
+            var href = e.target.getAttribute('href');
+            var newTab = href.replace('#', '');
+            var newUrl = window.location.pathname + '?tab=' + newTab;
+            history.pushState({}, '', newUrl);
+        });
+    });
+
+    // Profil fotoğrafı önizleme
+    var fileInput = document.getElementById('id_photo');
+    var previewContainer = document.getElementById('new-photo-preview-container');
+    var previewImage = document.getElementById('new-photo-preview');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            var file = this.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.style.display = 'block';
+                    previewImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+                previewImage.src = '#';
+            }
+        });
+    }
+
+    // Sabitlenmiş girdi "read-more" işlevi
+    var readMoreLinks = document.querySelectorAll('.read-more');
+    readMoreLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            var answerId = link.getAttribute('data-answer-id');
+            var summary = document.getElementById('answer-summary-' + answerId);
+            var fullText = document.getElementById('answer-full-' + answerId);
+            if (summary && fullText) {
+                if (summary.style.display === 'none') {
+                    summary.style.display = 'block';
+                    fullText.style.display = 'none';
+                    link.textContent = 'Tamamını oku';
+                } else {
+                    summary.style.display = 'none';
+                    fullText.style.display = 'block';
+                    link.textContent = 'Daha az göster';
+                }
+            }
+        });
+    });
 });
 </script>
 {% endblock extra_js %}

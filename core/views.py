@@ -1247,6 +1247,9 @@ def site_statistics(request):
         save_count=Count('saveditem')
     ).order_by('-save_count')[:5]
 
+    active_tab = request.GET.get('tab', 'word-analysis')  # Varsayılan olarak "Kelime Analizi" sekmesi
+
+
     # Kelime analizi: Tüm soru ve yanıt metinlerini al, birleştirip küçük harfe çevir
     question_texts = Question.objects.values_list('question_text', flat=True)
     answer_texts = Answer.objects.values_list('answer_text', flat=True)
@@ -1268,15 +1271,15 @@ def site_statistics(request):
         search_word_count = word_counts.get(search_word, 0)
 
     # --- Yeni: En Çok Kullanılan Kaynaklar ---
-    from .models import Reference  # Eğer Reference modeliniz aynı modülde değilse, uygun şekilde içe aktarın.
+    from .models import Reference
     all_references = list(Reference.objects.all())
-    # Sıralama: get_usage_count metoduna göre azalan
     all_references.sort(key=lambda ref: ref.get_usage_count(), reverse=True)
     paginator_references = Paginator(all_references, 5)
     reference_page_number = request.GET.get('reference_page', 1)
     top_references = paginator_references.get_page(reference_page_number)
 
     context = {
+        'active_tab': active_tab,
         'user_count': user_count,
         'total_questions': total_questions,
         'total_answers': total_answers,
@@ -1301,6 +1304,7 @@ def site_statistics(request):
     }
 
     return render(request, 'core/site_statistics.html', context)
+
 def user_homepage(request):
     if not request.user.is_authenticated:
         return redirect('signup')

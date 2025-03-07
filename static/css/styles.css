@@ -138,7 +138,7 @@ mark{
 
 /* List Group */
 .list-group-item:hover {
-    background-color: var(--message-bubble);
+    background-color: var(--link-hover-color);
 }
 .list-group{
     background-color: var(--background-color);
@@ -274,6 +274,18 @@ textarea.auto-expand.expanded {
 }
 
 /* Dropdown Icons */
+.dropdown-menu {
+    background-color: var(--background-color) !important;
+    border-color: var(--text-color) !important; 
+}
+
+.dropdown-menu .dropdown-item:hover{
+    /* background-color: var(--dropdown-hover-background-color) */
+}
+
+.dropdown-menu .dropdown-item {
+    color: var(--text-color) !important;
+}
 .dropdown-item i {
     width: 20px;
     text-align: center;
@@ -399,7 +411,7 @@ textarea.auto-expand.expanded {
 }
 
 .baslik:hover{
-    background-color:#E6F0FA ; 
+    background-color:var(--dropdown-hover-background-color)
 }
 
 @media (max-width: 600px) {
