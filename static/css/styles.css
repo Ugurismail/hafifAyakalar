@@ -17,6 +17,8 @@ a {
     color: var(--tbas-color, #000000);
 }
 
+
+
 .container{
     max-width: 100%;
 }
@@ -140,6 +142,7 @@ mark{
 }
 .list-group{
     background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 /* Pagination */
@@ -396,7 +399,7 @@ textarea.auto-expand.expanded {
 }
 
 .baslik:hover{
-    background-color: var(--nav-link-hover-bg, #495057);
+    background-color:#E6F0FA ; 
 }
 
 @media (max-width: 600px) {
@@ -417,6 +420,7 @@ textarea.auto-expand.expanded {
 .list-group-item{
     background-color: var(--background-color);
     border-color: var(--text-color);
+    color: var(--text-color);
 }
 
 .list-group-item-action.active,
@@ -425,9 +429,30 @@ textarea.auto-expand.expanded {
   color: #ffffff; 
 }
 
+
+.custom-table {
+    background-color: var(--background-color); /* İçerik arka plan rengi (site ayarınız varsa CSS değişkeniyle) */
+    color: var(--text-color, #000000);            /* Metin rengi */
+  }
+  
+  .custom-table thead th {
+    background-color: var(--background-color);
+    color: var(--header-text-color, #333333);
+  }
+  
+  /* Alternatif: Zebra şerit efekti yerine sitenizle uyumlu satır arka planı */
+  .custom-table tbody tr:nth-of-type(odd) {
+    background-color: var(--background-color);
+  }
+  
 .card{
     border: var(--background-color);
     border-width: 10px;
+}
+
+.card-header{
+    background-color: var(--background-color);
+    border-color: var(--background-color);
 }
 .card-header a{
     font-size: 20px !important;
@@ -473,7 +498,46 @@ textarea.auto-expand.expanded {
 .form-control{
     background-color: var(--background-color) !important;
     border-color: var(--text-color) !important;
+    color: var(--text-color);
 }
+
+.form-control::placeholder{
+    color: var(--text-color) !important;
+}
+
+.form-control:focus{
+    color: var(--text-color);
+}
+
+.btn-outline-secondary{
+    border-color: var(--text-color) !important;
+    color: var(--text-color);
+}
+
+#advancedSearchBtn{
+border-color: var(--text-color);
+color: var(--text-color);
+  }
+#search-input::placeholder {
+    color: var(--text-color);
+}
+  
+.auto-expand::placeholder {
+    color: var(--text-color);
+    opacity: 1; /* Bazı tarayıcılarda transparanlığı önlemek için */
+}
+
+.auto-expand {
+    color: var(--text-color);
+}
+
+.auto-expand {
+    color: var(--text-color) !important;
+}
+.auto-expand:focus {
+    color: var(--text-color) !important;
+}
+
 
 a.ms-2 i.bi-pencil-square,
 a.ms-2 i.bi-trash {

@@ -11,16 +11,13 @@
     <div class="col-md-3 mb-4">
       <div class="card border-0 shadow-sm">
         <div class="card-body text-center">
-          <!-- Profil Fotoğrafı -->
           {% if user_profile.photo %}
             <img src="{{ user_profile.photo.url }}" alt="Profil Fotoğrafı" class="rounded-circle img-fluid mb-3" style="max-width:150px;">
           {% else %}
             <img src="{% static 'imgs/default_profile.jpg' %}" alt="Profil Fotoğrafı" class="rounded-circle img-fluid mb-3" style="max-width:150px;">
           {% endif %}
           <h4 class="card-title mb-1">{{ profile_user.username }}</h4>
-          <p class="text-muted mb-3">
-            <strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen
-          </p>
+          <p class="mb-3"><strong>{{ follower_count }}</strong> Takipçi | <strong>{{ following_count }}</strong> Takip Edilen</p>
           <hr>
           {% if is_own_profile %}
             <div class="d-grid gap-2">
@@ -29,15 +26,9 @@
               </button>
               <a href="{% url 'password_change' %}" class="btn btn-outline-secondary btn-sm">Şifreyi Değiştir</a>
               <a href="{% url 'user_settings' %}" class="btn btn-outline-secondary btn-sm">Ayarlar</a>
-              <a href="{% url 'download_entries_json' profile_user.username %}" class="btn btn-outline-secondary btn-sm">
-                Tüm Entry’lerimi (JSON) İndir
-              </a>
-              <a href="{% url 'download_entries_xlsx' profile_user.username %}" class="btn btn-outline-secondary btn-sm">
-                Tüm Entry’lerimi (Excel) İndir
-              </a>
-              <a href="{% url 'download_entries_docx' profile_user.username %}" class="btn btn-outline-secondary btn-sm">
-                Tüm Entry’lerimi (Word) İndir
-              </a>
+              <a href="{% url 'download_entries_json' profile_user.username %}" class="btn btn-outline-secondary btn-sm">Tüm Entry’lerimi (JSON) İndir</a>
+              <a href="{% url 'download_entries_xlsx' profile_user.username %}" class="btn btn-outline-secondary btn-sm">Tüm Entry’lerimi (Excel) İndir</a>
+              <a href="{% url 'download_entries_docx' profile_user.username %}" class="btn btn-outline-secondary btn-sm">Tüm Entry’lerimi (Word) İndir</a>
             </div>
           {% else %}
             {% if request.user.is_authenticated %}
@@ -59,7 +50,7 @@
       </div>
     </div>
     
-    <!-- Sağ Panel: Sabit İçerik ve Profil Sekmeleri -->
+    <!-- Sağ Panel: Profil Sekmeleri -->
     <div class="col-md-9">
       {% if pinned_entry and pinned_entry.answer %}
       <div class="card mb-4 shadow-sm">
@@ -95,74 +86,43 @@
         {% endif %}
       </div>
       {% else %}
-      <p class="mb-4">Sabitlenmiş içerik bulunamadı.</p>
+        <p class="mb-4">Sabitlenmiş içerik bulunamadı.</p>
       {% endif %}
       
-      <!-- Profil Sekmeleri -->
+      <!-- Sekme Menüsü -->
       <ul class="nav nav-tabs" id="profileTab" role="tablist">
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'sorular' %}active{% endif %}"
-             id="sorular-tab" data-bs-toggle="tab" href="#sorular" role="tab"
-             aria-controls="sorular" aria-selected="{% if active_tab == 'sorular' %}true{% else %}false{% endif %}">
-             Sorular
-          </a>
+          <a class="nav-link {% if active_tab == 'sorular' %}active{% endif %}" id="sorular-tab" data-bs-toggle="tab" href="#sorular" role="tab" aria-controls="sorular" aria-selected="{% if active_tab == 'sorular' %}true{% else %}false{% endif %}">Sorular</a>
         </li>
         {% if is_own_profile %}
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'davetler' %}active{% endif %}"
-             id="davetler-tab" data-bs-toggle="tab" href="#davetler" role="tab"
-             aria-controls="davetler" aria-selected="{% if active_tab == 'davetler' %}true{% else %}false{% endif %}">
-             Davetler
-          </a>
+          <a class="nav-link {% if active_tab == 'davetler' %}active{% endif %}" id="davetler-tab" data-bs-toggle="tab" href="#davetler" role="tab" aria-controls="davetler" aria-selected="{% if active_tab == 'davetler' %}true{% else %}false{% endif %}">Davetler</a>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link {% if active_tab == 'davet_aagac' %}active{% endif %}" id="davet-aagac-tab" data-bs-toggle="tab" data-bs-target="#davet_aagac" type="button" role="tab">Davet Ağaç</button>
         </li>
         {% endif %}
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'yanitlar' %}active{% endif %}"
-             id="yanitlar-tab" data-bs-toggle="tab" href="#yanitlar" role="tab"
-             aria-controls="yanitlar" aria-selected="{% if active_tab == 'yanitlar' %}true{% else %}false{% endif %}">
-             Yanıtlar
-          </a>
+          <a class="nav-link {% if active_tab == 'yanitlar' %}active{% endif %}" id="yanitlar-tab" data-bs-toggle="tab" href="#yanitlar" role="tab" aria-controls="yanitlar" aria-selected="{% if active_tab == 'yanitlar' %}true{% else %}false{% endif %}">Yanıtlar</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'kelimeler' %}active{% endif %}"
-             id="kelimeler-tab" data-bs-toggle="tab" href="#kelimeler" role="tab"
-             aria-controls="kelimeler" aria-selected="{% if active_tab == 'kelimeler' %}true{% else %}false{% endif %}">
-             Kelimeler
-          </a>
+          <a class="nav-link {% if active_tab == 'kelimeler' %}active{% endif %}" id="kelimeler-tab" data-bs-toggle="tab" href="#kelimeler" role="tab" aria-controls="kelimeler" aria-selected="{% if active_tab == 'kelimeler' %}true{% else %}false{% endif %}">Kelimeler</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'istatistikler' %}active{% endif %}"
-             id="istatistikler-tab" data-bs-toggle="tab" href="#istatistikler" role="tab"
-             aria-controls="istatistikler" aria-selected="{% if active_tab == 'istatistikler' %}true{% else %}false{% endif %}">
-             İstatistikler
-          </a>
+          <a class="nav-link {% if active_tab == 'istatistikler' %}active{% endif %}" id="istatistikler-tab" data-bs-toggle="tab" href="#istatistikler" role="tab" aria-controls="istatistikler" aria-selected="{% if active_tab == 'istatistikler' %}true{% else %}false{% endif %}">İstatistikler</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'tanimlar' %}active{% endif %}"
-             id="tanimlar-tab" data-bs-toggle="tab" href="#tanimlar" role="tab"
-             aria-controls="tanimlar" aria-selected="{% if active_tab == 'tanimlar' %}true{% else %}false{% endif %}">
-             Tanımlarım
-          </a>
+          <a class="nav-link {% if active_tab == 'tanimlar' %}active{% endif %}" id="tanimlar-tab" data-bs-toggle="tab" href="#tanimlar" role="tab" aria-controls="tanimlar" aria-selected="{% if active_tab == 'tanimlar' %}true{% else %}false{% endif %}">Tanımlarım</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'kaynaklarim' %}active{% endif %}"
-             id="kaynaklarim-tab" data-bs-toggle="tab" href="#kaynaklarim" role="tab"
-             aria-controls="kaynaklarim" aria-selected="{% if active_tab == 'kaynaklarim' %}true{% else %}false{% endif %}">
-             Kaynaklarım
-          </a>
+          <a class="nav-link {% if active_tab == 'kaynaklarim' %}active{% endif %}" id="kaynaklarim-tab" data-bs-toggle="tab" href="#kaynaklarim" role="tab" aria-controls="kaynaklarim" aria-selected="{% if active_tab == 'kaynaklarim' %}true{% else %}false{% endif %}">Kaynaklarım</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'kaydedilenler' %}active{% endif %}"
-             id="kaydedilenler-tab" data-bs-toggle="tab" href="#kaydedilenler" role="tab"
-             aria-controls="kaydedilenler" aria-selected="{% if active_tab == 'kaydedilenler' %}true{% else %}false{% endif %}">
-             Kaydedilenler
-          </a>
+          <a class="nav-link {% if active_tab == 'kaydedilenler' %}active{% endif %}" id="kaydedilenler-tab" data-bs-toggle="tab" href="#kaydedilenler" role="tab" aria-controls="kaydedilenler" aria-selected="{% if active_tab == 'kaydedilenler' %}true{% else %}false{% endif %}">Kaydedilenler</a>
         </li>
       </ul>
       
+      <!-- Sekme İçerikleri -->
       <div class="tab-content p-3 border border-top-0" id="profileTabContent">
         <!-- Sorular Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'sorular' %}show active{% endif %}" id="sorular" role="tabpanel" aria-labelledby="sorular-tab">
@@ -177,7 +137,7 @@
               <p>Henüz soru yok.</p>
             {% endfor %}
             <nav aria-label="Sorular Sayfaları">
-              <ul class="pagination">
+              <ul class="pagination custom-pagination">
                 {% if questions.has_previous %}
                   <li class="page-item">
                     <a class="page-link" href="?question_page={{ questions.previous_page_number }}&tab=sorular" aria-label="Önceki">&laquo;</a>
@@ -185,13 +145,14 @@
                 {% else %}
                   <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                 {% endif %}
-                {% for num in questions.paginator.page_range %}
-                  {% if questions.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                  {% else %}
-                    <li class="page-item"><a class="page-link" href="?question_page={{ num }}&tab=sorular">{{ num }}</a></li>
-                  {% endif %}
-                {% endfor %}
+                <!-- Dropdown ile sayfa seçimi -->
+                <li class="page-item">
+                  <select class="form-select" id="questionPageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
+                    {% for num in questions.paginator.page_range %}
+                      <option value="{{ num }}" {% if questions.number == num %} selected {% endif %}>{{ num }}</option>
+                    {% endfor %}
+                  </select>
+                </li>
                 {% if questions.has_next %}
                   <li class="page-item">
                     <a class="page-link" href="?question_page={{ questions.next_page_number }}&tab=sorular" aria-label="Sonraki">&raquo;</a>
@@ -201,20 +162,23 @@
                 {% endif %}
               </ul>
             </nav>
+            <script>
+              document.getElementById('questionPageSelect').addEventListener('change', function() {
+                var selectedPage = this.value;
+                window.location.href = "?question_page=" + selectedPage + "&tab=sorular";
+              });
+            </script>
           </div>
         </div>
         
-        <!-- Davetler Sekmesi (Kendi Profil için) -->
         {% if is_own_profile %}
+        <!-- Davetler Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}" id="davetler" role="tabpanel" aria-labelledby="davetler-tab">
           <div class="mt-3">
             <h5>Davetlerim</h5>
             <p>Gönderilen Davetiye Sayısı: {{ total_invitations }}</p>
             <p>Kullanılan Davetiye Sayısı: {{ used_invitations }}</p>
             <p>Kalan Davetiye Sayısı: {{ remaining_invitations }}</p>
-
-
-
             {% if remaining_invitations > 0 %}
               <form action="{% url 'create_invitation' %}" method="post" class="mb-3">
                 {% csrf_token %}
@@ -227,9 +191,7 @@
             {% else %}
               <p>Davetiye kotanız dolmuştur.</p>
             {% endif %}
-
-            <!-- Halihazırdaki davetiye tablosu -->
-            <table class="table table-sm">
+            <table class="table table-sm custom-table">
               <thead>
                 <tr>
                   <th>Kod</th>
@@ -241,42 +203,38 @@
               </thead>
               <tbody>
                 {% for invite in invitations %}
-                <tr>
-                  <td>{{ invite.code }}</td>
-                  <td>{{ invite.created_at|date:"d M Y H:i" }}</td>
-                  <td>{{ invite.quota_granted }}</td>
-                  <td>{% if invite.is_used %}Evet{% else %}Hayır{% endif %}</td>
-                  <td>{% if invite.used_by %}{{ invite.used_by.username }}{% else %}-{% endif %}</td>
-                </tr>
+                  <tr>
+                    <td>{{ invite.code }}</td>
+                    <td>{{ invite.created_at|date:"d M Y H:i" }}</td>
+                    <td>{{ invite.quota_granted }}</td>
+                    <td>{% if invite.is_used %}Evet{% else %}Hayır{% endif %}</td>
+                    <td>{% if invite.used_by %}{{ invite.used_by.username }}{% else %}-{% endif %}</td>
+                  </tr>
                 {% empty %}
-                <tr>
-                  <td colspan="5">Henüz davetiye gönderilmedi.</td>
-                </tr>
+                  <tr><td colspan="5">Henüz davetiye gönderilmedi.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         </div>
+        
+        <!-- Davet Ağaç Sekmesi -->
+        <div class="tab-pane fade {% if active_tab == 'davet_aagac' %}show active{% endif %}" id="davet_aagac" role="tabpanel" aria-labelledby="davet-aagac-tab">
+          <h5>Davet Ağaç</h5>
+          {% if invitation_tree %}
+            <div class="invitation-tree">
+              <ul class="list-unstyled">
+                {% for node in invitation_tree %}
+                  {% include 'core/invitation_node.html' with node=node %}
+                {% endfor %}
+              </ul>
+            </div>
+          {% else %}
+            <p>Henüz davetiye gönderilmedi.</p>
+          {% endif %}
+        </div>
         {% endif %}
-                
-        {% if is_own_profile %}
-      <!-- Davet Ağaç Sekmesi -->
-      <div class="tab-pane fade {% if active_tab == 'davet_aagac' %}show active{% endif %}" id="davet_aagac" role="tabpanel" aria-labelledby="davet-aagac-tab">
-        <h5>Davet Ağaç</h5>
-        {% if invitation_tree %}
-          <div class="invitation-tree">
-            <ul class="list-unstyled">
-              {% for node in invitation_tree %}
-                {% include 'core/invitation_node.html' with node=node %}
-              {% endfor %}
-            </ul>
-          </div>
-        {% else %}
-          <p>Henüz davetiye gönderilmedi.</p>
-        {% endif %}
-      </div>
-      {% endif %}
-
+        
         <!-- Yanıtlar Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'yanitlar' %}show active{% endif %}" id="yanitlar" role="tabpanel" aria-labelledby="yanitlar-tab">
           <div class="mt-3">
@@ -290,14 +248,10 @@
                 <a href="{% url 'single_answer' answer.question.id answer.id %}" class="text-decoration-none">
                   {{ answer.answer_text|truncatewords:20 }}
                 </a>
-                
                 {% if answer.user == request.user %}
                   <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-danger float-end"
-                            onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">
-                      Sil
-                    </button>
+                    <button type="submit" class="btn btn-sm btn-danger float-end" onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">Sil</button>
                   </form>
                 {% endif %}
               </div>
@@ -305,7 +259,7 @@
               <p>Henüz yanıt yok.</p>
             {% endfor %}
             <nav aria-label="Yanıtlar Sayfaları">
-              <ul class="pagination">
+              <ul class="pagination custom-pagination">
                 {% if answers.has_previous %}
                   <li class="page-item">
                     <a class="page-link" href="?answer_page={{ answers.previous_page_number }}&tab=yanitlar" aria-label="Önceki">&laquo;</a>
@@ -313,13 +267,14 @@
                 {% else %}
                   <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                 {% endif %}
-                {% for num in answers.paginator.page_range %}
-                  {% if answers.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                  {% else %}
-                    <li class="page-item"><a class="page-link" href="?answer_page={{ num }}&tab=yanitlar">{{ num }}</a></li>
-                  {% endif %}
-                {% endfor %}
+                <!-- Dropdown ile sayfa seçimi -->
+                <li class="page-item">
+                  <select class="form-select" id="answerPageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
+                    {% for num in answers.paginator.page_range %}
+                      <option value="{{ num }}" {% if answers.number == num %} selected {% endif %}>{{ num }}</option>
+                    {% endfor %}
+                  </select>
+                </li>
                 {% if answers.has_next %}
                   <li class="page-item">
                     <a class="page-link" href="?answer_page={{ answers.next_page_number }}&tab=yanitlar" aria-label="Sonraki">&raquo;</a>
@@ -329,6 +284,12 @@
                 {% endif %}
               </ul>
             </nav>
+            <script>
+              document.getElementById('answerPageSelect').addEventListener('change', function() {
+                var selectedPage = this.value;
+                window.location.href = "?answer_page=" + selectedPage + "&tab=yanitlar";
+              });
+            </script>
           </div>
         </div>
         
@@ -367,7 +328,7 @@
                   <input type="hidden" name="exclude_words" value="{{ exclude_words }}">
                   <div class="input-group mb-2">
                     <input type="text" name="exclude_word" class="form-control" placeholder="Çıkarmak istediğiniz kelimeyi girin">
-                    <button class="btn btn-danger btn-sm" type="submit">Çıkar</button>
+                    <button class="btn btn-secondary btn-sm" type="submit">Çıkar</button>
                   </div>
                 </form>
               {% endif %}
@@ -463,95 +424,106 @@
             {% endif %}
           </div>
         </div>
-        
         <!-- Tanımlarım Sekmesi -->
-        <div class="tab-pane fade {% if active_tab == 'tanimlar' %}show active{% endif %}" id="tanimlar" role="tabpanel" aria-labelledby="tanimlar-tab">
-          <div class="mt-3">
-            <h5>Tanımlarım</h5>
-            {% if definitions_page.object_list %}
-            <table class="table table-striped table-sm">
-              <thead>
-                <tr>
-                  <th>Kelime (Başlık/Soru)</th>
-                  <th>Tanım İçeriği</th>
-                  <th style="width: 180px;">İşlemler</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for definition in definitions_page.object_list %}
-                <tr>
-                  <td>
-                    <a href="{% url 'question_detail' definition.question.id %}" class="text-decoration-none">
-                      {{ definition.question.question_text }}
-                    </a>
-                  </td>
-                  <td>{{ definition.definition_text|truncatewords:25 }}</td>
-                  <td>
-                    <a href="{% url 'edit_definition' definition.id %}?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a>
-                    <form action="{% url 'delete_definition' definition.id %}" method="post" class="d-inline">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu tanımı silmek istediğinize emin misiniz?');">Sil</button>
-                    </form>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            {% include 'core/pagination.html' with page_obj=definitions_page page_param='d_page' active_tab='tanimlar' %}
-            {% else %}
-              <p>Henüz tanımınız bulunmuyor.</p>
-            {% endif %}
-          </div>
-        </div>
-
-                
-        <!-- Kaynaklarım Sekmesi -->
-        <div class="tab-pane fade {% if active_tab == 'kaynaklarim' %}show active{% endif %}" id="kaynaklarim" role="tabpanel" aria-labelledby="kaynaklarim-tab">
-          <div class="mt-3">
-            <h5>Kaynaklarım</h5>
-            {% if references_page.object_list %}
-              <table class="table table-striped">
+          <div class="tab-pane fade {% if active_tab == 'tanimlar' %}show active{% endif %}" id="tanimlar" role="tabpanel" aria-labelledby="tanimlar-tab">
+            <div class="mt-3">
+              <h5>Tanımlarım</h5>
+              <!-- Arama Formu -->
+              <form method="get" action="">
+                <input type="hidden" name="tab" value="tanimlar">
+                <div class="input-group mb-3">
+                  <input type="text" name="q" id="definitionsSearchInput" class="form-control" placeholder="Tanım arayın..." value="{{ request.GET.q }}">
+                  <button type="submit" class="btn btn-primary">Ara</button>
+                </div>
+              </form>
+              <table class="table custom-table table-sm">
                 <thead>
                   <tr>
-                    <th>Yazar Soyadı</th>
-                    <th>Yazar Adı</th>
-                    <th>Yıl</th>
-                    <th>Ek Bilgiler</th>
-                    <th>Kısaltma</th>
-                    <th>Kullanım Sayısı</th>
-                    <th>İşlemler</th>
+                    <th>Kelime (Başlık/Soru)</th>
+                    <th>Tanım İçeriği</th>
+                    <th style="width: 180px;">İşlemler</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {% for ref in references_page.object_list %}
-                  <tr>
-                    <td>{{ ref.author_surname }}</td>
-                    <td>{{ ref.author_name }}</td>
-                    <td>{{ ref.year }}</td>
-                    <td>{{ ref.rest }}</td>
-                    <td>{{ ref.abbreviation }}</td>
-                    <td>{{ ref.get_usage_count }}</td>
-                    <td>
-                      <a href="{% url 'edit_reference' ref.id %}" class="btn btn-sm btn-primary" title="Düzenle">
-                        <i class="bi bi-pencil-square"></i>
-                      </a>
-                      <a href="{% url 'delete_reference' ref.id %}" class="btn btn-sm btn-danger" 
-                        title="Sil" onclick="return confirm('Bu kaynağı silmek istediğinize emin misiniz?');">
-                        <i class="bi bi-trash"></i>
-                      </a>
-                    </td>
-                  </tr>
+                <tbody id="definitionsTbody">
+                  {% for definition in definitions_page.object_list %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'question_detail' definition.question.id %}" class="text-decoration-none">
+                          {{ definition.question.question_text }}
+                        </a>
+                      </td>
+                      <td>{{ definition.definition_text|truncatewords:25 }}</td>
+                      <td>
+                        <a href="{% url 'edit_definition' definition.id %}?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a>
+                        <form action="{% url 'delete_definition' definition.id %}?tab=tanimlar" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm('Bu tanımı silmek istediğinize emin misiniz?');">Sil</button>
+                        </form>
+                      </td>
+                    </tr>
                   {% endfor %}
                 </tbody>
               </table>
-              {% include 'core/pagination.html' with page_obj=references_page page_param='r_page' active_tab='kaynaklarim' %}
-            {% else %}
-              <p>Henüz kaynak eklemediniz.</p>
-            {% endif %}
+              {% include 'core/pagination.html' with page_obj=definitions_page page_param='d_page' active_tab='tanimlar' %}
+            </div>
           </div>
-        </div>
 
-                
+          <!-- Kaynaklarım Sekmesi -->
+          <div class="tab-pane fade {% if active_tab == 'kaynaklarim' %}show active{% endif %}" id="kaynaklarim" role="tabpanel" aria-labelledby="kaynaklarim-tab">
+            <div class="mt-3">
+              <h5>Kaynaklarım</h5>
+              <!-- Arama Formu -->
+              <form method="get" action="" id="referencesSearchForm">
+                <input type="hidden" name="tab" value="kaynaklarim">
+                <div class="input-group mb-3">
+                  <input type="text" name="q" id="referencesSearchInput" class="form-control" placeholder="Kaynak arayın..." value="{{ request.GET.q }}">
+                  <button type="submit" class="btn btn-primary">Ara</button>
+                </div>
+              </form>
+              <div id="referencesContainer">
+                {% if references_page.object_list %}
+                  <table class="table custom-table">
+                    <thead>
+                      <tr>
+                        <th>Yazar Soyadı</th>
+                        <th>Yazar Adı</th>
+                        <th>Yıl</th>
+                        <th>Ek Bilgiler</th>
+                        <th>Kısaltma</th>
+                        <th>Kullanım Sayısı</th>
+                        <th>İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody id="referencesTbody">
+                      {% for ref in references_page.object_list %}
+                        <tr>
+                          <td>{{ ref.author_surname }}</td>
+                          <td>{{ ref.author_name }}</td>
+                          <td>{{ ref.year }}</td>
+                          <td>{{ ref.rest }}</td>
+                          <td>{{ ref.abbreviation }}</td>
+                          <td>{{ ref.get_usage_count }}</td>
+                          <td>
+                            <a href="{% url 'edit_reference' ref.id %}?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle">
+                              <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a href="{% url 'delete_reference' ref.id %}?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm('Bu kaynağı silmek istediğinize emin misiniz?');">
+                              <i class="bi bi-trash"></i>
+                            </a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                  {% include 'core/pagination.html' with page_obj=references_page page_param='r_page' active_tab='kaynaklarim' %}
+                {% else %}
+                  <p>Henüz kaynak eklemediniz.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+
         <!-- Kaydedilenler Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'kaydedilenler' %}show active{% endif %}" id="kaydedilenler" role="tabpanel" aria-labelledby="kaydedilenler-tab">
           <div class="mt-3">
@@ -582,7 +554,6 @@
                       <a href="{% url 'single_answer' answer_obj.question.id answer_obj.id %}" class="text-decoration-none">
                         {{ answer_obj.answer_text|truncatewords:20 }}
                       </a>
-                      
                       <div class="position-absolute top-0 end-0 me-2 mt-2">
                         <a href="#" class="save-btn btn btn-sm btn-link icon-black-white" data-content-type="answer" data-object-id="{{ answer_obj.id }}" title="Kaydetmeyi kaldır">
                           <i class="bi bi-bookmark-x fs-5"></i>
@@ -665,68 +636,210 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/answer_form.js' %}"></script>
 <script src="{% static 'js/vote_save.js' %}"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+  // Debounce fonksiyonu: Çok sık yapılan AJAX çağrılarını engeller
+  function debounce(func, delay) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(function(){
+        func.apply(context, args);
+      }, delay);
+    };
+  }
+
+  // Ortak AJAX arama fonksiyonu: inputSelector, endpointUrl, targetTbody ve sekmeye göre (örneğin "tanimlar" veya "kaynaklarim") işlem yapar
+  function setupDynamicSearch(inputSelector, endpointUrl, targetTbodySelector) {
+    $(inputSelector).on('keyup', debounce(function(){
+      var query = $(this).val();
+      $.ajax({
+        url: endpointUrl,
+        data: { q: query },
+        dataType: "json",
+        success: function(data) {
+          var tbody = $(targetTbodySelector);
+          tbody.empty();
+          // Eğer tanımlar için veri geldiyse
+          if(data.definitions) {
+            $.each(data.definitions, function(i, def){
+              var row = '<tr>'+
+                '<td>'+ def.question_text +'</td>'+
+                '<td>'+ def.definition_text +'</td>'+
+                '<td>'+
+                  '<a href="/edit_definition/'+ def.id + '/?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a> '+
+                  '<form action="/delete_definition/'+ def.id + '/?tab=tanimlar" method="post" class="d-inline">{% csrf_token %}'+
+                  '<button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm(\'Bu tanımı silmek istediğinize emin misiniz?\');">Sil</button>'+
+                  '</form>'+
+                '</td>'+
+                '</tr>';
+              tbody.append(row);
+            });
+          }
+          // Eğer kaynaklar için veri geldiyse
+          else if(data.references) {
+            $.each(data.references, function(i, ref){
+              var row = '<tr>'+
+                '<td>'+ ref.author_surname +'</td>'+
+                '<td>'+ ref.author_name +'</td>'+
+                '<td>'+ ref.year +'</td>'+
+                '<td>'+ ref.rest +'</td>'+
+                '<td>'+ ref.abbreviation +'</td>'+
+                '<td>'+(ref.usage_count || 0)+'</td>'+
+                '<td>'+
+                  '<a href="/edit_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle"><i class="bi bi-pencil-square"></i></a> '+
+                  '<a href="/delete_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm(\'Bu kaynağı silmek istediğinize emin misiniz?\');"><i class="bi bi-trash"></i></a>'+
+                '</td>'+
+                '</tr>';
+              tbody.append(row);
+            });
+          }
+          else {
+            tbody.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
+          }
+        }
+      });
+    }, 300));
+  }
+
+  $(document).ready(function(){
+    setupDynamicSearch('#definitionsSearchInput', "{% url 'get_user_definitions' %}", '#definitionsTbody');
+    setupDynamicSearch('#referencesSearchInput', "{% url 'get_references' %}", '#referencesTbody');
+  });
+</script>
+
+<script>
+  // DRY debounce fonksiyonu
+  function debounce(func, delay) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(function() {
+        func.apply(context, args);
+      }, delay);
+    };
+  }
+
+  // Ortak AJAX arama fonksiyonu
+  function setupDynamicSearch(inputSelector, endpointUrl, targetTbodySelector) {
+    $(inputSelector).on('keyup', debounce(function(){
+      var query = $(this).val();
+      $.ajax({
+        url: endpointUrl,
+        data: { q: query },
+        dataType: "json",
+        success: function(data) {
+          var tbody = $(targetTbodySelector);
+          tbody.empty();
+          if(data.definitions) {
+            $.each(data.definitions, function(i, item){
+              var row = '<tr>'+
+                '<td>'+item.question_text+'</td>'+
+                '<td>'+item.definition_text+'</td>'+
+                '<td>'+
+                  '<a href="/edit_definition/'+item.id+'/?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a> '+
+                  '<form action="/delete_definition/'+item.id+'/?tab=tanimlar" method="post" class="d-inline">{% csrf_token %}'+
+                  '<button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm(\'Bu tanımı silmek istediğinize emin misiniz?\');">Sil</button>'+
+                  '</form>'+
+                '</td>'+
+                '</tr>';
+              tbody.append(row);
+            });
+          } else if(data.references) {
+            $.each(data.references, function(i, item){
+              var row = '<tr>'+
+                '<td>'+item.author_surname+'</td>'+
+                '<td>'+item.author_name+'</td>'+
+                '<td>'+item.year+'</td>'+
+                '<td>'+item.rest+'</td>'+
+                '<td>'+item.abbreviation+'</td>'+
+                '<td>'+(item.usage_count || 0)+'</td>'+
+                '<td>'+
+                  '<a href="/edit_reference/'+item.id+'/?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle"><i class="bi bi-pencil-square"></i></a> '+
+                  '<a href="/delete_reference/'+item.id+'/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm(\'Bu kaynağı silmek istediğinize emin misiniz?\');"><i class="bi bi-trash"></i></a>'+
+                '</td>'+
+                '</tr>';
+              tbody.append(row);
+            });
+          } else {
+            tbody.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
+          }
+        }
+      });
+    }, 300));
+  }
+
+  // Tanımlarım ve Kaynaklarım için dinamik aramayı başlatıyoruz
+  $(document).ready(function(){
+    setupDynamicSearch('#definitionsSearchInput', "{% url 'get_user_definitions' %}", '#definitionsTbody');
+    setupDynamicSearch('#referencesSearchInput', "{% url 'get_references' %}", '#referencesTbody');
+  });
+
   // Sekme seçim ve URL güncelleme
-  var params = new URLSearchParams(window.location.search);
-  var initialTab = params.get('tab');
-  if (initialTab) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var params = new URLSearchParams(window.location.search);
+    var initialTab = params.get('tab');
+    if (initialTab) {
       var tabTriggerEl = document.querySelector('.nav-link[href="#' + initialTab + '"]');
       if (tabTriggerEl) {
-          var tab = new bootstrap.Tab(tabTriggerEl);
-          tab.show();
+        var tab = new bootstrap.Tab(tabTriggerEl);
+        tab.show();
       }
-  }
-  var tabLinks = document.querySelectorAll('#profileTab .nav-link');
-  tabLinks.forEach(function(link) {
+    }
+    var tabLinks = document.querySelectorAll('#profileTab .nav-link');
+    tabLinks.forEach(function(link) {
       link.addEventListener('shown.bs.tab', function(e) {
-          var href = e.target.getAttribute('href');
-          var newTab = href.replace('#', '');
-          var newUrl = window.location.pathname + '?tab=' + newTab;
-          history.pushState({}, '', newUrl);
+        var href = e.target.getAttribute('href');
+        var newTab = href.replace('#', '');
+        var newUrl = window.location.pathname + '?tab=' + newTab;
+        history.pushState({}, '', newUrl);
       });
+    });
   });
+
   // Profil fotoğrafı önizleme
   var fileInput = document.getElementById('id_photo');
   var previewContainer = document.getElementById('new-photo-preview-container');
   var previewImage = document.getElementById('new-photo-preview');
   if (fileInput) {
-      fileInput.addEventListener('change', function() {
-          var file = this.files[0];
-          if (file) {
-              var reader = new FileReader();
-              reader.onload = function(e) {
-                  previewContainer.style.display = 'block';
-                  previewImage.src = e.target.result;
-              }
-              reader.readAsDataURL(file);
-          } else {
-              previewContainer.style.display = 'none';
-              previewImage.src = '#';
-          }
-      });
+    fileInput.addEventListener('change', function() {
+      var file = this.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          previewContainer.style.display = 'block';
+          previewImage.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+      } else {
+        previewContainer.style.display = 'none';
+        previewImage.src = '#';
+      }
+    });
   }
+
   // Sabitlenmiş girdi "read-more" işlevi
-  const readMoreLinks = document.querySelectorAll('.read-more');
+  var readMoreLinks = document.querySelectorAll('.read-more');
   readMoreLinks.forEach(function(link) {
-      link.addEventListener('click', function(event) {
-          event.preventDefault();
-          const answerId = link.getAttribute('data-answer-id');
-          const summary = document.getElementById('answer-summary-' + answerId);
-          const fullText = document.getElementById('answer-full-' + answerId);
-          if (summary && fullText) {
-              if (summary.style.display === 'none') {
-                  summary.style.display = 'block';
-                  fullText.style.display = 'none';
-                  link.textContent = 'Tamamını oku';
-              } else {
-                  summary.style.display = 'none';
-                  fullText.style.display = 'block';
-                  link.textContent = 'Daha az göster';
-              }
-          }
-      });
+    link.addEventListener('click', function(event) {
+      event.preventDefault();
+      var answerId = link.getAttribute('data-answer-id');
+      var summary = document.getElementById('answer-summary-' + answerId);
+      var fullText = document.getElementById('answer-full-' + answerId);
+      if (summary && fullText) {
+        if (summary.style.display === 'none') {
+          summary.style.display = 'block';
+          fullText.style.display = 'none';
+          link.textContent = 'Tamamını oku';
+        } else {
+          summary.style.display = 'none';
+          fullText.style.display = 'block';
+          link.textContent = 'Daha az göster';
+        }
+      }
+    });
   });
-});
 </script>
 {% endblock extra_js %}

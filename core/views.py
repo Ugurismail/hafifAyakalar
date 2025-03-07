@@ -194,6 +194,12 @@ def user_profile(request, username):
     invitation_tree = get_invitation_tree(request.user) if request.user == profile_user else None
     # -- Tanımlar --
     definitions_qs = Definition.objects.filter(user=profile_user).select_related('question')
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        definitions_qs = definitions_qs.filter(
+            Q(definition_text__icontains=search_query) |
+            Q(question__question_text__icontains=search_query)
+        )
     def_page = request.GET.get('d_page', 1)
     def_paginator = Paginator(definitions_qs, 5)
     try:
@@ -348,6 +354,14 @@ def user_profile(request, username):
 
     # -- Kaynaklarım sekmesi: Paginate references --
     user_references = Reference.objects.filter(created_by=profile_user)
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        user_references = user_references.filter(
+            Q(author_surname__icontains=search_query) |
+            Q(author_name__icontains=search_query) |
+            Q(rest__icontains=search_query) |
+            Q(abbreviation__icontains=search_query)
+        )
     r_page = request.GET.get('r_page', 1)
     ref_paginator = Paginator(user_references, 5)
     try:

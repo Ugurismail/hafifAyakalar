@@ -11,7 +11,7 @@
             <h4>Tüm Sorular</h4>
             <ul class="list-unstyled">
                 {% for question in all_questions %}
-                <li class="tbas-color d-flex justify-content-between align-items-center mt-2">
+                <li class="tbas-color baslik d-flex justify-content-between align-items-center mt-2">
                     <a href="{% url 'question_detail' question.id %}" class="tbas-color text-decoration-none d-flex justify-content-between align-items-center w-100">
                         <span>{{ question.question_text }}</span> 
                         <small class="">{{ question.answers_count }}</small>
@@ -91,7 +91,7 @@
                         </div>
                         <!-- Right: User Info and Date -->
                         <div class="text-end">
-                            <small class="text-muted me-2">
+                            <small class=" me-2">
                                 <a class="action-user" href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                                 | {{ answer.created_at|date:"Y-m-d H:i" }}
                                 {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
@@ -150,8 +150,8 @@
             {% if starting_questions %}
                 <ul class="list-unstyled">
                     {% for item in starting_questions %}
-                    <li class="text-dark text-decoration-none d-flex justify-content-between align-items-center mt-2 baslik">
-                        <a href="{% url 'question_detail' item.question.id %}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                    <li class="text-decoration-none d-flex justify-content-between align-items-center mt-2">
+                        <a href="{% url 'question_detail' item.question.id %}" class="tbas-color text-decoration-none d-flex justify-content-between align-items-center w-100">
                             <span>{{ item.question.question_text }}</span> 
                             <small>{{ item.total_subquestions }}</small>
                         </a>

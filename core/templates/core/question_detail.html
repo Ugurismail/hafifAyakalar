@@ -131,7 +131,7 @@
                 <span class="save-count">{{ question_save_count }}</span>
               </div>
               <div class="text-end">
-                <small class="text-muted">
+                <small class="">
                   <a href="{% url 'user_profile' question.user.username %}">
                     {{ question.user.username }}
                   </a> |
@@ -205,7 +205,7 @@
                         {% endif %}
                       </div>
                       <div class="text-end">
-                        <small class="text-muted me-2">
+                        <small class="me-2">
                           <a href="{% url 'user_profile' answer.user.username %}">{{ answer.user.username }}</a>
                           | {{ answer.created_at|date:"Y-m-d H:i" }}
                           {% if answer.updated_at|date:"Y-m-d H:i:s" > answer.created_at|date:"Y-m-d H:i:s" %}
@@ -365,7 +365,7 @@
                                                           {{ parent.question_text }}
                                                       </a>
                                                       <br>
-                                                      <small class="text-muted">
+                                                      <small class="">
                                                           <a href="{% url 'user_profile' parent.user.username %}">
                                                               {{ parent.user.username }}
                                                           </a>
@@ -390,7 +390,7 @@
                                           {{ subquestion.question_text }}
                                       </a>
                                       <br>
-                                      <small class="text-muted">
+                                      <small class="">
                                           <a href="{% url 'user_profile' subquestion.user.username %}">
                                               {{ subquestion.user.username }}
                                           </a>

@@ -9,9 +9,9 @@
             <h4>Tüm Sorular</h4>
             <ul class="list-unstyled">
                 {% for question in all_questions %}
-                <li class="d-flex justify-content-between align-items-center mt-2 baslik">
+                <li class="tbas-color d-flex justify-content-between align-items-center mt-2 baslik">
                     <a href="{% url 'question_detail' question.id %}"
-                       class="text-dark text-decoration-none d-flex justify-content-between align-items-center w-100">
+                       class="tbas-color text-decoration-none d-flex justify-content-between align-items-center w-100">
                         {{ question.question_text }}
                     </a>
                     <small>{{ question.answers_count }}</small>
