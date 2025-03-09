@@ -34,7 +34,59 @@ from django.db.models.functions import Lower
 
 
 
+@login_required
+def get_user_questions(request):
+    q = request.GET.get('q', '').strip()
+    # İstediğiniz filtreleme: örneğin sadece kendi sorularınız veya profildeki tüm sorular
+    questions = Question.objects.filter(user=request.user)
+    if q:
+        questions = questions.filter(question_text__icontains=q)
+    data = []
+    for question in questions:
+        data.append({
+            'id': question.id,
+            'question_text': question.question_text,
+            'detail_url': reverse('question_detail', args=[question.id]),
+        })
+    return JsonResponse({'questions': data})
 
+@login_required
+def get_user_answers(request):
+    q = request.GET.get('q', '').strip()
+    answers = Answer.objects.filter(user=request.user)
+    if q:
+        answers = answers.filter(answer_text__icontains=q)
+    data = []
+    for answer in answers:
+        data.append({
+            'id': answer.id,
+            'answer_text': answer.answer_text[:80] + '...' if len(answer.answer_text) > 80 else answer.answer_text,
+            'detail_url': reverse('single_answer', args=[answer.question.id, answer.id]),
+        })
+    return JsonResponse({'answers': data})
+
+@login_required
+def get_saved_items(request):
+    q = request.GET.get('q', '').strip()
+    saved_items = SavedItem.objects.filter(user=request.user)
+    filtered_items = []
+    # Eğer arama terimi girildiyse, ilgili içeriklerde arama yapalım
+    for item in saved_items:
+        instance = item.content_type.get_object_for_this_type(id=item.object_id)
+        if item.content_type.model == 'question':
+            text = instance.question_text
+        elif item.content_type.model == 'answer':
+            text = instance.answer_text
+        else:
+            text = ''
+        if not q or q.lower() in text.lower():
+            filtered_items.append({
+                'type': item.content_type.model,
+                'id': instance.id,
+                'text': text[:80] + '...' if len(text) > 80 else text,
+                'detail_url': reverse('question_detail', args=[instance.id]) if item.content_type.model == 'question' else reverse('single_answer', args=[instance.question.id, instance.id]),
+            })
+    return JsonResponse({'saved_items': filtered_items})
 
 
 

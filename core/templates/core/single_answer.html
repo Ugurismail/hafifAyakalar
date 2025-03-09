@@ -164,7 +164,7 @@
                                     <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
                                         <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                                     </a>
-                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0"|bkz_link|tanim_link|reference_link|ref_link|mention_link }}</span>
+                                    <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0"|add:""|bkz_link|tanim_link|reference_link|ref_link|mention_link }}</span>
                                     {% if answer.user == request.user %}
                                         <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">
                                             <i class="bi bi-pencil-square icon-black-white"></i>

@@ -95,6 +95,12 @@ urlpatterns = [
     path('profile/<str:username>/download_entries_xlsx/', views.download_entries_xlsx, name='download_entries_xlsx'),
     path('question/<int:question_id>/filter_answers/', views.filter_answers, name='filter_answers'),
     path('profile/<str:username>/download_entries_docx/', views.download_entries_docx, name='download_entries_docx'),
+
+    #aramalar
+    path('get-user-questions/', views.get_user_questions, name='get_user_questions'),
+    path('get-user-answers/', views.get_user_answers, name='get_user_answers'),
+    path('get-saved-items/', views.get_saved_items, name='get_saved_items'),
 ]
 
 handler404 = 'core.views.custom_404_view'
+

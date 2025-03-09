@@ -127,15 +127,23 @@
         <!-- Sorular Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'sorular' %}show active{% endif %}" id="sorular" role="tabpanel" aria-labelledby="sorular-tab">
           <div class="mt-3">
-            {% for question in questions %}
-              <div class="mb-2">
-                <a href="{% url 'question_detail' question.id %}" class="text-decoration-none">
-                  {{ question.question_text }}
-                </a>
-              </div>
-            {% empty %}
-              <p>Henüz soru yok.</p>
-            {% endfor %}
+            <!-- Dinamik arama inputu ekleyin -->
+            <div id="questionsContainer" class="mb-3">
+              <input type="text" id="questionsSearchInput" class="form-control" placeholder="Soru ara...">
+            </div>
+            <!-- Soru listesi için container -->
+            <div id="questionsList">
+              {% for question in questions %}
+                <div class="mb-2">
+                  <a href="{% url 'question_detail' question.id %}" class="text-decoration-none">
+                    {{ question.question_text }}
+                  </a>
+                </div>
+              {% empty %}
+                <p>Henüz soru yok.</p>
+              {% endfor %}
+            </div>
+            <!-- Sayfalama kısmınız burada kalabilir -->
             <nav aria-label="Sorular Sayfaları">
               <ul class="pagination custom-pagination">
                 {% if questions.has_previous %}
@@ -170,6 +178,7 @@
             </script>
           </div>
         </div>
+        
         
         {% if is_own_profile %}
         <!-- Davetler Sekmesi -->
@@ -238,26 +247,34 @@
         <!-- Yanıtlar Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'yanitlar' %}show active{% endif %}" id="yanitlar" role="tabpanel" aria-labelledby="yanitlar-tab">
           <div class="mt-3">
-            {% for answer in answers %}
-              <div class="mb-3">
-                <p>
-                  <a href="{% url 'question_detail' answer.question.id %}" class="text-decoration-none">
-                    {{ answer.question.question_text }}
+            <!-- Dinamik arama inputu -->
+            <div id="answersContainer" class="mb-3">
+              <input type="text" id="answersSearchInput" class="form-control" placeholder="Yanıt ara...">
+            </div>
+            <!-- Yanıt listesi container -->
+            <div id="answersList">
+              {% for answer in answers %}
+                <div class="mb-3">
+                  <p>
+                    <a href="{% url 'question_detail' answer.question.id %}" class="text-decoration-none">
+                      {{ answer.question.question_text }}
+                    </a>
+                  </p>
+                  <a href="{% url 'single_answer' answer.question.id answer.id %}" class="text-decoration-none">
+                    {{ answer.answer_text|truncatewords:20 }}
                   </a>
-                </p>
-                <a href="{% url 'single_answer' answer.question.id answer.id %}" class="text-decoration-none">
-                  {{ answer.answer_text|truncatewords:20 }}
-                </a>
-                {% if answer.user == request.user %}
-                  <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-danger float-end" onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">Sil</button>
-                  </form>
-                {% endif %}
-              </div>
-            {% empty %}
-              <p>Henüz yanıt yok.</p>
-            {% endfor %}
+                  {% if answer.user == request.user %}
+                    <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-danger float-end" onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">Sil</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% empty %}
+                <p>Henüz yanıt yok.</p>
+              {% endfor %}
+            </div>
+            <!-- Mevcut sayfalama kodunuz burada kalabilir -->
             <nav aria-label="Yanıtlar Sayfaları">
               <ul class="pagination custom-pagination">
                 {% if answers.has_previous %}
@@ -267,7 +284,6 @@
                 {% else %}
                   <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                 {% endif %}
-                <!-- Dropdown ile sayfa seçimi -->
                 <li class="page-item">
                   <select class="form-select" id="answerPageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
                     {% for num in answers.paginator.page_range %}
@@ -292,6 +308,7 @@
             </script>
           </div>
         </div>
+        
         
         <!-- Kelimeler Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'kelimeler' %}show active{% endif %}" id="kelimeler" role="tabpanel" aria-labelledby="kelimeler-tab">
@@ -528,47 +545,55 @@
         <div class="tab-pane fade {% if active_tab == 'kaydedilenler' %}show active{% endif %}" id="kaydedilenler" role="tabpanel" aria-labelledby="kaydedilenler-tab">
           <div class="mt-3">
             <h5>Kaydedilenler</h5>
-            {% if saved_items_page and saved_items_page.object_list %}
-              {% for saved in saved_items_page.object_list %}
-                {% if saved.type == 'question' %}
-                  {% with question_obj=saved.object %}
-                    <div class="mb-3 p-2 border rounded">
-                      <p><strong>Soru:</strong>
-                        <a href="{% url 'question_detail' question_obj.id %}" class="text-decoration-none">
-                          {{ question_obj.question_text|truncatewords:20 }}
-                        </a>
-                      </p>
-                      <a href="#" class="save-btn btn btn-sm btn-warning" data-content-type="question" data-object-id="{{ question_obj.id }}">
-                        Kaydetmeyi Kaldır
-                      </a>
-                    </div>
-                  {% endwith %}
-                {% elif saved.type == 'answer' %}
-                  {% with answer_obj=saved.object %}
-                    <div class="mb-3 p-2 border rounded position-relative">
-                      <p><strong>Yanıt:</strong>
-                        <a href="{% url 'question_detail' answer_obj.question.id %}#answer-{{ answer_obj.id }}" class="text-decoration-none">
-                          {{ answer_obj.question.question_text|truncatewords:20 }}
-                        </a>
-                      </p>
-                      <a href="{% url 'single_answer' answer_obj.question.id answer_obj.id %}" class="text-decoration-none">
-                        {{ answer_obj.answer_text|truncatewords:20 }}
-                      </a>
-                      <div class="position-absolute top-0 end-0 me-2 mt-2">
-                        <a href="#" class="save-btn btn btn-sm btn-link icon-black-white" data-content-type="answer" data-object-id="{{ answer_obj.id }}" title="Kaydetmeyi kaldır">
-                          <i class="bi bi-bookmark-x fs-5"></i>
+            <!-- Dinamik arama inputu -->
+            <div id="savedItemsContainer" class="mb-3">
+              <input type="text" id="savedItemsSearchInput" class="form-control" placeholder="Kaydedilenler içinde ara...">
+            </div>
+            <!-- Kaydedilen içeriklerin gösterileceği container -->
+            <div id="savedItemsList">
+              {% if saved_items_page and saved_items_page.object_list %}
+                {% for saved in saved_items_page.object_list %}
+                  {% if saved.type == 'question' %}
+                    {% with question_obj=saved.object %}
+                      <div class="mb-3 p-2 border rounded">
+                        <p><strong>Soru:</strong>
+                          <a href="{% url 'question_detail' question_obj.id %}" class="text-decoration-none">
+                            {{ question_obj.question_text|truncatewords:20 }}
+                          </a>
+                        </p>
+                        <a href="#" class="save-btn btn btn-sm btn-warning" data-content-type="question" data-object-id="{{ question_obj.id }}">
+                          Kaydetmeyi Kaldır
                         </a>
                       </div>
-                    </div>
-                  {% endwith %}
-                {% endif %}
-              {% endfor %}
-              {% include 'core/pagination.html' with page_obj=saved_items_page page_param='s_page' active_tab='kaydedilenler' %}
-            {% else %}
-              <p>Hiç kaydedilmiş soru veya yanıt yok.</p>
-            {% endif %}
+                    {% endwith %}
+                  {% elif saved.type == 'answer' %}
+                    {% with answer_obj=saved.object %}
+                      <div class="mb-3 p-2 border rounded position-relative">
+                        <p><strong>Yanıt:</strong>
+                          <a href="{% url 'question_detail' answer_obj.question.id %}#answer-{{ answer_obj.id }}" class="text-decoration-none">
+                            {{ answer_obj.question.question_text|truncatewords:20 }}
+                          </a>
+                        </p>
+                        <a href="{% url 'single_answer' answer_obj.question.id answer_obj.id %}" class="text-decoration-none">
+                          {{ answer_obj.answer_text|truncatewords:20 }}
+                        </a>
+                        <div class="position-absolute top-0 end-0 me-2 mt-2">
+                          <a href="#" class="save-btn btn btn-sm btn-link icon-black-white" data-content-type="answer" data-object-id="{{ answer_obj.id }}" title="Kaydetmeyi kaldır">
+                            <i class="bi bi-bookmark-x fs-5"></i>
+                          </a>
+                        </div>
+                      </div>
+                    {% endwith %}
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                <p>Hiç kaydedilmiş soru veya yanıt yok.</p>
+              {% endif %}
+            </div>
+            {% include 'core/pagination.html' with page_obj=saved_items_page page_param='s_page' active_tab='kaydedilenler' %}
           </div>
         </div>
+        
       </div>
     </div>
   </div>
@@ -638,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="{% static 'js/vote_save.js' %}"></script>
 
 <script>
-  // Debounce fonksiyonu: Çok sık yapılan AJAX çağrılarını engeller
+  // 1. Ortak debounce fonksiyonu (çalışma sıklığını azaltmak için)
   function debounce(func, delay) {
     var timeout;
     return function() {
@@ -650,8 +675,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Ortak AJAX arama fonksiyonu: inputSelector, endpointUrl, targetTbody ve sekmeye göre (örneğin "tanimlar" veya "kaynaklarim") işlem yapar
-  function setupDynamicSearch(inputSelector, endpointUrl, targetTbodySelector) {
+  // 2. Genel AJAX arama fonksiyonu (render callback ile)
+  function setupDynamicSearch(inputSelector, endpointUrl, targetSelector, renderFunction) {
     $(inputSelector).on('keyup', debounce(function(){
       var query = $(this).val();
       $.ajax({
@@ -659,125 +684,116 @@ document.addEventListener('DOMContentLoaded', function() {
         data: { q: query },
         dataType: "json",
         success: function(data) {
-          var tbody = $(targetTbodySelector);
-          tbody.empty();
-          // Eğer tanımlar için veri geldiyse
-          if(data.definitions) {
-            $.each(data.definitions, function(i, def){
-              var row = '<tr>'+
-                '<td>'+ def.question_text +'</td>'+
-                '<td>'+ def.definition_text +'</td>'+
-                '<td>'+
-                  '<a href="/edit_definition/'+ def.id + '/?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a> '+
-                  '<form action="/delete_definition/'+ def.id + '/?tab=tanimlar" method="post" class="d-inline">{% csrf_token %}'+
-                  '<button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm(\'Bu tanımı silmek istediğinize emin misiniz?\');">Sil</button>'+
-                  '</form>'+
-                '</td>'+
-                '</tr>';
-              tbody.append(row);
-            });
-          }
-          // Eğer kaynaklar için veri geldiyse
-          else if(data.references) {
-            $.each(data.references, function(i, ref){
-              var row = '<tr>'+
-                '<td>'+ ref.author_surname +'</td>'+
-                '<td>'+ ref.author_name +'</td>'+
-                '<td>'+ ref.year +'</td>'+
-                '<td>'+ ref.rest +'</td>'+
-                '<td>'+ ref.abbreviation +'</td>'+
-                '<td>'+(ref.usage_count || 0)+'</td>'+
-                '<td>'+
-                  '<a href="/edit_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle"><i class="bi bi-pencil-square"></i></a> '+
-                  '<a href="/delete_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm(\'Bu kaynağı silmek istediğinize emin misiniz?\');"><i class="bi bi-trash"></i></a>'+
-                '</td>'+
-                '</tr>';
-              tbody.append(row);
-            });
-          }
-          else {
-            tbody.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
-          }
+          var container = $(targetSelector);
+          container.empty();
+          renderFunction(data, container);
         }
       });
     }, 300));
   }
 
-  $(document).ready(function(){
-    setupDynamicSearch('#definitionsSearchInput', "{% url 'get_user_definitions' %}", '#definitionsTbody');
-    setupDynamicSearch('#referencesSearchInput', "{% url 'get_references' %}", '#referencesTbody');
-  });
-</script>
-
-<script>
-  // DRY debounce fonksiyonu
-  function debounce(func, delay) {
-    var timeout;
-    return function() {
-      var context = this, args = arguments;
-      clearTimeout(timeout);
-      timeout = setTimeout(function() {
-        func.apply(context, args);
-      }, delay);
-    };
-  }
-
-  // Ortak AJAX arama fonksiyonu
-  function setupDynamicSearch(inputSelector, endpointUrl, targetTbodySelector) {
-    $(inputSelector).on('keyup', debounce(function(){
-      var query = $(this).val();
-      $.ajax({
-        url: endpointUrl,
-        data: { q: query },
-        dataType: "json",
-        success: function(data) {
-          var tbody = $(targetTbodySelector);
-          tbody.empty();
-          if(data.definitions) {
-            $.each(data.definitions, function(i, item){
-              var row = '<tr>'+
-                '<td>'+item.question_text+'</td>'+
-                '<td>'+item.definition_text+'</td>'+
-                '<td>'+
-                  '<a href="/edit_definition/'+item.id+'/?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a> '+
-                  '<form action="/delete_definition/'+item.id+'/?tab=tanimlar" method="post" class="d-inline">{% csrf_token %}'+
-                  '<button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm(\'Bu tanımı silmek istediğinize emin misiniz?\');">Sil</button>'+
-                  '</form>'+
-                '</td>'+
-                '</tr>';
-              tbody.append(row);
-            });
-          } else if(data.references) {
-            $.each(data.references, function(i, item){
-              var row = '<tr>'+
-                '<td>'+item.author_surname+'</td>'+
-                '<td>'+item.author_name+'</td>'+
-                '<td>'+item.year+'</td>'+
-                '<td>'+item.rest+'</td>'+
-                '<td>'+item.abbreviation+'</td>'+
-                '<td>'+(item.usage_count || 0)+'</td>'+
-                '<td>'+
-                  '<a href="/edit_reference/'+item.id+'/?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle"><i class="bi bi-pencil-square"></i></a> '+
-                  '<a href="/delete_reference/'+item.id+'/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm(\'Bu kaynağı silmek istediğinize emin misiniz?\');"><i class="bi bi-trash"></i></a>'+
-                '</td>'+
-                '</tr>';
-              tbody.append(row);
-            });
-          } else {
-            tbody.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
-          }
-        }
+  // 3. Tanımlar için render fonksiyonu
+  function renderDefinitions(data, container) {
+    if(data.definitions && data.definitions.length > 0) {
+      // CSRF token'ı meta tag'dan alıyoruz:
+      var csrfToken = $('meta[name="csrf-token"]').attr('content');
+      $.each(data.definitions, function(i, def){
+        var row = '<tr>'+
+                    '<td>'+ def.question_text +'</td>'+
+                    '<td>'+ def.definition_text +'</td>'+
+                    '<td>'+
+                      '<a href="/edit_definition/'+ def.id + '/?tab=tanimlar" class="btn btn-sm btn-primary">Düzenle</a> '+
+                      '<form action="/delete_definition/'+ def.id + '/?tab=tanimlar" method="post" class="d-inline">'+
+                        '<input type="hidden" name="csrfmiddlewaretoken" value="'+ csrfToken +'">'+
+                        '<button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm(\'Bu tanımı silmek istediğinize emin misiniz?\');">Sil</button>'+
+                      '</form>'+
+                    '</td>'+
+                  '</tr>';
+        container.append(row);
       });
-    }, 300));
+    } else {
+      container.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
+    }
   }
 
-  // Tanımlarım ve Kaynaklarım için dinamik aramayı başlatıyoruz
+  // 4. Kaynaklar için render fonksiyonu
+  function renderReferences(data, container) {
+    if(data.references && data.references.length > 0) {
+      $.each(data.references, function(i, ref){
+        var row = '<tr>'+
+                    '<td>'+ ref.author_surname +'</td>'+
+                    '<td>'+ ref.author_name +'</td>'+
+                    '<td>'+ ref.year +'</td>'+
+                    '<td>'+ ref.rest +'</td>'+
+                    '<td>'+ ref.abbreviation +'</td>'+
+                    '<td>'+(ref.usage_count || 0)+'</td>'+
+                    '<td>'+
+                      '<a href="/edit_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle"><i class="bi bi-pencil-square"></i></a> '+
+                      '<a href="/delete_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm(\'Bu kaynağı silmek istediğinize emin misiniz?\');"><i class="bi bi-trash"></i></a>'+
+                    '</td>'+
+                  '</tr>';
+        container.append(row);
+      });
+    } else {
+      container.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
+    }
+  }
+
+  // 5. Soru, yanıt ve kaydedilenler için render fonksiyonları
+  function renderQuestions(data, container) {
+    if(data.questions && data.questions.length > 0) {
+      $.each(data.questions, function(i, question) {
+        container.append(
+          '<div class="mb-2"><a href="' + question.detail_url + '" class="text-decoration-none">' +
+          question.question_text +
+          '</a></div>'
+        );
+      });
+    } else {
+      container.append('<p>Sonuç bulunamadı.</p>');
+    }
+  }
+
+  function renderAnswers(data, container) {
+    if(data.answers && data.answers.length > 0) {
+      $.each(data.answers, function(i, answer) {
+        container.append(
+          '<div class="mb-3"><a href="' + answer.detail_url + '" class="text-decoration-none">' +
+          answer.answer_text +
+          '</a></div>'
+        );
+      });
+    } else {
+      container.append('<p>Sonuç bulunamadı.</p>');
+    }
+  }
+
+  function renderSavedItems(data, container) {
+    if(data.saved_items && data.saved_items.length > 0) {
+      $.each(data.saved_items, function(i, item) {
+        container.append(
+          '<div class="mb-3"><a href="' + item.detail_url + '" class="text-decoration-none">' +
+          item.text +
+          '</a></div>'
+        );
+      });
+    } else {
+      container.append('<p>Sonuç bulunamadı.</p>');
+    }
+  }
+
+  // 6. Belirtilen inputlar için dinamik aramayı başlatıyoruz
   $(document).ready(function(){
-    setupDynamicSearch('#definitionsSearchInput', "{% url 'get_user_definitions' %}", '#definitionsTbody');
-    setupDynamicSearch('#referencesSearchInput', "{% url 'get_references' %}", '#referencesTbody');
+    // Tanımlar ve kaynaklar için:
+    setupDynamicSearch('#definitionsSearchInput', "{% url 'get_user_definitions' %}", '#definitionsTbody', renderDefinitions);
+    setupDynamicSearch('#referencesSearchInput', "{% url 'get_references' %}", '#referencesTbody', renderReferences);
+    // Soru, yanıt ve kaydedilenler için (varsa diğer dinamik arama inputlarınız):
+    setupDynamicSearch('#questionsSearchInput', "{% url 'get_user_questions' %}", '#questionsList', renderQuestions);
+    setupDynamicSearch('#answersSearchInput', "{% url 'get_user_answers' %}", '#answersList', renderAnswers);
+    setupDynamicSearch('#savedItemsSearchInput', "{% url 'get_saved_items' %}", '#savedItemsList', renderSavedItems);
   });
 
-  // Sekme seçim ve URL güncelleme
+  // 7. Sekme seçim ve URL güncelleme
   document.addEventListener('DOMContentLoaded', function() {
     var params = new URLSearchParams(window.location.search);
     var initialTab = params.get('tab');
@@ -799,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Profil fotoğrafı önizleme
+  // 8. Profil fotoğrafı önizleme
   var fileInput = document.getElementById('id_photo');
   var previewContainer = document.getElementById('new-photo-preview-container');
   var previewImage = document.getElementById('new-photo-preview');
@@ -820,7 +836,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Sabitlenmiş girdi "read-more" işlevi
+  // 9. Sabitlenmiş girdi "read-more" işlevi
   var readMoreLinks = document.querySelectorAll('.read-more');
   readMoreLinks.forEach(function(link) {
     link.addEventListener('click', function(event) {
@@ -843,3 +859,4 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 </script>
 {% endblock extra_js %}
+
