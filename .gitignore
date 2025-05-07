@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Sanal Ortam
+venv/
+.*/
+pip-log.txt
+pip-delete-this-directory.txt
+local_settings.py
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal # SQLite'ın geçici dosyası
+staticfiles/ # Eğer collectstatic ile oluşturulan ve DEBUG=False için kullanılan bir klasörse
+             # Ancak DEBUG=True ile geliştirme yaparken genellikle gerekmez.
+             # Eğer STATIC_ROOT ayarınız `staticfiles` ise ve bu klasörü
+             # Git'e eklemek istemiyorsanız bu satırı ekleyin.
+             # Projenizin yapısına göre karar verin.
+             # Genellikle build/deployment aşamasında oluşturulur.
+
+# İşletim Sistemi ve Editör Dosyaları
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
