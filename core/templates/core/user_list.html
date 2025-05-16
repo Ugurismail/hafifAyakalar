@@ -1,22 +1,52 @@
 {% extends 'core/base.html' %}
 
 {% block content %}
-<div class="mt-5">
-    <h2>Kullanıcı Listesi</h2>
-    <ul class="list-group">
+<div class="container mt-5">
+    <h2 class="mb-4">Kullanıcı Listesi</h2>
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-2">
         {% for user in users %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <a href="{% url 'user_profile' user.username %}">{{ user.username }}</a>
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center border rounded px-2 py-1 shadow-sm bg-light" style="height: 48px;">
+                    <a href="{% url 'user_profile' user.username %}" class="text-decoration-none fw-bold flex-grow-1 text-truncate">
+                        {{ user.username }}
+                    </a>
+                    <a href="{% url 'send_message_from_user' user.id %}" 
+                       class="btn btn-outline-primary btn-sm ms-2 d-flex align-items-center"
+                       title="Mesaj Gönder">
+                        <i class="bi bi-envelope"></i>
+                    </a>
+                </div>
             </div>
-            <div>
-                <!-- Mesaj Gönder Butonu -->
-                <a class="btn btn-sm btn-primary" href="{% url 'send_message_from_user' user.id %}">
-                    <i class="bi bi-envelope"></i> Mesaj Gönder
-                </a>
-            </div>
-        </li>
         {% endfor %}
-    </ul>
+    </div>
+
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if users.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.previous_page_number }}" aria-label="Önceki">&laquo;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            {% endif %}
+            {% for num in users.paginator.page_range %}
+                {% if users.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if users.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.next_page_number }}" aria-label="Sonraki">&raquo;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 {% endblock %}

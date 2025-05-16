@@ -623,8 +623,11 @@ def view_message(request, message_id):
 def user_list(request):
     users = User.objects.exclude(id=request.user.id) \
                         .annotate(username_lower=Lower('username')) \
-                        .order_by('username_lower')  # Küçük harfe göre sıralama
-    return render(request, 'core/user_list.html', {'users': users})
+                        .order_by('username_lower')
+    paginator = Paginator(users, 36)  # Sayfa başına 36 kullanıcı
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'core/user_list.html', {'users': page_obj})
 
 @login_required
 def follow_user(request, username):
@@ -1210,6 +1213,8 @@ def save_item(request):
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=400)
 
+
+
 def site_statistics(request):
     # Kullanıcı sayısı (en az bir soru veya yanıt yazmış olanlar)
     user_count = User.objects.filter(
@@ -1234,35 +1239,15 @@ def site_statistics(request):
         answer_count=Count('answers')
     ).order_by('-answer_count')[:5]
 
-    # En çok oy alan sorular (upvotes - downvotes)
-    top_voted_questions = Question.objects.annotate(
-        total_votes=F('upvotes') - F('downvotes')
-    ).order_by('-total_votes')[:5]
-
-    # En çok beğenilen sorular (sadece upvotes)
+    # En çok beğenilen sorular (upvotes)
     top_liked_questions = Question.objects.annotate(
         like_count=F('upvotes')
     ).order_by('-like_count')[:5]
 
-    # En çok beğenilmeyen sorular (sadece downvotes)
-    top_disliked_questions = Question.objects.annotate(
-        dislike_count=F('downvotes')
-    ).order_by('-dislike_count')[:5]
-
-    # En çok oy alan yanıtlar (upvotes - downvotes)
-    top_voted_answers = Answer.objects.annotate(
-        total_votes=F('upvotes') - F('downvotes')
-    ).order_by('-total_votes')[:5]
-
-    # En çok beğenilen yanıtlar (sadece upvotes)
+    # En çok beğenilen yanıtlar (upvotes)
     top_liked_answers = Answer.objects.annotate(
         like_count=F('upvotes')
     ).order_by('-like_count')[:5]
-
-    # En çok beğenilmeyen yanıtlar (sadece downvotes)
-    top_disliked_answers = Answer.objects.annotate(
-        dislike_count=F('downvotes')
-    ).order_by('-dislike_count')[:5]
 
     # En çok kaydedilen sorular
     top_saved_questions = Question.objects.annotate(
@@ -1276,28 +1261,51 @@ def site_statistics(request):
 
     active_tab = request.GET.get('tab', 'word-analysis')  # Varsayılan olarak "Kelime Analizi" sekmesi
 
-
-    # Kelime analizi: Tüm soru ve yanıt metinlerini al, birleştirip küçük harfe çevir
+    # --- KELİME ANALİZİ ve KELİME ARAMA ---
     question_texts = Question.objects.values_list('question_text', flat=True)
     answer_texts = Answer.objects.values_list('answer_text', flat=True)
-    all_texts = ' '.join(question_texts) + ' ' + ' '.join(answer_texts)
-    all_texts = all_texts.lower()
-    words = re.findall(r'\b\w+\b', all_texts)
+    all_texts = list(question_texts) + list(answer_texts)
+
+    # Küçük harfe çevir, birleştir (tüm kelimeleri görmek için)
+    all_words = []
+    for text in all_texts:
+        if text:
+            all_words.extend(re.findall(r'\b\w+\b', text.lower()))
+
+    # Hariç tutulan kelimeleri işle
     exclude_words_input = request.GET.get('exclude_words', '')
     if exclude_words_input:
         exclude_words_list = re.split(r',\s*', exclude_words_input.strip())
-        exclude_words = set(word.lower() for word in exclude_words_list)
+        exclude_words = set(word.lower() for word in exclude_words_list if word.strip())
     else:
         exclude_words = set()
-    filtered_words = [word for word in words if word not in exclude_words]
+
+    # Hariç tutulanları çıkar
+    filtered_words = [word for word in all_words if word not in exclude_words]
+
+    # En çok geçen kelimeler
     word_counts = Counter(filtered_words)
     top_words = word_counts.most_common(10)
+
+    # --- Anahtar kelime arama: tüm başlık ve yanıtlarda toplam kaç kere geçiyor? ---
     search_word = request.GET.get('search_word', '').strip().lower()
     search_word_count = None
     if search_word:
-        search_word_count = word_counts.get(search_word, 0)
+        # Hariç tutulan bir kelimeyle aynıysa, doğrudan 0 göster
+        if search_word in exclude_words:
+            search_word_count = 0
+        else:
+            # Tek tek başlık ve yanıtların hepsini say (her satırda birden fazla geçiş varsa onlar da dahil)
+            search_word_pattern = re.compile(r'\b{}\b'.format(re.escape(search_word)), re.IGNORECASE)
+            search_word_count = 0
+            for text in all_texts:
+                # Hariç tutulan kelimelerden biri bu text'te geçiyorsa, burayı tamamen atla
+                if any(re.search(r'\b{}\b'.format(re.escape(exw)), text, re.IGNORECASE) for exw in exclude_words):
+                    continue
+                if text:
+                    search_word_count += len(search_word_pattern.findall(text))
 
-    # --- Yeni: En Çok Kullanılan Kaynaklar ---
+    # --- En çok kullanılan kaynaklar ---
     from .models import Reference
     all_references = list(Reference.objects.all())
     all_references.sort(key=lambda ref: ref.get_usage_count(), reverse=True)
@@ -1314,12 +1322,8 @@ def site_statistics(request):
         'total_dislikes': total_dislikes,
         'top_question_users': top_question_users,
         'top_answer_users': top_answer_users,
-        'top_voted_questions': top_voted_questions,
         'top_liked_questions': top_liked_questions,
-        'top_disliked_questions': top_disliked_questions,
-        'top_voted_answers': top_voted_answers,
         'top_liked_answers': top_liked_answers,
-        'top_disliked_answers': top_disliked_answers,
         'top_saved_questions': top_saved_questions,
         'top_saved_answers': top_saved_answers,
         'top_words': top_words,
@@ -1329,9 +1333,7 @@ def site_statistics(request):
         'exclude_words_input': exclude_words_input,
         'top_references': top_references,
     }
-
     return render(request, 'core/site_statistics.html', context)
-
 
 
 def get_today_questions_queryset():
