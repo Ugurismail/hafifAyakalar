@@ -271,3 +271,11 @@ class ReferenceForm(forms.ModelForm):
         if year and (year < 1 or year > 9999):
             raise forms.ValidationError("Yıl 1 ile 9999 arasında olmalıdır.")
         return year
+
+class AnswerEditForm(forms.ModelForm):
+    class Meta:
+        model = Answer
+        fields = ['answer_text']
+        widgets = {
+            'answer_text': forms.Textarea(attrs={'class': 'auto-expand form-control'}),
+        }

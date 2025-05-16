@@ -306,5 +306,20 @@
         })
       })
     });
+
+    document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.auto-expand').forEach(function(textarea) {
+        // Başlangıç yüksekliğini kaydet
+        textarea.dataset.initialHeight = textarea.offsetHeight;
+
+        textarea.addEventListener('focus', function() {
+            let base = parseInt(this.dataset.initialHeight) || 40;
+            this.style.height = (base * 3) + "px";  // İstediğin oranı burada değiştir
+        });
+        textarea.addEventListener('blur', function() {
+            this.style.height = this.dataset.initialHeight + "px";
+        });
+    });
+});
 </script>
 {% endblock %}
