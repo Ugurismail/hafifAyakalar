@@ -29,6 +29,12 @@ def bkz_link(text):
     return mark_safe(re.sub(pattern, replace, text))
 
 @register.filter
+def nl2br(value):
+    """Her satır sonunu <br> yapar."""
+    return mark_safe(value.replace('\n', '<br>'))
+
+
+@register.filter
 def ref_link(text):
     pattern = r'\(ref:([^\)]+)\)'
     def replace_ref(match):
@@ -104,7 +110,6 @@ def tanim_link(text):
 
     return mark_safe(new_text)
 
-
 @register.filter
 def reference_link(text):
     """
@@ -148,8 +153,6 @@ def reference_link(text):
     new_text = re.sub(pattern, replace_reference, text)
     return mark_safe(new_text)
 
-
-
 @register.filter
 def highlight(text, keyword):
     """
@@ -166,7 +169,6 @@ def highlight(text, keyword):
         text
     )
     return mark_safe(highlighted)
-
 
 @register.filter
 def mention_link(text):
