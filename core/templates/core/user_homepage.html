@@ -63,18 +63,18 @@
                             data-content-type="answer" data-object-id="{{ answer.id }}" data-value="1" title="Beğen">
                                 <i class="bi-chevron-up"></i>
                             </a>
-                            <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
+                            <span class="icon-number" id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
                             <!-- Downvote Button and Count -->
                             <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
                             data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" title="Beğenme">
                                 <i class="bi-chevron-down"></i>
                             </a>
-                            <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
+                            <span class="icon-number" id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
                             <!-- Save Button -->
                             <a href="#" class="save-btn ms-2" data-content-type="answer" data-object-id="{{ answer.id }}" title="Kaydet">
                                 <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                             </a>
-                            <span>{{ answer_save_dict|get_item:answer.id }}</span>
+                            <span class="icon-number">{{ answer_save_dict|get_item:answer.id }}</span>
                             <!-- Edit and Delete Buttons (Only for Content Owner) -->
                             {% if answer.user == request.user %}
                                 <a href="{% url 'edit_answer' answer.id %}" class="ms-2" title="Düzenle">

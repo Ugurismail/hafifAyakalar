@@ -12,6 +12,7 @@ a {
 }
 
 
+
 a:hover {
     color: var(--link-hover-color, #0056b3);
     text-decoration: underline;
@@ -345,3 +346,17 @@ a:hover {
         height: 100%;
     }
 }
+
+.question .icon-number,
+.answer .icon-number,
+.random-item-card .icon-number {
+    color: var(--icon-color, #6c757d) !important;
+}
+
+
+
+.question span.icon-number,
+.answer span.icon-number {
+    color: red !important;
+}
+body { border: 5px solid red !important; }

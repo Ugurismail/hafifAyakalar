@@ -97,20 +97,6 @@
             </div>
         </div>
 
-        <!-- İçerik Renkleri -->
-        <div class="card p-3 mb-3 cemil">
-            <h4>İçerik Renkleri</h4>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="content_background_color" class="form-label">İçerik Arka Plan Rengi:</label>
-                    <input type="color" id="content_background_color" name="content_background_color" class="form-control form-control-color" value="{{ user_profile.content_background_color }}">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="answer_background_color" class="form-label">Yanıt Arka Plan Rengi:</label>
-                    <input type="color" id="answer_background_color" name="answer_background_color" class="form-control form-control-color" value="{{ user_profile.answer_background_color }}">
-                </div>
-            </div>
-        </div>
 
         <!-- Sekme Renkleri -->
         <div class="card p-3 mb-3 cemil">
@@ -135,59 +121,26 @@
             </div>
         </div>
 
-        <!-- İkon ve Hover Renkleri -->
-        <div class="card p-3 mb-3 cemil">
-            <h4>İkon ve Hover Renkleri</h4>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="icon_color" class="form-label">İkon Rengi:</label>
-                    <input type="color" id="icon_color" name="icon_color" class="form-control form-control-color" value="{{ user_profile.icon_color }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="icon_hover_color" class="form-label">İkon Hover Rengi:</label>
-                    <input type="color" id="icon_hover_color" name="icon_hover_color" class="form-control form-control-color" value="{{ user_profile.icon_hover_color }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="hover_background_color" class="form-label">Hover Arka Plan Rengi:</label>
-                    <input type="color" id="hover_background_color" name="hover_background_color" class="form-control form-control-color" value="{{ user_profile.hover_background_color }}">
-                </div>
-            </div>
-        </div>
-
-        <!-- Dropdown Renkleri -->
-        <div class="card p-3 mb-3 cemil">
-            <h4>Dropdown Renkleri</h4>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="dropdown_text_color" class="form-label">Dropdown Metin Rengi:</label>
-                    <input type="color" id="dropdown_text_color" name="dropdown_text_color" class="form-control form-control-color" value="{{ user_profile.dropdown_text_color }}">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="dropdown_hover_background_color" class="form-label">Dropdown Hover Arka Plan Rengi:</label>
-                    <input type="color" id="dropdown_hover_background_color" name="dropdown_hover_background_color" class="form-control form-control-color" value="{{ user_profile.dropdown_hover_background_color }}">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="dropdown_hover_text_color" class="form-label">Dropdown Hover Metin Rengi:</label>
-                    <input type="color" id="dropdown_hover_text_color" name="dropdown_hover_text_color" class="form-control form-control-color" value="{{ user_profile.dropdown_hover_text_color }}">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="yanit_card" class="form-label">Yanıt Card:</label>
-                    <input type="color" id="yanit_card" name="yanit_card" class="form-control form-control-color" value="{{ user_profile.yanit_card }}">
-                </div>
-            </div>
-        </div>
 
         <!-- Sayfalama Renkleri -->
         <div class="card p-3 mb-3 cemil">
-            <h4>Sayfalama Renkleri</h4>
+            <h4>Sayfa Göstergesi Renkleri</h4>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="pagination_background_color" class="form-label">Sayfalama Arka Plan Rengi:</label>
                     <input type="color" id="pagination_background_color" name="pagination_background_color" class="form-control form-control-color" value="{{ user_profile.pagination_background_color }}">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="pagination_text_color" class="form-label">Sayfalama Metin Rengi:</label>
                     <input type="color" id="pagination_text_color" name="pagination_text_color" class="form-control form-control-color" value="{{ user_profile.pagination_text_color }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="icon_color" class="form-label">İkon Rengi:</label>
+                    <input type="color" id="icon_color" name="icon_color" class="form-control form-control-color" value="{{ user_profile.icon_color }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="answer_background_color" class="form-label">Yanıt Kart Arka Plan Rengi:</label>
+                    <input type="color" id="answer_background_color" name="answer_background_color" class="form-control form-control-color" value="{{ user_profile.answer_background_color }}">
                 </div>
                 <!-- <div class="col-md-3 mb-3">
                     <label for="pagination_active_background_color" class="form-label">Aktif Sayfalama Arka Plan Rengi:</label>

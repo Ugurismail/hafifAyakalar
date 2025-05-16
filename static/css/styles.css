@@ -571,3 +571,7 @@ ul.subquestions-list .list-group-item:hover {
     color: inherit !important;
     cursor: default !important;
 }
+
+span.icon-number {
+    color: var(--icon-color)
+}
