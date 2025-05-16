@@ -137,9 +137,7 @@ mark{
 }
 
 /* List Group */
-.list-group-item:hover {
-    background-color: var(--link-hover-color);
-}
+
 .list-group{
     background-color: var(--background-color);
     color: var(--text-color);
@@ -435,11 +433,8 @@ textarea.auto-expand.expanded {
     color: var(--text-color);
 }
 
-.list-group-item-action.active,
-.list-group-item-action:active {
-  background-color: #0d6efd; /* ya da istediğiniz renk */
-  color: #ffffff; 
-}
+
+
 
 
 .custom-table {
@@ -554,4 +549,25 @@ color: var(--text-color);
 a.ms-2 i.bi-pencil-square,
 a.ms-2 i.bi-trash {
     color: var(--icon-color, #000) !important;
+}
+
+.list-group-item:hover,
+.list-group-item.active,
+.list-group-item:focus,
+.list-group-item-action.active,
+.list-group-item-action:active {
+    background-color: var(--link-hover-color, #6E8CA7) !important;
+    color: #fff !important;
+}
+
+#parentQuestionsModal .list-group-item:hover {
+    background-color: inherit !important;
+    color: inherit !important;
+    cursor: default !important;
+}
+
+ul.subquestions-list .list-group-item:hover {
+    background-color: inherit !important;
+    color: inherit !important;
+    cursor: default !important;
 }

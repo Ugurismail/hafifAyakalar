@@ -43,11 +43,11 @@ class UserProfile(models.Model):
     yanit_card = models.CharField(max_length=7, default='#ffffff')
     header_background_color = models.CharField(max_length=7, default='#ffffff')
     header_text_color = models.CharField(max_length=7, default='#333333')
-    link_color = models.CharField(max_length=7, default='#0d6efd')
-    link_hover_color = models.CharField(max_length=7, default='#0056b3')
+    link_color = models.CharField(max_length=7, default='#6E8CA7')
+    link_hover_color = models.CharField(max_length=7, default='#4E647E')
 
-    button_background_color = models.CharField(max_length=7, default='#007bff')
-    button_hover_background_color = models.CharField(max_length=7, default='#0056b3')
+    button_background_color = models.CharField(max_length=7, default='#6E8CA7')
+    button_hover_background_color = models.CharField(max_length=7, default='#4E647E')
     button_text_color = models.CharField(max_length=7, default='#ffffff')
 
     secondary_button_background_color = models.CharField(max_length=7, default='#6c757d')

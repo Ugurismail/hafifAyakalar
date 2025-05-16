@@ -223,7 +223,7 @@
                   <div class="card-body">
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
                       <div>
-                        <a href="{% url 'question_detail' answer.question.id %}" class="fw-bold text-primary text-decoration-none">
+                        <a href="{% url 'question_detail' answer.question.id %}" class="fw-bold text-decoration-none">
                           {{ answer.question.question_text }}
                         </a>
                         <span class="text-muted ms-2 small">({{ answer.created_at|date:"d M Y H:i" }})</span>
@@ -555,7 +555,7 @@
                             {{ answer_obj.question.question_text|truncatewords:20 }}
                           </a>
                         </p>
-                        <a href="{% url 'single_answer' answer_obj.question.id answer_obj.id %}" class="text-decoration-none">
+                        <a href="{% url 'single_answer' answer_obj.question.id answer_obj.id %}" class=" text-body text-decoration-none">
                           {{ answer_obj.answer_text|truncatewords:20 }}
                         </a>
                         <div class="position-absolute top-0 end-0 me-2 mt-2">

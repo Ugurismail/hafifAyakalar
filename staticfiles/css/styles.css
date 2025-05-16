@@ -219,6 +219,12 @@ a:hover {
     position: relative;
 }
 
+.list-group-item-action.active,
+.list-group-item-action:active {
+  background-color: #6E8CA7 !important; /* ya da istediğiniz renk */
+  color: #ffffff; 
+}
+
 #search-results,
 #user-search-results {
     position: absolute;
