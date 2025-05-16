@@ -761,6 +761,30 @@
               });
           }
       });
+
+
+      document.addEventListener('DOMContentLoaded', function() {
+    // Her seferinde event'ları kaldır ve ekle (önce var olanları silmek için)
+    document.querySelectorAll('.read-more').forEach(function(link) {
+        link.onclick = null;
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            var answerId = this.getAttribute('data-answer-id');
+            var summary = document.getElementById('answer-summary-' + answerId);
+            var fullText = document.getElementById('answer-full-' + answerId);
+            if (!summary || !fullText) return;
+            if (summary.style.display === 'none') {
+                summary.style.display = 'block';
+                fullText.style.display = 'none';
+                this.textContent = 'Tümünü Göster';
+            } else {
+                summary.style.display = 'none';
+                fullText.style.display = 'block';
+                this.textContent = 'Daha az göster';
+            }
+        });
+    });
+});
   </script>
       
   {% endblock %}

@@ -69,7 +69,7 @@
             <div id="answer-full-{{ pinned_entry.answer.id }}" class="mb-2" style="display: none;">
               {{ pinned_entry.answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
             </div>
-            <a href="#" class="read-more" data-answer-id="{{ pinned_entry.answer.id }}">Tamamını oku</a>
+            <a href="#" class="read-more" data-answer-id="{{ pinned_entry.answer.id }}">Tümünü Göster</a>
           {% else %}
             <div>
               {{ pinned_entry.answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link }}
@@ -91,95 +91,63 @@
       
       <!-- Sekme Menüsü -->
       <ul class="nav nav-tabs" id="profileTab" role="tablist">
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'sorular' %}active{% endif %}" id="sorular-tab" data-bs-toggle="tab" href="#sorular" role="tab" aria-controls="sorular" aria-selected="{% if active_tab == 'sorular' %}true{% else %}false{% endif %}">Sorular</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'girdiler' %}active{% endif %}" 
+             href="?tab=girdiler">
+            Girdiler
+          </a>
         </li>
         {% if is_own_profile %}
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'davetler' %}active{% endif %}" id="davetler-tab" data-bs-toggle="tab" href="#davetler" role="tab" aria-controls="davetler" aria-selected="{% if active_tab == 'davetler' %}true{% else %}false{% endif %}">Davetler</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'davetler' %}active{% endif %}" 
+             href="?tab=davetler">
+            Davetler
+          </a>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link {% if active_tab == 'davet_aagac' %}active{% endif %}" id="davet-aagac-tab" data-bs-toggle="tab" data-bs-target="#davet_aagac" type="button" role="tab">Davet Ağaç</button>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'davet_aagac' %}active{% endif %}" 
+             href="?tab=davet_aagac">
+            Davet Ağaç
+          </a>
         </li>
         {% endif %}
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'yanitlar' %}active{% endif %}" id="yanitlar-tab" data-bs-toggle="tab" href="#yanitlar" role="tab" aria-controls="yanitlar" aria-selected="{% if active_tab == 'yanitlar' %}true{% else %}false{% endif %}">Yanıtlar</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'kelimeler' %}active{% endif %}" 
+             href="?tab=kelimeler">
+            Kelimeler
+          </a>
         </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'kelimeler' %}active{% endif %}" id="kelimeler-tab" data-bs-toggle="tab" href="#kelimeler" role="tab" aria-controls="kelimeler" aria-selected="{% if active_tab == 'kelimeler' %}true{% else %}false{% endif %}">Kelimeler</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'istatistikler' %}active{% endif %}" 
+             href="?tab=istatistikler">
+            İstatistikler
+          </a>
         </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'istatistikler' %}active{% endif %}" id="istatistikler-tab" data-bs-toggle="tab" href="#istatistikler" role="tab" aria-controls="istatistikler" aria-selected="{% if active_tab == 'istatistikler' %}true{% else %}false{% endif %}">İstatistikler</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'tanimlar' %}active{% endif %}" 
+             href="?tab=tanimlar">
+            Tanımlarım
+          </a>
         </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'tanimlar' %}active{% endif %}" id="tanimlar-tab" data-bs-toggle="tab" href="#tanimlar" role="tab" aria-controls="tanimlar" aria-selected="{% if active_tab == 'tanimlar' %}true{% else %}false{% endif %}">Tanımlarım</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'kaynaklarim' %}active{% endif %}" 
+             href="?tab=kaynaklarim">
+            Kaynaklarım
+          </a>
         </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'kaynaklarim' %}active{% endif %}" id="kaynaklarim-tab" data-bs-toggle="tab" href="#kaynaklarim" role="tab" aria-controls="kaynaklarim" aria-selected="{% if active_tab == 'kaynaklarim' %}true{% else %}false{% endif %}">Kaynaklarım</a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link {% if active_tab == 'kaydedilenler' %}active{% endif %}" id="kaydedilenler-tab" data-bs-toggle="tab" href="#kaydedilenler" role="tab" aria-controls="kaydedilenler" aria-selected="{% if active_tab == 'kaydedilenler' %}true{% else %}false{% endif %}">Kaydedilenler</a>
+        <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'kaydedilenler' %}active{% endif %}" 
+             href="?tab=kaydedilenler">
+            Kaydedilenler
+          </a>
         </li>
       </ul>
+      
       
       <!-- Sekme İçerikleri -->
       <div class="tab-content p-3 border border-top-0" id="profileTabContent">
         <!-- Sorular Sekmesi -->
-        <div class="tab-pane fade {% if active_tab == 'sorular' %}show active{% endif %}" id="sorular" role="tabpanel" aria-labelledby="sorular-tab">
-          <div class="mt-3">
-            <!-- Dinamik arama inputu ekleyin -->
-            <div id="questionsContainer" class="mb-3">
-              <input type="text" id="questionsSearchInput" class="form-control" placeholder="Soru ara...">
-            </div>
-            <!-- Soru listesi için container -->
-            <div id="questionsList">
-              {% for question in questions %}
-                <div class="mb-2">
-                  <a href="{% url 'question_detail' question.id %}" class="text-decoration-none">
-                    {{ question.question_text }}
-                  </a>
-                </div>
-              {% empty %}
-                <p>Henüz soru yok.</p>
-              {% endfor %}
-            </div>
-            <!-- Sayfalama kısmınız burada kalabilir -->
-            <nav aria-label="Sorular Sayfaları">
-              <ul class="pagination custom-pagination">
-                {% if questions.has_previous %}
-                  <li class="page-item">
-                    <a class="page-link" href="?question_page={{ questions.previous_page_number }}&tab=sorular" aria-label="Önceki">&laquo;</a>
-                  </li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                {% endif %}
-                <!-- Dropdown ile sayfa seçimi -->
-                <li class="page-item">
-                  <select class="form-select" id="questionPageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
-                    {% for num in questions.paginator.page_range %}
-                      <option value="{{ num }}" {% if questions.number == num %} selected {% endif %}>{{ num }}</option>
-                    {% endfor %}
-                  </select>
-                </li>
-                {% if questions.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?question_page={{ questions.next_page_number }}&tab=sorular" aria-label="Sonraki">&raquo;</a>
-                  </li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                {% endif %}
-              </ul>
-            </nav>
-            <script>
-              document.getElementById('questionPageSelect').addEventListener('change', function() {
-                var selectedPage = this.value;
-                window.location.href = "?question_page=" + selectedPage + "&tab=sorular";
-              });
-            </script>
-          </div>
-        </div>
-        
-        
+
         {% if is_own_profile %}
         <!-- Davetler Sekmesi -->
         <div class="tab-pane fade {% if active_tab == 'davetler' %}show active{% endif %}" id="davetler" role="tabpanel" aria-labelledby="davetler-tab">
@@ -244,70 +212,79 @@
         </div>
         {% endif %}
         
-        <!-- Yanıtlar Sekmesi -->
-        <div class="tab-pane fade {% if active_tab == 'yanitlar' %}show active{% endif %}" id="yanitlar" role="tabpanel" aria-labelledby="yanitlar-tab">
+        <div class="tab-pane fade {% if active_tab == 'girdiler' %}show active{% endif %}" id="girdiler" role="tabpanel" aria-labelledby="girdiler-tab">
           <div class="mt-3">
-            <!-- Dinamik arama inputu -->
-            <div id="answersContainer" class="mb-3">
-              <input type="text" id="answersSearchInput" class="form-control" placeholder="Yanıt ara...">
+            <div class="mb-3">
+              <input type="text" id="answersSearchInput" class="form-control" placeholder="Yanıt/başlık içinde ara...">
             </div>
-            <!-- Yanıt listesi container -->
             <div id="answersList">
               {% for answer in answers %}
-                <div class="mb-3">
-                  <p>
-                    <a href="{% url 'question_detail' answer.question.id %}" class="text-decoration-none">
-                      {{ answer.question.question_text }}
-                    </a>
-                  </p>
-                  <a href="{% url 'single_answer' answer.question.id answer.id %}" class="text-decoration-none">
-                    {{ answer.answer_text|truncatewords:20 }}
-                  </a>
-                  {% if answer.user == request.user %}
-                    <form action="{% url 'delete_answer' answer.id %}" method="post" class="d-inline">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-sm btn-danger float-end" onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">Sil</button>
-                    </form>
-                  {% endif %}
+                <div class="card mb-3 shadow-sm border-0">
+                  <div class="card-body">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                      <div>
+                        <a href="{% url 'question_detail' answer.question.id %}" class="fw-bold text-primary text-decoration-none">
+                          {{ answer.question.question_text }}
+                        </a>
+                        <span class="text-muted ms-2 small">({{ answer.created_at|date:"d M Y H:i" }})</span>
+                      </div>
+                      {% if answer.user == request.user %}
+                        <form action="{% url 'delete_answer' answer.id %}" method="post" class="ms-md-3 mt-2 mt-md-0 d-inline">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-outline-danger"
+                                  onclick="return confirm('Bu yanıtı silmek istediğinize emin misiniz?');">
+                            Sil
+                          </button>
+                        </form>
+                      {% endif %}
+                    </div>
+                    <div class="mt-2">
+                      <a href="{% url 'single_answer' answer.question.id answer.id %}" class="text-body text-decoration-none">
+                        {{ answer.answer_text|truncatewords_html:40|safe }}
+                      </a>
+                    </div>
+                  </div>
                 </div>
               {% empty %}
-                <p>Henüz yanıt yok.</p>
+                <p>Henüz girdiniz yok.</p>
               {% endfor %}
             </div>
-            <!-- Mevcut sayfalama kodunuz burada kalabilir -->
-            <nav aria-label="Yanıtlar Sayfaları">
-              <ul class="pagination custom-pagination">
-                {% if answers.has_previous %}
+            {% if answers and answers.paginator.num_pages > 1 %}
+              <nav aria-label="Girdiler Sayfaları">
+                <ul class="pagination custom-pagination">
+                  {% if answers.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link" href="?answer_page={{ answers.previous_page_number }}&tab=girdiler" aria-label="Önceki">&laquo;</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                  {% endif %}
                   <li class="page-item">
-                    <a class="page-link" href="?answer_page={{ answers.previous_page_number }}&tab=yanitlar" aria-label="Önceki">&laquo;</a>
+                    <select class="form-select" id="answerPageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
+                      {% for num in answers.paginator.page_range %}
+                        <option value="{{ num }}" {% if answers.number == num %} selected {% endif %}>{{ num }}</option>
+                      {% endfor %}
+                    </select>
                   </li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                {% endif %}
-                <li class="page-item">
-                  <select class="form-select" id="answerPageSelect" style="width: auto; display: inline-block; margin-left: 5px;">
-                    {% for num in answers.paginator.page_range %}
-                      <option value="{{ num }}" {% if answers.number == num %} selected {% endif %}>{{ num }}</option>
-                    {% endfor %}
-                  </select>
-                </li>
-                {% if answers.has_next %}
-                  <li class="page-item">
-                    <a class="page-link" href="?answer_page={{ answers.next_page_number }}&tab=yanitlar" aria-label="Sonraki">&raquo;</a>
-                  </li>
-                {% else %}
-                  <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                {% endif %}
-              </ul>
-            </nav>
-            <script>
-              document.getElementById('answerPageSelect').addEventListener('change', function() {
-                var selectedPage = this.value;
-                window.location.href = "?answer_page=" + selectedPage + "&tab=yanitlar";
-              });
-            </script>
+                  {% if answers.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?answer_page={{ answers.next_page_number }}&tab=girdiler" aria-label="Sonraki">&raquo;</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                  {% endif %}
+                </ul>
+              </nav>
+              <script>
+                document.getElementById('answerPageSelect').addEventListener('change', function() {
+                  var selectedPage = this.value;
+                  window.location.href = "?answer_page=" + selectedPage + "&tab=girdiler";
+                });
+              </script>
+            {% endif %}
           </div>
         </div>
+        
         
         
         <!-- Kelimeler Sekmesi -->
@@ -481,7 +458,9 @@
                   {% endfor %}
                 </tbody>
               </table>
-              {% include 'core/pagination.html' with page_obj=definitions_page page_param='d_page' active_tab='tanimlar' %}
+              {% if definitions_page and definitions_page.paginator.num_pages > 1 %}
+                {% include 'core/pagination.html' with page_obj=definitions_page page_param='d_page' active_tab='tanimlar' %}
+              {% endif %}
             </div>
           </div>
 
@@ -532,7 +511,9 @@
                       {% endfor %}
                     </tbody>
                   </table>
-                  {% include 'core/pagination.html' with page_obj=references_page page_param='r_page' active_tab='kaynaklarim' %}
+                  {% if references_page and references_page.paginator.num_pages > 1 %}
+                    {% include 'core/pagination.html' with page_obj=references_page page_param='r_page' active_tab='kaynaklarim' %}
+                  {% endif %}
                 {% else %}
                   <p>Henüz kaynak eklemediniz.</p>
                 {% endif %}
@@ -590,7 +571,9 @@
                 <p>Hiç kaydedilmiş soru veya yanıt yok.</p>
               {% endif %}
             </div>
-            {% include 'core/pagination.html' with page_obj=saved_items_page page_param='s_page' active_tab='kaydedilenler' %}
+            {% if saved_items_page and saved_items_page.paginator.num_pages > 1 %}
+              {% include 'core/pagination.html' with page_obj=saved_items_page page_param='s_page' active_tab='kaydedilenler' %}
+            {% endif %}
           </div>
         </div>
         
@@ -738,35 +721,58 @@ document.addEventListener('DOMContentLoaded', function() {
       container.append('<tr><td colspan="3">Sonuç bulunamadı.</td></tr>');
     }
   }
+  
+  
+  function renderQuestions(data, container) {
+  if (data.questions && data.questions.length > 0) {
+    $.each(data.questions, function(i, question) {
+      var card = `
+        <div class="card mb-3 shadow-sm border-0">
+          <div class="card-body">
+            <a href="${question.detail_url}" class="fw-bold text-primary text-decoration-none">
+              ${question.question_text}
+            </a>
+          </div>
+        </div>
+      `;
+      container.append(card);
+    });
+  } else {
+    container.append('<p>Sonuç bulunamadı.</p>');
+  }
+}
+
 
   // 5. Soru, yanıt ve kaydedilenler için render fonksiyonları
-  function renderQuestions(data, container) {
-    if(data.questions && data.questions.length > 0) {
-      $.each(data.questions, function(i, question) {
-        container.append(
-          '<div class="mb-2"><a href="' + question.detail_url + '" class="text-decoration-none">' +
-          question.question_text +
-          '</a></div>'
-        );
-      });
-    } else {
-      container.append('<p>Sonuç bulunamadı.</p>');
-    }
-  }
-
   function renderAnswers(data, container) {
-    if(data.answers && data.answers.length > 0) {
-      $.each(data.answers, function(i, answer) {
-        container.append(
-          '<div class="mb-3"><a href="' + answer.detail_url + '" class="text-decoration-none">' +
-          answer.answer_text +
-          '</a></div>'
-        );
-      });
-    } else {
-      container.append('<p>Sonuç bulunamadı.</p>');
-    }
+  if (data.answers && data.answers.length > 0) {
+    $.each(data.answers, function(i, answer) {
+      var card = `
+        <div class="card mb-3 shadow-sm border-0">
+          <div class="card-body">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+              <div>
+                <a href="${answer.question_url}" class="fw-bold text-primary text-decoration-none">
+                  ${answer.question_text}
+                </a>
+                <span class="text-muted ms-2 small">(${answer.created_at})</span>
+              </div>
+            </div>
+            <div class="mt-2">
+              <a href="${answer.detail_url}" class="text-body text-decoration-none">
+                ${answer.answer_text}
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+      container.append(card);
+    });
+  } else {
+    container.append('<p>Sonuç bulunamadı.</p>');
   }
+}
+
 
   function renderSavedItems(data, container) {
     if(data.saved_items && data.saved_items.length > 0) {
@@ -848,7 +854,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (summary.style.display === 'none') {
           summary.style.display = 'block';
           fullText.style.display = 'none';
-          link.textContent = 'Tamamını oku';
+          link.textContent = 'Tümünü Göster';
         } else {
           summary.style.display = 'none';
           fullText.style.display = 'block';

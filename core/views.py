@@ -55,13 +55,18 @@ def get_user_answers(request):
     q = request.GET.get('q', '').strip()
     answers = Answer.objects.filter(user=request.user)
     if q:
-        answers = answers.filter(answer_text__icontains=q)
+        answers = answers.filter(
+            Q(answer_text__icontains=q) | Q(question__question_text__icontains=q)
+        )
     data = []
     for answer in answers:
         data.append({
             'id': answer.id,
+            'question_text': answer.question.question_text,  # Bunu da gönder
             'answer_text': answer.answer_text[:80] + '...' if len(answer.answer_text) > 80 else answer.answer_text,
             'detail_url': reverse('single_answer', args=[answer.question.id, answer.id]),
+            'question_url': reverse('question_detail', args=[answer.question.id]),
+            'created_at': answer.created_at.strftime("%d %b %Y %H:%M"),
         })
     return JsonResponse({'answers': data})
 
@@ -70,16 +75,24 @@ def get_saved_items(request):
     q = request.GET.get('q', '').strip()
     saved_items = SavedItem.objects.filter(user=request.user)
     filtered_items = []
-    # Eğer arama terimi girildiyse, ilgili içeriklerde arama yapalım
     for item in saved_items:
         instance = item.content_type.get_object_for_this_type(id=item.object_id)
         if item.content_type.model == 'question':
             text = instance.question_text
+            # Soru için sadece başlık aranır
+            matches = not q or q.lower() in text.lower()
         elif item.content_type.model == 'answer':
+            # Hem yanıt hem başlık aranır
             text = instance.answer_text
+            matches = (
+                not q
+                or q.lower() in text.lower()
+                or q.lower() in instance.question.question_text.lower()
+            )
         else:
             text = ''
-        if not q or q.lower() in text.lower():
+            matches = False
+        if matches:
             filtered_items.append({
                 'type': item.content_type.model,
                 'id': instance.id,
@@ -87,6 +100,7 @@ def get_saved_items(request):
                 'detail_url': reverse('question_detail', args=[instance.id]) if item.content_type.model == 'question' else reverse('single_answer', args=[instance.question.id, instance.id]),
             })
     return JsonResponse({'saved_items': filtered_items})
+
 
 
 
@@ -241,220 +255,198 @@ def profile(request):
 def user_profile(request, username):
     profile_user = get_object_or_404(User, username=username)
     user_profile = profile_user.userprofile
-    active_tab = request.GET.get('tab', 'sorular')
+    active_tab = request.GET.get('tab', 'girdiler')
     is_own_profile = (request.user == profile_user)
-    invitation_tree = get_invitation_tree(request.user) if request.user == profile_user else None
-    # -- Tanımlar --
-    definitions_qs = Definition.objects.filter(user=profile_user).select_related('question')
-    search_query = request.GET.get('q', '').strip()
-    if search_query:
-        definitions_qs = definitions_qs.filter(
-            Q(definition_text__icontains=search_query) |
-            Q(question__question_text__icontains=search_query)
-        )
-    def_page = request.GET.get('d_page', 1)
-    def_paginator = Paginator(definitions_qs, 5)
-    try:
-        definitions_page = def_paginator.page(def_page)
-    except PageNotAnInteger:
-        definitions_page = def_paginator.page(1)
-    except EmptyPage:
-        definitions_page = def_paginator.page(def_paginator.num_pages)
 
-    invitation_tree = None
-    if is_own_profile:
-        invitation_tree = get_invitation_tree(request.user)
-        
-    # -- SORULAR --
-    questions_list = Question.objects.filter(user=profile_user).order_by('-created_at')
-    question_page = request.GET.get('question_page', 1)
-    question_paginator = Paginator(questions_list, 10)
-    try:
-        questions = question_paginator.page(question_page)
-    except PageNotAnInteger:
-        questions = question_paginator.page(1)
-    except EmptyPage:
-        questions = question_paginator.page(question_paginator.num_pages)
-
-    # -- YANITLAR --
-    answers_list = Answer.objects.filter(user=profile_user).order_by('-created_at')
-    answer_page = request.GET.get('answer_page', 1)
-    answer_paginator = Paginator(answers_list, 10)
-    try:
-        answers = answer_paginator.page(answer_page)
-    except PageNotAnInteger:
-        answers = answer_paginator.page(1)
-    except EmptyPage:
-        answers = answer_paginator.page(answer_paginator.num_pages)
-
-    # -- Kelimeler sekmesi --
-    question_texts = questions_list.values_list('question_text', flat=True)
-    answer_texts = answers_list.values_list('answer_text', flat=True)
-    all_texts = (' '.join(question_texts) + ' ' + ' '.join(answer_texts)).lower()
-    words = re.findall(r'\b\w+\b', all_texts)
-    exclude_words_str = request.GET.get('exclude_words', '')
-    exclude_words_list = [w.strip() for w in exclude_words_str.split(',') if w.strip()]
-    exclude_words_set = set(word.lower() for word in exclude_words_list)
-
-    exclude_word = request.GET.get('exclude_word', '').strip().lower()
-    if exclude_word:
-        exclude_words_set.add(exclude_word)
-
-    include_word = request.GET.get('include_word', '').strip().lower()
-    if include_word and include_word in exclude_words_set:
-        exclude_words_set.remove(include_word)
-
-    exclude_words_list = sorted(list(exclude_words_set))
-    exclude_words_str = ', '.join(exclude_words_list)
-
-    filtered_words = [word for word in words if word not in exclude_words_set]
-    word_counts = Counter(filtered_words)
-    top_words = word_counts.most_common(20)
-
-    search_word = request.GET.get('search_word', '').strip().lower()
-    search_word_count = None
-    if search_word:
-        search_word_count = word_counts.get(search_word, 0)
-
-    # -- İstatistikler --
-    total_upvotes = ((questions_list.aggregate(total=Sum('upvotes'))['total'] or 0) +
-                 (answers_list.aggregate(total=Sum('upvotes'))['total'] or 0))
-
-    total_downvotes = ((questions_list.aggregate(total=Sum('downvotes'))['total'] or 0) +
-                   (answers_list.aggregate(total=Sum('downvotes'))['total'] or 0))
-    content_type_question = ContentType.objects.get_for_model(Question)
-    content_type_answer = ContentType.objects.get_for_model(Answer)
-    total_saves_questions = SavedItem.objects.filter(
-        content_type=content_type_question, object_id__in=questions_list
-    ).count()
-    total_saves_answers = SavedItem.objects.filter(
-        content_type=content_type_answer, object_id__in=answers_list
-    ).count()
-    total_saves = total_saves_questions + total_saves_answers
-
-    most_upvoted_question = questions_list.order_by('-upvotes').first()
-    most_upvoted_answer = answers_list.order_by('-upvotes').first()
-    most_upvoted_entry = max(
-        (e for e in [most_upvoted_question, most_upvoted_answer] if e),
-        key=lambda x: x.upvotes,
-        default=None
-    )
-    most_downvoted_question = questions_list.order_by('-downvotes').first()
-    most_downvoted_answer = answers_list.order_by('-downvotes').first()
-    most_downvoted_entry = max(
-        (e for e in [most_downvoted_question, most_downvoted_answer] if e),
-        key=lambda x: x.downvotes,
-        default=None
-    )
-    most_saved_question = questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
-    most_saved_answer = answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
-    most_saved_entry = max(
-        (e for e in [most_saved_question, most_saved_answer] if e),
-        key=lambda x: x.save_count,
-        default=None
-    )
-
-    # -- Takip / takipçi sayıları --
-    follower_count = user_profile.followers.count()
-    following_count = user_profile.following.count()
-    is_following = False
-    if request.user.is_authenticated and request.user != profile_user:
-        is_following = request.user.userprofile.following.filter(user=profile_user).exists()
-
-    # -- Pinned Entry --
-    try:
-        pinned_entry = PinnedEntry.objects.get(user=profile_user)
-    except PinnedEntry.DoesNotExist:
-        pinned_entry = None
-
-    # -- Davetiyeler (sadece kendi profilimde) --
-    if is_own_profile:
-        invitations = Invitation.objects.filter(sender=request.user).order_by('-created_at')
-        total_invitations = invitations.count()
-        used_invitations = invitations.filter(is_used=True).count()
-        remaining_invitations = user_profile.invitation_quota - total_invitations
-    else:
-        invitations = None
-        total_invitations = 0
-        used_invitations = 0
-        remaining_invitations = 0
-
-    # -- Kaydedilenler sekmesi: Paginate saved items --
-    saved_items_list = []
-    if is_own_profile:
-        user_saved = SavedItem.objects.filter(user=profile_user).select_related('content_type').order_by('-saved_at')
-        for item in user_saved:
-            ct_model = item.content_type.model  # 'question' veya 'answer'
-            try:
-                instance = item.content_type.get_object_for_this_type(id=item.object_id)
-                saved_items_list.append({
-                    'type': ct_model,
-                    'object': instance
-                })
-            except Exception:
-                pass
-        s_page = request.GET.get('s_page', 1)
-        saved_paginator = Paginator(saved_items_list, 5)
-        try:
-            saved_items_page = saved_paginator.page(s_page)
-        except PageNotAnInteger:
-            saved_items_page = saved_paginator.page(1)
-        except EmptyPage:
-            saved_items_page = saved_paginator.page(saved_paginator.num_pages)
-    else:
-        saved_items_page = None
-
-    # -- Kaynaklarım sekmesi: Paginate references --
-    user_references = Reference.objects.filter(created_by=profile_user)
-    search_query = request.GET.get('q', '').strip()
-    if search_query:
-        user_references = user_references.filter(
-            Q(author_surname__icontains=search_query) |
-            Q(author_name__icontains=search_query) |
-            Q(rest__icontains=search_query) |
-            Q(abbreviation__icontains=search_query)
-        )
-    r_page = request.GET.get('r_page', 1)
-    ref_paginator = Paginator(user_references, 5)
-    try:
-        references_page = ref_paginator.page(r_page)
-    except PageNotAnInteger:
-        references_page = ref_paginator.page(1)
-    except EmptyPage:
-        references_page = ref_paginator.page(ref_paginator.num_pages)
-
+    # Her sekme için context anahtarları baştan boş atanıyor
     context = {
         'profile_user': profile_user,
         'user_profile': user_profile,
         'is_own_profile': is_own_profile,
-        'is_following': is_following,
-        'questions': questions,
-        'answers': answers,
-        'top_words': top_words,
-        'exclude_words': exclude_words_str,
-        'search_word': search_word,
-        'search_word_count': search_word_count,
-        'exclude_words_list': exclude_words_list,
-        'total_upvotes': total_upvotes,
-        'total_downvotes': total_downvotes,
-        'total_saves': total_saves,
-        'most_upvoted_entry': most_upvoted_entry,
-        'most_downvoted_entry': most_downvoted_entry,
-        'most_saved_entry': most_saved_entry,
-        'definitions': definitions_qs,  # or you can use definitions_page.object_list in template if desired
-        'definitions_page': definitions_page,
-        'pinned_entry': pinned_entry,
-        'invitations': invitations,
-        'total_invitations': total_invitations,
-        'used_invitations': used_invitations,
-        'remaining_invitations': remaining_invitations,
-        'follower_count': follower_count,
-        'following_count': following_count,
         'active_tab': active_tab,
-        'saved_items_page': saved_items_page,
-        'references_page': references_page,
-        'invitation_tree': invitation_tree,
+        'answers': None,
+        'definitions_page': None,
+        'references_page': None,
+        'saved_items_page': None,
+        'top_words': None,
+        'exclude_words': None,
+        'exclude_words_list': None,
+        'search_word': None,
+        'search_word_count': None,
+        # ... diğer anahtarlar da buraya eklenecekse boş bırak
     }
+
+    # Takip ve takipçi sayısı
+    context['follower_count'] = user_profile.followers.count()
+    context['following_count'] = user_profile.following.count()
+    context['is_following'] = (
+        request.user.is_authenticated and
+        request.user != profile_user and
+        request.user.userprofile.following.filter(user=profile_user).exists()
+    )
+
+    # Sabitlenmiş entry
+    try:
+        context['pinned_entry'] = PinnedEntry.objects.select_related('answer__question').get(user=profile_user)
+    except PinnedEntry.DoesNotExist:
+        context['pinned_entry'] = None
+
+    # Hangi sekmedeyse sadece oradaki veriyi doldur
+    if active_tab == 'girdiler':
+        answers_list = Answer.objects.filter(user=profile_user).select_related('question', 'user').order_by('-created_at')
+        answer_paginator = Paginator(answers_list, 10)
+        answer_page = request.GET.get('answer_page', 1)
+        try:
+            context['answers'] = answer_paginator.page(answer_page)
+        except (PageNotAnInteger, EmptyPage):
+            context['answers'] = answer_paginator.page(1)
+
+    elif active_tab == 'tanimlar':
+        definitions_qs = Definition.objects.filter(user=profile_user).select_related('question')
+        search_query = request.GET.get('q', '').strip()
+        if search_query:
+            definitions_qs = definitions_qs.filter(
+                Q(definition_text__icontains=search_query) |
+                Q(question__question_text__icontains=search_query)
+            )
+        def_paginator = Paginator(definitions_qs, 5)
+        def_page = request.GET.get('d_page', 1)
+        try:
+            context['definitions_page'] = def_paginator.page(def_page)
+        except (PageNotAnInteger, EmptyPage):
+            context['definitions_page'] = def_paginator.page(1)
+
+    elif active_tab == 'kaynaklarim':
+        user_references = Reference.objects.filter(created_by=profile_user)
+        search_query = request.GET.get('q', '').strip()
+        if search_query:
+            user_references = user_references.filter(
+                Q(author_surname__icontains=search_query) |
+                Q(author_name__icontains=search_query) |
+                Q(rest__icontains=search_query) |
+                Q(abbreviation__icontains=search_query)
+            )
+        ref_paginator = Paginator(user_references, 5)
+        r_page = request.GET.get('r_page', 1)
+        try:
+            context['references_page'] = ref_paginator.page(r_page)
+        except (PageNotAnInteger, EmptyPage):
+            context['references_page'] = ref_paginator.page(1)
+
+    elif active_tab == 'kaydedilenler' and is_own_profile:
+        user_saved = SavedItem.objects.filter(user=profile_user).select_related('content_type').order_by('-saved_at')
+        saved_items_list = []
+        content_type_map = {ct.model: ct for ct in ContentType.objects.all()}
+        question_ids = [si.object_id for si in user_saved if si.content_type.model == 'question']
+        answer_ids = [si.object_id for si in user_saved if si.content_type.model == 'answer']
+        question_map = {q.id: q for q in Question.objects.filter(id__in=question_ids)}
+        answer_map = {a.id: a for a in Answer.objects.select_related('question').filter(id__in=answer_ids)}
+        for item in user_saved:
+            if item.content_type.model == 'question':
+                obj = question_map.get(item.object_id)
+                if obj:
+                    saved_items_list.append({'type': 'question', 'object': obj})
+            elif item.content_type.model == 'answer':
+                obj = answer_map.get(item.object_id)
+                if obj:
+                    saved_items_list.append({'type': 'answer', 'object': obj})
+        s_page = request.GET.get('s_page', 1)
+        saved_paginator = Paginator(saved_items_list, 5)
+        try:
+            context['saved_items_page'] = saved_paginator.page(s_page)
+        except (PageNotAnInteger, EmptyPage):
+            context['saved_items_page'] = saved_paginator.page(1)
+
+    elif active_tab in ['istatistikler', 'kelimeler']:
+        questions_list = Question.objects.filter(user=profile_user)
+        answers_list = Answer.objects.filter(user=profile_user)
+        question_texts = questions_list.values_list('question_text', flat=True)
+        answer_texts = answers_list.values_list('answer_text', flat=True)
+        all_texts = (' '.join(question_texts) + ' ' + ' '.join(answer_texts)).lower()
+        words = re.findall(r'\b\w+\b', all_texts)
+        exclude_words_str = request.GET.get('exclude_words', '')
+        exclude_words_list = [w.strip() for w in exclude_words_str.split(',') if w.strip()]
+        exclude_words_set = set(word.lower() for word in exclude_words_list)
+        exclude_word = request.GET.get('exclude_word', '').strip().lower()
+        if exclude_word:
+            exclude_words_set.add(exclude_word)
+        include_word = request.GET.get('include_word', '').strip().lower()
+        if include_word and include_word in exclude_words_set:
+            exclude_words_set.remove(include_word)
+        exclude_words_list = sorted(list(exclude_words_set))
+        exclude_words_str = ', '.join(exclude_words_list)
+        filtered_words = [word for word in words if word not in exclude_words_set]
+        word_counts = Counter(filtered_words)
+        top_words = word_counts.most_common(20)
+        search_word = request.GET.get('search_word', '').strip().lower()
+        search_word_count = None
+        if search_word:
+            search_word_count = word_counts.get(search_word, 0)
+        context.update({
+            'top_words': top_words,
+            'exclude_words': exclude_words_str,
+            'exclude_words_list': exclude_words_list,
+            'search_word': search_word,
+            'search_word_count': search_word_count,
+        })
+        # İstatistikler için:
+        total_upvotes = ((questions_list.aggregate(total=Sum('upvotes'))['total'] or 0) +
+                         (answers_list.aggregate(total=Sum('upvotes'))['total'] or 0))
+        total_downvotes = ((questions_list.aggregate(total=Sum('downvotes'))['total'] or 0) +
+                           (answers_list.aggregate(total=Sum('downvotes'))['total'] or 0))
+        content_type_question = ContentType.objects.get_for_model(Question)
+        content_type_answer = ContentType.objects.get_for_model(Answer)
+        total_saves_questions = SavedItem.objects.filter(
+            content_type=content_type_question, object_id__in=questions_list
+        ).count()
+        total_saves_answers = SavedItem.objects.filter(
+            content_type=content_type_answer, object_id__in=answers_list
+        ).count()
+        total_saves = total_saves_questions + total_saves_answers
+        most_upvoted_question = questions_list.order_by('-upvotes').first()
+        most_upvoted_answer = answers_list.order_by('-upvotes').first()
+        most_upvoted_entry = max(
+            (e for e in [most_upvoted_question, most_upvoted_answer] if e),
+            key=lambda x: x.upvotes,
+            default=None
+        )
+        most_downvoted_question = questions_list.order_by('-downvotes').first()
+        most_downvoted_answer = answers_list.order_by('-downvotes').first()
+        most_downvoted_entry = max(
+            (e for e in [most_downvoted_question, most_downvoted_answer] if e),
+            key=lambda x: x.downvotes,
+            default=None
+        )
+        most_saved_question = questions_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
+        most_saved_answer = answers_list.annotate(save_count=Count('saveditem')).order_by('-save_count').first()
+        most_saved_entry = max(
+            (e for e in [most_saved_question, most_saved_answer] if e),
+            key=lambda x: getattr(x, 'save_count', 0),
+            default=None
+        )
+        context.update({
+            'total_upvotes': total_upvotes,
+            'total_downvotes': total_downvotes,
+            'total_saves': total_saves,
+            'most_upvoted_entry': most_upvoted_entry,
+            'most_downvoted_entry': most_downvoted_entry,
+            'most_saved_entry': most_saved_entry,
+        })
+
+    if active_tab == 'davetler' and is_own_profile:
+        invitations = Invitation.objects.filter(sender=request.user).order_by('-created_at')
+        total_invitations = invitations.count()
+        used_invitations = invitations.filter(is_used=True).count()
+        remaining_invitations = user_profile.invitation_quota - total_invitations
+        context.update({
+            'invitations': invitations,
+            'total_invitations': total_invitations,
+            'used_invitations': used_invitations,
+            'remaining_invitations': remaining_invitations,
+        })
+
+    if active_tab == 'davet_aagac' and is_own_profile:
+        context['invitation_tree'] = get_invitation_tree(request.user)
 
     return render(request, 'core/user_profile.html', context)
 
@@ -499,52 +491,40 @@ from django.core.paginator import Paginator
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 
+
+
 @login_required
 def question_detail(request, question_id):
-    # 1) Soldaki “Tüm Sorular” listesini alalım (varsayım: bu fonksiyon size ait olabilir)
-    all_questions = get_today_questions(request)  # Örneğin, o günün sorularını getiriyor.
+    # Soldaki tüm sorular ve pagination
+    all_questions = get_today_questions_queryset()
     q_page_number = request.GET.get('q_page', 1)
     q_paginator = Paginator(all_questions, 20)
     all_questions_page = q_paginator.get_page(q_page_number)
 
-    # 2) İlgili question nesnesini çek
+    # Soru nesnesini al
     question = get_object_or_404(Question, id=question_id)
 
-    # 3) --- FİLTRE PARAMETRELERİNİ AL --- 
-    my_answers = request.GET.get('my_answers')  # checkbox => "on" veya None
-    followed = request.GET.get('followed')      # checkbox => "on" veya None
+    # Filtre parametreleri
+    my_answers = request.GET.get('my_answers')
+    followed = request.GET.get('followed')
     username = request.GET.get('username', '').strip()
     keyword  = request.GET.get('keyword', '').strip()
 
-    # Başlangıçta, bu soruya ait TÜM yanıtları al.
     all_answers = question.answers.all().order_by('created_at')
-
-    # Filtre 1: Kullanıcının kendi yanıtları
     if my_answers == 'on':
         all_answers = all_answers.filter(user=request.user)
-    
-    # Filtre 2: Takip edilen kullanıcıların yanıtları
     if followed == 'on':
-        # Burada takip modelinizi uyarlamanız lazım.
-        # Örnek: request.user.profile.following => ManyToMany
-        # followed_users = request.user.profile.following.all()
-        # all_answers = all_answers.filter(user__in=followed_users)
-        pass
-
-    # Filtre 3: Belirli bir kullanıcı adı
+        followed_users = request.user.userprofile.following.all()
+        all_answers = all_answers.filter(user__in=followed_users)
     if username:
         all_answers = all_answers.filter(user__username__iexact=username)
-
-    # Filtre 4: Yanıt metninde kelime arama
     if keyword:
         all_answers = all_answers.filter(answer_text__icontains=keyword)
 
-    # 4) Yanıtlar için pagination (?a_page=...)
     a_page_number = request.GET.get('a_page', 1)
     a_paginator = Paginator(all_answers, 10)
     answers_page = a_paginator.get_page(a_page_number)
 
-    # 5) Yanıt ekleme formu (POST)
     if request.method == 'POST':
         form = AnswerForm(request.POST)
         if form.is_valid():
@@ -556,14 +536,12 @@ def question_detail(request, question_id):
     else:
         form = AnswerForm()
 
-    # 6) Soru/yanıt kaydetme ve oylama bilgisi (örnek)
     content_type_question = ContentType.objects.get_for_model(Question)
     user_has_saved_question = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_question,
         object_id=question.id
     ).exists()
-
     question_save_count = SavedItem.objects.filter(
         content_type=content_type_question,
         object_id=question.id
@@ -571,45 +549,37 @@ def question_detail(request, question_id):
 
     content_type_answer = ContentType.objects.get_for_model(Answer)
     page_answer_ids = [ans.id for ans in answers_page]
-
     user_votes = Vote.objects.filter(
         user=request.user,
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values('object_id', 'value')
     user_vote_dict = {vote['object_id']: vote['value'] for vote in user_votes}
-
     for ans in answers_page:
         ans.user_vote_value = user_vote_dict.get(ans.id, 0)
-
     saved_answer_ids = SavedItem.objects.filter(
         user=request.user,
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values_list('object_id', flat=True)
-
     answer_save_counts = SavedItem.objects.filter(
         content_type=content_type_answer,
         object_id__in=page_answer_ids
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
+
     starting_question_ids = set(StartingQuestion.objects.values_list('question_id', flat=True))
     is_on_map = (question.id in starting_question_ids) or question.parent_questions.exists()
 
-    # 7) Template’e göndereceğimiz context
     context = {
         'question': question,
         'form': form,
-
-        'all_questions_page': all_questions_page,  # soldaki “Tüm Sorular”
-        'answers_page': answers_page,              # ortadaki (filtreli) yanıtlar
-
+        'all_questions_page': all_questions_page,
+        'answers_page': answers_page,
         'user_has_saved_question': user_has_saved_question,
         'question_save_count': question_save_count,
         'saved_answer_ids': list(saved_answer_ids),
         'answer_save_dict': answer_save_dict,
-
-        # Filtre formunda “önceki seçimleri” korumak için GET parametrelerini gönderebiliriz:
         'my_answers': my_answers,
         'followed': followed,
         'filter_username': username,
@@ -711,15 +681,12 @@ def search(request):
     )
 
     if is_ajax:
-        # AJAX (Autocomplete) İsteği: Sadece 'q' parametresi ile arama yapar ve JSON döner
         query = request.GET.get('q', '').strip()
         if query:
             questions = Question.objects.filter(question_text__icontains=query)
             users = User.objects.filter(username__icontains=query)
 
             results = []
-
-            # Soruları ekle
             for q_obj in questions:
                 results.append({
                     'type': 'question',
@@ -727,8 +694,6 @@ def search(request):
                     'text': q_obj.question_text,
                     'url': reverse('question_detail', args=[q_obj.id]),
                 })
-
-            # Kullanıcıları ekle
             for user in users:
                 results.append({
                     'type': 'user',
@@ -742,24 +707,23 @@ def search(request):
         else:
             return JsonResponse({'results': []})
 
-    # 2) Gelişmiş Arama: Ek parametreleri al
+    # 2) Gelişmiş Arama Parametreleri
     username = request.GET.get('username', '').strip()
     date_from = request.GET.get('date_from', '').strip()
     date_to = request.GET.get('date_to', '').strip()
     keywords = request.GET.get('keywords', '').strip()
-    search_in = request.GET.get('search_in', 'all')  # 'question', 'answer' veya 'all'
-
-    # Eski 'q' parametresini de al (basit arama için)
+    search_in = request.GET.get('search_in', 'all')
     q_param = request.GET.get('q', '').strip()
 
-    # 3) Soru ve Yanıt queryset'lerini başlat
+    # 3) Başlangıç querysetleri
     questions = Question.objects.all()
     answers = Answer.objects.all()
-    users_found = User.objects.none()  # 'q_param' ile eşleşen kullanıcılar
+    users_found = User.objects.none()
 
-    # 4) Basit 'q' aramasını uygulama (eski arama)
+    # 4) Basit 'q' araması
     if q_param:
         questions = questions.filter(question_text__icontains=q_param)
+        answers = answers.filter(answer_text__icontains=q_param)
         users_found = User.objects.filter(username__icontains=q_param)
 
     # 5) Gelişmiş parametrelerle filtreleme
@@ -779,35 +743,42 @@ def search(request):
         questions = questions.filter(question_text__icontains=keywords)
         answers = answers.filter(answer_text__icontains=keywords)
 
-    # 6) Hangi tabloda arama yapılacağına karar verme
+    # 6) Hangi tabloda arama yapılacağına karar ver
     if search_in == 'question':
         answers = Answer.objects.none()
     elif search_in == 'answer':
         questions = Question.objects.none()
 
-    # 7) Pagination for questions
-    questions_page_number = request.GET.get('questions_page', 1)
-    questions_paginator = Paginator(questions.order_by('-created_at'), 10)  # 10 soru per page
-    try:
-        questions_paginated = questions_paginator.page(questions_page_number)
-    except PageNotAnInteger:
-        questions_paginated = questions_paginator.page(1)
-    except EmptyPage:
-        questions_paginated = questions_paginator.page(questions_paginator.num_pages)
+    # 7) Soruları ve yanıtları birleştir
+    combined_results = []
+    for q in questions:
+        combined_results.append({
+            "type": "question",
+            "object": q,
+            "created_at": q.created_at
+        })
+    for a in answers:
+        combined_results.append({
+            "type": "answer",
+            "object": a,
+            "created_at": a.created_at
+        })
 
-    # 8) Pagination for answers
-    answers_page_number = request.GET.get('answers_page', 1)
-    answers_paginator = Paginator(answers.order_by('-created_at'), 10)  # 10 yanıt per page
-    try:
-        answers_paginated = answers_paginator.page(answers_page_number)
-    except PageNotAnInteger:
-        answers_paginated = answers_paginator.page(1)
-    except EmptyPage:
-        answers_paginated = answers_paginator.page(answers_paginator.num_pages)
+    combined_results.sort(key=lambda x: x['created_at'], reverse=True)
 
-    # 9) Sayfalama için kullanıcılar bölümü
+    # 8) Pagination for combined results
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(combined_results, 15)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # 9) Kullanıcılar için pagination
     users_page_number = request.GET.get('users_page', 1)
-    users_paginator = Paginator(users_found.order_by('username'), 10)  # 10 kullanıcı per page
+    users_paginator = Paginator(users_found.order_by('username'), 10)
     try:
         users_paginated = users_paginator.page(users_page_number)
     except PageNotAnInteger:
@@ -815,24 +786,25 @@ def search(request):
     except EmptyPage:
         users_paginated = users_paginator.page(users_paginator.num_pages)
 
-    # 10) Sonuçları sayfaya gönder
+    # 10) Sonuçları template'e gönder
     context = {
-        'questions': questions_paginated,
-        'answers': answers_paginated,
-        'users': users_paginated,
+        'results': page_obj,         # Birleşik sonuçlar burada!
+        'users': users_paginated,    # Kullanıcılar ayrı.
         'query': q_param,
         'username': username,
         'date_from': date_from,
         'date_to': date_to,
         'keywords': keywords,
         'search_in': search_in,
+        'page_obj': page_obj,        # Pagination için
     }
 
     return render(request, 'core/search_results.html', context)
 
+
 @login_required
 def add_question_from_search(request):
-    all_questions = get_today_questions(request)
+    all_questions = get_today_questions_queryset()
     query = request.GET.get('q', '').strip()
 
     if request.method == 'POST':
@@ -897,7 +869,7 @@ def add_question(request):
 @login_required
 def add_subquestion(request, question_id):
     parent_question = get_object_or_404(Question, id=question_id)
-    all_questions = get_today_questions(request)
+    all_questions = get_today_questions_queryset()
     if request.method == 'POST':
         form = QuestionForm(request.POST)
         if form.is_valid():
@@ -1115,7 +1087,7 @@ def user_settings(request):
 
 @login_required
 def add_starting_question(request):
-    all_questions = get_today_questions(request)
+    all_questions = get_today_questions_queryset()
     if request.method == 'POST':
         form = StartingQuestionForm(request.POST)
         if form.is_valid():
@@ -1360,77 +1332,115 @@ def site_statistics(request):
 
     return render(request, 'core/site_statistics.html', context)
 
+
+
+def get_today_questions_queryset():
+    """
+    Son 7 gün içinde oluşturulan veya yanıt alan soruları döndürür (queryset).
+    En son yanıtlananlar en üste gelecek şekilde sıralar.
+    """
+    seven_days_ago = now() - timedelta(days=7)
+    queryset = Question.objects.annotate(
+        answers_count=Count('answers', distinct=True),  # Yanıt sayısı
+        latest_answer_date=Max('answers__created_at')   # En son yanıt tarihi
+    ).filter(
+        Q(created_at__gte=seven_days_ago) | Q(answers__created_at__gte=seven_days_ago)
+    ).distinct()
+
+    queryset = queryset.annotate(
+        sort_date=Coalesce('latest_answer_date', 'created_at')
+    ).order_by(F('sort_date').desc())
+
+    return queryset
+
+def get_today_questions_page(request, per_page=25):
+    queryset = get_today_questions_queryset()
+    paginator = Paginator(queryset, per_page)
+    page = request.GET.get('page', 1)
+    try:
+        all_questions = paginator.page(page)
+    except PageNotAnInteger:
+        all_questions = paginator.page(1)
+    except EmptyPage:
+        all_questions = paginator.page(paginator.num_pages)
+    return all_questions
+
+
 def user_homepage(request):
     if not request.user.is_authenticated:
         return redirect('signup')
-    
-    today = timezone.now().date()
 
-    # Tüm soruları al
-    all_questions = get_today_questions(request)
+    # 1. Tüm Sorular (ve cevap sayısı)
+    all_questions_qs = get_today_questions_queryset().select_related('user')
+    q_page_number = request.GET.get('page', 1)
+    q_paginator = Paginator(all_questions_qs, 20)
+    all_questions = q_paginator.get_page(q_page_number)
 
-    # Rastgele yanıtlar (Örnek)
-    random_items = Answer.objects.all().order_by('?')[:20]
+    # 2. Rastgele Cevaplar -- OPTİMİZE (ID ile çek, sonra select_related)
+    answer_ids = list(Answer.objects.values_list('id', flat=True))
+    if len(answer_ids) > 20:
+        random_ids = random.sample(answer_ids, 20)
+    else:
+        random_ids = answer_ids
+    random_items_qs = Answer.objects.filter(id__in=random_ids).select_related('question', 'user')
 
+    # Sıralama tutarsız olmasın diye aynı sırayı koru:
+    random_items = sorted(list(random_items_qs), key=lambda x: random_ids.index(x.id)) if random_ids else []
 
-    # Başlangıç sorularını al
-    starting_questions = StartingQuestion.objects.filter(user=request.user).annotate(
+    # 3. Başlangıç Soruları (her biri için toplam subquestion ve son eklenen alt soru)
+    starting_questions_qs = StartingQuestion.objects.filter(user=request.user).select_related('question').annotate(
         total_subquestions=Count('question__subquestions'),
         latest_subquestion_date=Max('question__subquestions__created_at')
-    ).order_by(F('latest_subquestion_date').desc(nulls_last=True))
+    ).order_by(F('latest_subquestion_date').desc(nulls_last=True)).select_related('question__user')
 
+    sq_page_number = request.GET.get('starting_page', 1)
+    sq_paginator = Paginator(starting_questions_qs, 10)
+    starting_questions = sq_paginator.get_page(sq_page_number)
 
-    
-    # Kullanıcının oylarını alalım
-    if request.user.is_authenticated:
-        content_type_answer = ContentType.objects.get_for_model(Answer)
+    # 4. Kullanıcı oyları topluca çek
+    content_type_answer = ContentType.objects.get_for_model(Answer)
+    if request.user.is_authenticated and random_items:
         answer_votes = Vote.objects.filter(
             user=request.user,
             content_type=content_type_answer,
-            object_id__in=random_items.values_list('id', flat=True)
+            object_id__in=[a.id for a in random_items]
         ).values('object_id', 'value')
         answer_vote_dict = {item['object_id']: item['value'] for item in answer_votes}
-    
-        # Her yanıta `user_vote_value` özelliğini ekle
         for answer in random_items:
             answer.user_vote_value = answer_vote_dict.get(answer.id, 0)
     else:
-        # Kullanıcı giriş yapmamışsa, tüm oy değerlerini 0 olarak ayarla
         for answer in random_items:
             answer.user_vote_value = 0
-    
-    # Kullanıcının kaydettiği yanıtların ID'lerini al
-    if request.user.is_authenticated:
-        content_type_answer = ContentType.objects.get_for_model(Answer)
-        saved_answer_ids = SavedItem.objects.filter(
+
+    # 5. Kullanıcının kaydettiği yanıtlar
+    if request.user.is_authenticated and random_items:
+        saved_answer_ids = set(SavedItem.objects.filter(
             user=request.user,
             content_type=content_type_answer,
-            object_id__in=random_items.values_list('id', flat=True)
-        ).values_list('object_id', flat=True)
+            object_id__in=[a.id for a in random_items]
+        ).values_list('object_id', flat=True))
     else:
-        saved_answer_ids = []
-    
-    # Yanıtların kaydedilme sayısını al
-    content_type_answer = ContentType.objects.get_for_model(Answer)
+        saved_answer_ids = set()
+
+    # 6. Yanıtların kaydedilme sayısı
     answer_save_counts = SavedItem.objects.filter(
         content_type=content_type_answer,
-        object_id__in=random_items.values_list('id', flat=True)
+        object_id__in=[a.id for a in random_items]
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
-    
+
     context = {
         'random_items': random_items,
-        'saved_answer_ids': list(saved_answer_ids),
+        'saved_answer_ids': saved_answer_ids,
         'answer_save_dict': answer_save_dict,
-        'all_questions': all_questions,
-        'starting_questions': starting_questions,
+        'all_questions': all_questions,  # Pagineli queryset
+        'starting_questions': starting_questions,  # Pagineli queryset
     }
     return render(request, 'core/user_homepage.html', context)
 
-
 @login_required
 def edit_answer(request, answer_id):
-    all_questions = get_today_questions(request)
+    all_questions = get_today_questions_queryset()
     answer = get_object_or_404(Answer, id=answer_id, user=request.user)
         # Başlangıç sorularını al
     starting_questions = StartingQuestion.objects.filter(user=request.user).annotate(
@@ -1532,7 +1542,7 @@ def delete_question_and_subquestions(question):
 def single_answer(request, question_id, answer_id):
     question = get_object_or_404(Question, id=question_id)
     focused_answer = get_object_or_404(Answer, id=answer_id, question=question)
-    all_questions = get_today_questions(request)
+    all_questions = get_today_questions_queryset()
 
     # Tüm yanıtlar
     all_answers = Answer.objects.filter(question=question).select_related('user')
@@ -1770,59 +1780,43 @@ def get_top_words(user):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def message_list(request):
-    # Get all messages involving the user
     messages = Message.objects.filter(
         Q(sender=request.user) | Q(recipient=request.user)
-    )
-    all_questions = get_today_questions(request)
-    # Annotate each conversation with the latest message timestamp
-    conversations = messages.values(
-        'sender', 'recipient'
-    ).annotate(
-        last_message_time=Max('timestamp')
-    ).order_by('-last_message_time')
+    ).select_related('sender', 'recipient')
 
-    # Use a set to avoid duplicate user pairs
-    conversation_users = []
+    # En yeni mesajı her kullanıcı için birleştir
+    # Sadece diğer kullanıcı id’lerini çek
+    user_ids = set(messages.values_list('sender', flat=True)) | set(messages.values_list('recipient', flat=True))
+    user_ids.discard(request.user.id)
+    other_users = User.objects.filter(id__in=user_ids)
+
     conversation_dict = {}
+    for other_user in other_users:
+        messages_with_user = messages.filter(
+            Q(sender=other_user, recipient=request.user) |
+            Q(sender=request.user, recipient=other_user)
+        ).order_by('-timestamp')
 
-    for convo in conversations:
-        # Determine the other user in the conversation
-        if convo['sender'] == request.user.id:
-            other_user_id = convo['recipient']
-        else:
-            other_user_id = convo['sender']
+        unread_count = messages_with_user.filter(
+            sender=other_user,
+            recipient=request.user,
+            is_read=False
+        ).count()
 
-        if other_user_id not in conversation_users:
-            other_user = User.objects.get(id=other_user_id)
-            # Fetch messages with this user
-            messages_with_user = messages.filter(
-                Q(sender=other_user, recipient=request.user) |
-                Q(sender=request.user, recipient=other_user)
-            ).order_by('-timestamp')
+        conversation_dict[other_user] = {
+            'messages': messages_with_user,
+            'unread_count': unread_count,
+        }
 
-            # Count unread messages from other_user to request.user
-            unread_count = messages_with_user.filter(
-                sender=other_user,
-                recipient=request.user,
-                is_read=False
-            ).count()
-
-            conversation_dict[other_user] = {
-                'messages': messages_with_user,
-                'unread_count': unread_count,
-                'all_questions': all_questions,
-            }
-
-            conversation_users.append(other_user_id)
-
+    all_questions = get_today_questions_queryset().annotate(
+        answers_count=Count('answers')
+    )
 
     context = {
         'conversations': conversation_dict,
         'all_questions': all_questions,
     }
     return render(request, 'core/message_list.html', context)
-
 
 @login_required
 def message_detail(request, username):
@@ -1848,7 +1842,7 @@ def message_detail(request, username):
             # Diğer kullanıcının mesajlarını okunmuş olarak işaretlemek isteğe bağlıdır
             Message.objects.filter(sender=other_user, recipient=request.user).update(is_read=True)
             return redirect('message_detail', username=username)
-    all_questions = get_today_questions(request)
+    all_questions = get_today_questions_queryset()
 
     context = {
         'other_user': other_user,
@@ -1916,37 +1910,6 @@ def send_message_from_user(request, user_id):
         'recipient': recipient,
     }
     return render(request, 'core/send_message_from_answer.html', context)
-
-
-def get_today_questions(request, per_page=25):
-    """
-    Son 7 gün içinde oluşturulan veya yanıt alan soruları döndürür (sayfalandırılmış),
-    en son yanıtlananlar en üste gelecek şekilde sıralar.
-    """
-    seven_days_ago = now() - timedelta(days=7)
-    queryset = Question.objects.annotate(
-        answers_count=Count('answers', distinct=True),  # Yanıt sayısı
-        latest_answer_date=Max('answers__created_at')   # En son yanıt tarihi
-    ).filter(
-        Q(created_at__gte=seven_days_ago) | Q(answers__created_at__gte=seven_days_ago)
-    ).distinct()
-
-    # sort_date için Coalesce kullanımı
-    queryset = queryset.annotate(
-        sort_date=Coalesce('latest_answer_date', 'created_at')
-    ).order_by(F('sort_date').desc())
-
-    # Sayfalandırma
-    page = request.GET.get('page', 1)
-    paginator = Paginator(queryset, per_page)
-    try:
-        all_questions = paginator.page(page)
-    except PageNotAnInteger:
-        all_questions = paginator.page(1)
-    except EmptyPage:
-        all_questions = paginator.page(paginator.num_pages)
-
-    return all_questions
 
 
 def custom_404_view(request, exception):
