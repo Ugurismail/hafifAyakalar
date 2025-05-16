@@ -34,8 +34,6 @@ fsspec==2024.3.0
 idna==3.4
 importlib_resources==6.3.1
 itsdangerous==2.2.0
-jax==0.4.25
-jaxlib==0.4.25
 Jinja2==3.1.4
 jmp==0.0.4
 kiwisolver==1.4.5

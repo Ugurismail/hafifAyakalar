@@ -593,6 +593,8 @@ def question_detail(request, question_id):
         object_id__in=page_answer_ids
     ).values('object_id').annotate(count=Count('id'))
     answer_save_dict = {item['object_id']: item['count'] for item in answer_save_counts}
+    starting_question_ids = set(StartingQuestion.objects.values_list('question_id', flat=True))
+    is_on_map = (question.id in starting_question_ids) or question.parent_questions.exists()
 
     # 7) Template’e göndereceğimiz context
     context = {
@@ -612,6 +614,7 @@ def question_detail(request, question_id):
         'followed': followed,
         'filter_username': username,
         'filter_keyword': keyword,
+        'is_on_map': is_on_map,
     }
     return render(request, 'core/question_detail.html', context)
 

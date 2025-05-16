@@ -33,11 +33,13 @@
               
               <h1 class="h1 mb-0">
                 {{ question.question_text }}
-                <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
-                  class="ms-2 text-secondary"
-                  title="Haritada Gör">
-                  <i class="bi bi-geo-alt-fill"></i>
-                </a>
+                {% if is_on_map %}
+                  <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
+                    class="ms-2 text-secondary"
+                    title="Haritada Gör">
+                    <i class="bi bi-geo-alt-fill"></i>
+                  </a>
+                {% endif %}
               </h1>
               
               <!-- Filtre / Huni Butonu (Bootstrap Dropdown) -->
