@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>{{ poll.question_text }}</h2>
+    <p>Bitiş Tarihi: {{ poll.end_date|date:"Y-m-d H:i" }}</p>
+
+    {% if user_vote %}
+        <div class="alert alert-success">Bu ankete oy verdiniz.</div>
+    {% endif %}
+
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        <ul class="list-group">
+            {% for opt in options_data %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <label>
+                  <input type="radio" name="option" value="{{ opt.option.id }}" {% if user_vote == opt.option.id %}checked disabled{% elif user_vote %}disabled{% endif %}>
+                  {{ opt.option.option_text }}
+                </label>
+                <span>
+                  {{ opt.votes }} oy (%{{ opt.percentage }})
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if not user_vote %}
+        <button type="submit" class="btn btn-primary mt-3">Oy Ver</button>
+        {% endif %}
+    </form>
+    <a href="{% url 'polls_home' %}" class="btn btn-secondary">Tüm Anketler</a>
+</div>
+{% endblock %}

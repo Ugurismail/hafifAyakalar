@@ -33,14 +33,29 @@
               
               <h1 class="h1 mb-0">
                 {{ question.question_text }}
+              
+                {# Haritada Gör butonu (mevcut özelliğin değişmedi) #}
                 {% if is_on_map %}
                   <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
-                    class="ms-2 text-secondary"
-                    title="Haritada Gör">
+                     class="ms-2 text-secondary"
+                     title="Haritada Gör">
                     <i class="bi bi-geo-alt-fill"></i>
                   </a>
                 {% endif %}
+              
+                {# YENİ: Eğer bu başlık bir anketle ilişkiliyse, anket ikonunu göster #}
+                {% with poll=question.poll_set.first %}
+                {% if poll %}
+                  <span class="ms-2 poll-icon-wrapper" data-poll-id="{{ poll.id }}">
+                    <i class="bi bi-bar-chart poll-icon text-primary"
+                       style="cursor:pointer; font-size:1.3em;"
+                       data-bs-placement="top"
+                       ></i>
+                  </span>
+                {% endif %}
+              {% endwith %}
               </h1>
+              
               
               <!-- Filtre / Huni Butonu (Bootstrap Dropdown) -->
               <div class="dropdown">
@@ -691,6 +706,7 @@
       });
   </script>
 
+
   <script>
       document.addEventListener('DOMContentLoaded', function() {
           const filterForm  = document.getElementById('filterForm');
@@ -785,6 +801,72 @@
     });
 });
   </script>
-      
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+  
+    /* Django’dan ters çözülmüş URL şablonları */
+    const popTpl  = "{% url 'poll_popover'   0 %}";
+    const voteTpl = "{% url 'vote_poll_ajax' 0 %}";
+    const detTpl  = "{% url 'poll_detail'    0 %}";
+  
+    const openMap = new Map();   // pollId → {instance, hideTimer}
+  
+    function show(icon, pid){
+      fetch(popTpl.replace('0', pid))
+        .then(r => r.json())
+        .then(d => {
+          const pop = new bootstrap.Popover(icon, {
+            html:true, trigger:'manual', content:d.html,
+            placement:'top', sanitize:false, container:'body'
+          });
+          pop.show();
+          const tip = pop.getTipElement();
+          tip.addEventListener('mouseenter', () => {
+            const o = openMap.get(pid); if (o?.hideTimer){ clearTimeout(o.hideTimer); o.hideTimer=null; }
+          });
+          tip.addEventListener('mouseleave', () => scheduleHide(pid));
+          openMap.set(pid, {instance:pop, hideTimer:null});
+        });
+    }
+  
+    function scheduleHide(pid){
+      const o = openMap.get(pid);
+      if (!o || o.hideTimer) return;
+      o.hideTimer = setTimeout(()=>{ o.instance.hide(); openMap.delete(pid); }, 200);
+    }
+  
+    /* İkon olayları */
+    document.querySelectorAll('.poll-icon-wrapper').forEach(w=>{
+      const icon = w.querySelector('.poll-icon'), pid = w.dataset.pollId;
+      icon.addEventListener('mouseenter', ()=>{ if(!openMap.has(pid)) show(icon,pid); });
+      icon.addEventListener('mouseleave', ()=> scheduleHide(pid));
+      icon.addEventListener('click',      ()=> window.location.href = detTpl.replace('0', pid));
+    });
+  
+    /* Popover içinden AJAX oy */
+    document.body.addEventListener('submit', e=>{
+      if (!e.target.classList.contains('popover-vote-form')) return;
+      e.preventDefault();
+      const f=e.target, pid=f.dataset.pollId, fd=new FormData(f);
+      fetch(voteTpl.replace('0', pid), {
+        method:'POST', body:fd, credentials:'same-origin',
+        headers:{'X-CSRFToken': fd.get('csrfmiddlewaretoken')}
+      })
+      .then(r=>r.json())
+      .then(d=>{
+        const o=openMap.get(pid);
+        if(o){
+          o.instance.getTipElement().querySelector('.popover-body').innerHTML = d.html;
+        }
+      });
+    });
+  
+  });
+  </script>
+  
+  
+  
+  
   {% endblock %}
 

@@ -1,0 +1,32 @@
+<div style="min-width:180px;">
+    <div class="fw-bold mb-2">{{ poll.question_text }}</div>
+    <ul class="list-unstyled mb-2">
+      {% for opt_data in options_data %}
+        <li>
+          {{ opt_data.option.option_text }}:
+          <span class="text-muted">%{{ opt_data.percentage }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if user_vote %}
+      <span class="badge bg-success">Oyunuz kaydedildi</span>
+    {% else %}
+      <form class="popover-vote-form" data-poll-id="{{ poll.id }}">
+        {% csrf_token %}
+        {% for opt_data in options_data %}
+          <div class="form-check mb-1">
+            <input type="radio"
+                   class="form-check-input"
+                   name="option_id"
+                   value="{{ opt_data.option.id }}"
+                   id="poll_{{ poll.id }}_opt_{{ opt_data.option.id }}">
+            <label class="form-check-label" for="poll_{{ poll.id }}_opt_{{ opt_data.option.id }}">
+              {{ opt_data.option.option_text }}
+            </label>
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary btn-sm mt-2 w-100">Oy Ver</button>
+      </form>
+    {% endif %}
+  </div>
+  

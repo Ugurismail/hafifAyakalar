@@ -29,6 +29,7 @@ from django.shortcuts import get_object_or_404
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from urllib.parse import unquote
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models.functions import Lower
 
 
@@ -2042,6 +2043,103 @@ def poll_question_redirect(request, poll_id):
         poll.save()
         return redirect('question_detail', question_id=q.id)
     
+@login_required
+@csrf_exempt  # (Eğer CSRF token’da sorun olursa, frontend'de tokeni gönderdiğine emin ol!)
+def vote_poll_ajax(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    if request.method == 'POST':
+        option_id = request.POST.get('option_id')
+        if PollVote.objects.filter(user=request.user, option__poll=poll).exists():
+            # Zaten oy vermiş, sonuçları döndür
+            pass
+        else:
+            option = get_object_or_404(PollOption, id=option_id, poll=poll)
+            PollVote.objects.create(user=request.user, option=option)
+    # Sonuçları tekrar gönder
+    options = poll.options.all()
+    total_votes = sum(opt.votes.count() for opt in options)
+    user_vote = PollVote.objects.filter(option__poll=poll, user=request.user).first()
+    context = {
+        'poll': poll,
+        'options': options,
+        'total_votes': total_votes,
+        'user_vote': user_vote,
+    }
+    html = render_to_string('core/poll_popover_content.html', context, request)
+    return JsonResponse({'html': html})
+
+@login_required
+def poll_detail(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    options = poll.options.all()
+    total_votes = sum(opt.votes.count() for opt in options)
+    user_vote = None
+
+    if request.user.is_authenticated:
+        # Kullanıcı daha önce oy vermiş mi?
+        for opt in options:
+            if opt.votes.filter(user=request.user).exists():
+                user_vote = opt.id
+                break
+
+    # Oy kullanma işlemi (POST)
+    if request.method == "POST":
+        if not user_vote:  # Sadece ilk oy
+            option_id = request.POST.get("option")
+            option = get_object_or_404(PollOption, id=option_id, poll=poll)
+            PollVote.objects.create(user=request.user, option=option)
+            return redirect('poll_detail', poll_id=poll.id)
+        else:
+            messages.error(request, "Bu ankete zaten oy verdiniz.")
+            return redirect('poll_detail', poll_id=poll.id)
+
+    # Her seçenek için yüzdeleri hesapla
+    options_data = []
+    for opt in options:
+        votes = opt.votes.count()
+        percentage = (votes / total_votes * 100) if total_votes > 0 else 0
+        options_data.append({
+            'option': opt,
+            'votes': votes,
+            'percentage': round(percentage, 2)
+        })
+
+    context = {
+        'poll': poll,
+        'options_data': options_data,
+        'total_votes': total_votes,
+        'user_vote': user_vote,
+    }
+    return render(request, 'core/poll_detail.html', context)
+
+@login_required
+def poll_popover_content(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    options = poll.options.all()
+    total_votes = sum(opt.votes.count() for opt in options)
+    user_vote = None
+    if request.user.is_authenticated:
+        user_vote = PollVote.objects.filter(user=request.user, option__poll=poll).first()
+    # Her option için yüzdeyi hesapla ve diziye ekle:
+    options_data = []
+    for opt in options:
+        votes = opt.votes.count()
+        percentage = (votes / total_votes * 100) if total_votes > 0 else 0
+        options_data.append({
+            'option': opt,
+            'votes': votes,
+            'percentage': round(percentage, 1)
+        })
+    context = {
+        'poll': poll,
+        'options_data': options_data,
+        'user_vote': user_vote,
+        'total_votes': total_votes,
+        'request': request,
+    }
+    html = render_to_string('core/poll_popover_content.html', context)
+    return JsonResponse({'html': html})
+
 def create_definition(request, question_id):
     question = get_object_or_404(Question, id=question_id)
     if request.method == 'POST':
