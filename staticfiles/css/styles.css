@@ -360,3 +360,10 @@ a:hover {
     color: red !important;
 }
 body { border: 5px solid red !important; }
+
+.topic-small-icon {
+    font-size: 1.08em !important;   /* Küçük ve uyumlu */
+    line-height: 1;
+    vertical-align: middle;
+  }
+  

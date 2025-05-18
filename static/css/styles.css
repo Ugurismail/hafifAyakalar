@@ -17,6 +17,9 @@ a {
     color: var(--tbas-color, #000000);
 }
 
+.tbas-color:hover{
+    background-color: var(--nav-link-hover-bg)
+}
 
 
 .container{
@@ -278,7 +281,7 @@ textarea.auto-expand.expanded {
 }
 
 .dropdown-menu .dropdown-item:hover{
-    /* background-color: var(--dropdown-hover-background-color) */
+    background-color: var(--nav-link-hover-bg) !important;
 }
 
 .dropdown-menu .dropdown-item {
@@ -574,4 +577,15 @@ ul.subquestions-list .list-group-item:hover {
 
 span.icon-number {
     color: var(--icon-color)
+}
+.topic-small-icon {
+    font-size: .58em !important;   /* Küçük ve uyumlu */
+    line-height: 1;
+    vertical-align: middle;
+  }
+  
+
+.bi-pie-chart{
+    color: var(--icon-color, #6c757d);
+    font-size: 1.2em;
 }

@@ -9,7 +9,7 @@
       {% endfor %}
     </ul>
     {% if user_vote %}
-      <span class="badge bg-success">Oyunuz kaydedildi</span>
+      <span class="badge tbas-color">Oyunuz kaydedildi</span>
     {% else %}
       <form class="popover-vote-form" data-poll-id="{{ poll.id }}">
         {% csrf_token %}

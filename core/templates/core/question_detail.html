@@ -37,7 +37,7 @@
                 {# Haritada Gör butonu (mevcut özelliğin değişmedi) #}
                 {% if is_on_map %}
                   <a href="{% url 'question_map' %}?question_id={{ question.id }}" 
-                     class="ms-2 text-secondary"
+                     class="ms-2 text-secondary topic-small-icon"
                      title="Haritada Gör">
                     <i class="bi bi-geo-alt-fill"></i>
                   </a>
@@ -46,12 +46,9 @@
                 {# YENİ: Eğer bu başlık bir anketle ilişkiliyse, anket ikonunu göster #}
                 {% with poll=question.poll_set.first %}
                 {% if poll %}
-                  <span class="ms-2 poll-icon-wrapper" data-poll-id="{{ poll.id }}">
-                    <i class="bi bi-bar-chart poll-icon text-primary"
-                       style="cursor:pointer; font-size:1.3em;"
-                       data-bs-placement="top"
-                       ></i>
-                  </span>
+                <span class="ms-2 poll-icon-wrapper" data-poll-id="{{ poll.id }}">
+                  <i class="bi bi-pie-chart poll-icon topic-small-icon"></i>
+                </span>
                 {% endif %}
               {% endwith %}
               </h1>
@@ -129,14 +126,14 @@
                   data-content-type="question" data-object-id="{{ question.id }}" data-value="1" title="Beğen">
                   <i class="bi bi-chevron-up"></i>
                 </a>
-                <span id="question-upvotes">{{ question.upvotes }}</span>
+                <span class="icon-number" id="question-upvotes">{{ question.upvotes }}</span>
           
                 <a href="#"
                   class="vote-btn ms-1 me-1 {% if question.user_vote_value == -1 %}voted-down{% endif %}"
                   data-content-type="question" data-object-id="{{ question.id }}" data-value="-1" title="Beğenme">
                   <i class="bi bi-chevron-down"></i>
                 </a>
-                <span id="question-downvotes">{{ question.downvotes }}</span>
+                <span class="icon-number" id="question-downvotes ">{{ question.downvotes }}</span>
           
                 <!-- Kaydet -->
                 <a href="#"
@@ -145,7 +142,7 @@
                   title="Kaydet">
                   <i class="{% if user_has_saved_question %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                 </a>
-                <span class="save-count">{{ question_save_count }}</span>
+                <span class="save-count icon-number">{{ question_save_count }}</span>
               </div>
               <div class="text-end">
                 <small class="">
@@ -185,21 +182,21 @@
                           title="Beğen">
                           <i class="bi bi-chevron-up"></i>
                         </a>
-                        <span id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
+                        <span class="icon-number" id="answer-upvotes-{{ answer.id }}">{{ answer.upvotes }}</span>
           
                         <a href="#" class="vote-btn ms-1 me-1 {% if answer.user_vote_value == -1 %}voted-down{% endif %}"
                           data-content-type="answer" data-object-id="{{ answer.id }}" data-value="-1" 
                           title="Beğenme">
                           <i class="bi bi-chevron-down"></i>
                         </a>
-                        <span id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
+                        <span class="icon-number" id="answer-downvotes-{{ answer.id }}">{{ answer.downvotes }}</span>
           
                         <a href="#" class="save-btn ms-2"
                           data-content-type="answer" data-object-id="{{ answer.id }}" 
                           title="Kaydet">
                           <i class="{% if answer.id in saved_answer_ids %}bi bi-bookmark-fill{% else %}bi bi-bookmark{% endif %}"></i>
                         </a>
-                        <span class="save-count">{{ answer_save_dict|get_item:answer.id|default:"0" }}</span>
+                        <span class="save-count icon-number">{{ answer_save_dict|get_item:answer.id|default:"0" }}</span>
           
                         {% if answer.user == request.user %}
                         {% if answer.user == request.user %}
