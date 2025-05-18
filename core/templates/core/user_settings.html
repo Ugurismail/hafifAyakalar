@@ -9,6 +9,16 @@
     <form method="post">
         {% csrf_token %}
 
+        <div class="mb-3">
+            <label for="theme_select" class="form-label">Hazır Tema:</label>
+            <select id="theme_select" class="form-select">
+                <option value="">-- Tema Seçin --</option>
+                <option value="default">Varsayılan</option>
+                <option value="gece">Gece Modu</option>
+                <option value="eglence">Eğlence Modu</option>
+            </select>
+        </div>
+        
         <!-- Genel Renkler -->
         <div class="card p-3 mb-3 cemil">
             <h4>Genel Renkler</h4>
@@ -218,6 +228,152 @@
         });
     });
 </script>
+<script>
+    // TEMALAR BURADA TANIMLI
+    const THEMES = {
+        "default": {
+            "background_color": "#F5F5F5",
+            "text_color": "#000000",
+            "header_background_color": "#F5F5F5",
+            "header_text_color": "#333333",
+            "link_color": "#6E8CA7",
+            "link_hover_color": "#4E647E",
+            "button_background_color": "#6E8CA7",
+            "button_hover_background_color": "#4E647E",
+            "button_text_color": "#ffffff",
+            "secondary_button_background_color": "#6c757d",
+            "secondary_button_hover_background_color": "#495057",
+            "secondary_button_text_color": "#ffffff",
+            "message_bubble_color": "#d1e7ff",
+            "tbas_color": "#000000",
+            "font_size": "16",
+            "hover_background_color": "#f0f0f0",
+            "icon_color": "#333333",
+            "icon_hover_color": "#007bff",
+            "answer_background_color": "#F5F5F5",
+            "content_background_color": "#ffffff",
+            "tab_background_color": "#f8f9fa",
+            "tab_text_color": "#000000",
+            "tab_active_background_color": "#ffffff",
+            "tab_active_text_color": "#000000",
+            "dropdown_text_color": "#333333",
+            "dropdown_hover_background_color": "#f2f2f2",
+            "dropdown_hover_text_color": "#0056b3",
+            "nav_link_hover_color": "#007bff",
+            "nav_link_hover_bg": "#f5f5f5",
+            "pagination_background_color": "#ffffff",
+            "pagination_text_color": "#000000",
+            "font_family": "EB Garamond"
+        },
+        "gece": {
+            "background_color": "#181824",
+            "text_color": "#998F8F",
+            "header_background_color": "#232536",
+            "header_text_color": "#e5e5e5",
+            "link_color": "#8ab4f8",
+            "link_hover_color": "#bbdefb",
+            "button_background_color": "#27293d",
+            "button_hover_background_color": "#3b3e5b",
+            "button_text_color": "#e5e5e5",
+            "secondary_button_background_color": "#44475a",
+            "secondary_button_hover_background_color": "#6272a4",
+            "secondary_button_text_color": "#fff",
+            "message_bubble_color": "#B7BADC",
+            "tbas_color": "#e5e5e5",
+            "font_size": "17",
+            "hover_background_color": "#21243a",
+            "icon_color": "#8ab4f8",
+            "icon_hover_color": "#ffffff",
+            "answer_background_color": "#22223b",
+            "content_background_color": "#232536",
+            "tab_background_color": "#21243a",
+            "tab_text_color": "#e5e5e5",
+            "tab_active_background_color": "#2c2e49",
+            "tab_active_text_color": "#8ab4f8",
+            "dropdown_text_color": "#e5e5e5",
+            "dropdown_hover_background_color": "#383a59",
+            "dropdown_hover_text_color": "#8ab4f8",
+            "nav_link_hover_color": "#8ab4f8",
+            "nav_link_hover_bg": "#232536",
+            "pagination_background_color": "#21243a",
+            "pagination_text_color": "#e5e5e5",
+            "font_family": "Roboto"
+        },
+        "eglence": {
+            "background_color": "#FFFAE3",
+            "text_color": "#392F5A",
+            "header_background_color": "#FFAFCC",
+            "header_text_color": "#392F5A",
+            "link_color": "#FF6F61",
+            "link_hover_color": "#FE346E",
+            "button_background_color": "#FF6F61",
+            "button_hover_background_color": "#FE346E",
+            "button_text_color": "#fff",
+            "secondary_button_background_color": "#87BBA2",
+            "secondary_button_hover_background_color": "#558B6E",
+            "secondary_button_text_color": "#fff",
+            "message_bubble_color": "#FFD6E0",
+            "tbas_color": "#6D435A",
+            "icon_color": "#F9844A",
+            "icon_hover_color": "#F9C74F",
+            "answer_background_color": "#FFF5F7",
+            "content_background_color": "#FFF0F3",
+            "tab_background_color": "#FDE2E4",
+            "tab_text_color": "#392F5A",
+            "tab_active_background_color": "#FFD6E0",
+            "tab_active_text_color": "#FE346E",
+            "dropdown_text_color": "#392F5A",
+            "dropdown_hover_background_color": "#FFD6E0",
+            "dropdown_hover_text_color": "#FE346E",
+            "nav_link_hover_color": "#FE346E",
+            "nav_link_hover_bg": "#FFD6E0",
+            "pagination_background_color": "#FFD6E0",
+            "pagination_text_color": "#392F5A",
+            "font_family": "Poppins",
+            "font_size": "17"
+        }
+    };
+    
+    function updateColor(variable, value) {
+        document.documentElement.style.setProperty(variable, value);
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Renk inputlarına canlı önizleme
+        const colorInputs = document.querySelectorAll('input[type="color"], input[type="number"], select[name="font_family"]');
+        colorInputs.forEach(function(input) {
+            input.addEventListener('input', function() {
+                const varName = '--' + this.name.replace(/_/g, '-');
+                updateColor(varName, this.value);
+            });
+        });
+    
+        // TEMALAR
+        document.getElementById('theme_select').addEventListener('change', function() {
+            const theme = THEMES[this.value];
+            if (!theme) return;
+            for (const [key, val] of Object.entries(theme)) {
+                // inputları doldur
+                let input = document.getElementsByName(key)[0];
+                if (input) {
+                    input.value = val;
+                    // select ise option'u seç
+                    if (input.tagName.toLowerCase() === 'select') {
+                        Array.from(input.options).forEach(opt => {
+                            if (opt.value.replace(/\+/g, ' ') === val || opt.value === val) opt.selected = true;
+                        });
+                    }
+                    // number ise direkt value ata
+                    if (input.type === "number") input.value = parseInt(val);
+                }
+                // canlı olarak siteye uygula
+                const varName = '--' + key.replace(/_/g, '-');
+                updateColor(varName, val);
+            }
+        });
+    });
+    </script>
+    
 {% endblock %}
 
 {% endblock %}
