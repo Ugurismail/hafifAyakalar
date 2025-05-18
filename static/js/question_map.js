@@ -129,6 +129,10 @@ document.addEventListener('DOMContentLoaded', function () {
             );
 
         // Etiketleri oluşturun
+        var TBAS_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--tbas-color') || "#000000";
+        TBAS_COLOR = TBAS_COLOR.trim();
+        console.log("Aktif TBAS_COLOR", TBAS_COLOR);
+        
         label = g.append("g")
             .attr("class", "labels")
             .selectAll("text")
@@ -139,7 +143,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .text(function (d) { return d.label; })
             .style("font-size", function (d) {
                 return (12 + (d.users.length * 2)) + "px";
-            });
+            })
+            .style("fill", TBAS_COLOR);
+        
 
         // Simülasyonu başlatın
         simulation.on("tick", ticked);

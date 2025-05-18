@@ -16,6 +16,9 @@
                 <option value="default">Varsayılan</option>
                 <option value="gece">Gece Modu</option>
                 <option value="eglence">Eğlence Modu</option>
+                <option value="gpt41">GPT4.1 (Koyu-Mavi)</option>
+                <option value="neomint">NeoMint (Pastel-Mint)</option>
+                <option value="solarpop">SolarPop (Canlı Sarı)</option>
             </select>
         </div>
         
@@ -299,6 +302,40 @@
             "pagination_text_color": "#e5e5e5",
             "font_family": "Roboto"
         },
+        "gpt41": {
+    "background_color": "#131826",
+    "text_color": "#CED2E5",
+    "header_background_color": "#292F4A",
+    "header_text_color": "#81C3F7",
+    "link_color": "#63B3ED",
+    "link_hover_color": "#B794F4",
+    "button_background_color": "#5759D6",
+    "button_hover_background_color": "#726EFF",
+    "button_text_color": "#F3F4F6",
+    "secondary_button_background_color": "#31365A",
+    "secondary_button_hover_background_color": "#5759D6",
+    "secondary_button_text_color": "#CED2E5",
+    "message_bubble_color": "#222946",
+    "tbas_color": "#A3BFFA",
+    "font_size": "17",
+    "hover_background_color": "#222946",
+    "icon_color": "#81C3F7",
+    "icon_hover_color": "#B794F4",
+    "answer_background_color": "#181D31",
+    "content_background_color": "#1A2138",
+    "tab_background_color": "#23294A",
+    "tab_text_color": "#A3BFFA",
+    "tab_active_background_color": "#292F4A",
+    "tab_active_text_color": "#B794F4",
+    "dropdown_text_color": "#CED2E5",
+    "dropdown_hover_background_color": "#3D426B",
+    "dropdown_hover_text_color": "#81C3F7",
+    "nav_link_hover_color": "#81C3F7",
+    "nav_link_hover_bg": "#181D31",
+    "pagination_background_color": "#23294A",
+    "pagination_text_color": "#A3BFFA",
+    "font_family": "Roboto"
+},
         "eglence": {
             "background_color": "#FFFAE3",
             "text_color": "#392F5A",
@@ -331,7 +368,75 @@
             "pagination_text_color": "#392F5A",
             "font_family": "Poppins",
             "font_size": "17"
-        }
+        },
+        "neomint": {
+    "background_color": "#F6FFF8",
+    "text_color": "#36413E",
+    "header_background_color": "#A6E3E9",
+    "header_text_color": "#36413E",
+    "link_color": "#51C2D5",
+    "link_hover_color": "#39A2DB",
+    "button_background_color": "#5AD2A7",
+    "button_hover_background_color": "#53BC9B",
+    "button_text_color": "#fff",
+    "secondary_button_background_color": "#AED9E0",
+    "secondary_button_hover_background_color": "#88A2AA",
+    "secondary_button_text_color": "#36413E",
+    "message_bubble_color": "#C9F6FF",
+    "tbas_color": "#20B2AA",
+    "font_size": "16",
+    "hover_background_color": "#D9F3EF",
+    "icon_color": "#5AD2A7",
+    "icon_hover_color": "#39A2DB",
+    "answer_background_color": "#F2FDFB",
+    "content_background_color": "#F6FFF8",
+    "tab_background_color": "#E3FFF8",
+    "tab_text_color": "#36413E",
+    "tab_active_background_color": "#A6E3E9",
+    "tab_active_text_color": "#20B2AA",
+    "dropdown_text_color": "#36413E",
+    "dropdown_hover_background_color": "#C9F6FF",
+    "dropdown_hover_text_color": "#39A2DB",
+    "nav_link_hover_color": "#39A2DB",
+    "nav_link_hover_bg": "#AED9E0",
+    "pagination_background_color": "#C9F6FF",
+    "pagination_text_color": "#36413E",
+    "font_family": "Noto Sans"
+},
+        "solarpop": {
+    "background_color": "#FFF9E2",
+    "text_color": "#1F2937",
+    "header_background_color": "#FFD93D",
+    "header_text_color": "#1F2937",
+    "link_color": "#3366FF",
+    "link_hover_color": "#D7263D",
+    "button_background_color": "#3366FF",
+    "button_hover_background_color": "#405DE6",
+    "button_text_color": "#fff",
+    "secondary_button_background_color": "#F2A365",
+    "secondary_button_hover_background_color": "#F76E11",
+    "secondary_button_text_color": "#fff",
+    "message_bubble_color": "#FFFBDA",
+    "tbas_color": "#EA7317",
+    "font_size": "17",
+    "hover_background_color": "#FFF5C3",
+    "icon_color": "#FFD93D",
+    "icon_hover_color": "#F76E11",
+    "answer_background_color": "#FFF6B7",
+    "content_background_color": "#FFF9E2",
+    "tab_background_color": "#FFE49E",
+    "tab_text_color": "#1F2937",
+    "tab_active_background_color": "#FFD93D",
+    "tab_active_text_color": "#F76E11",
+    "dropdown_text_color": "#1F2937",
+    "dropdown_hover_background_color": "#FFD93D",
+    "dropdown_hover_text_color": "#D7263D",
+    "nav_link_hover_color": "#D7263D",
+    "nav_link_hover_bg": "#FFD93D",
+    "pagination_background_color": "#FFE49E",
+    "pagination_text_color": "#1F2937",
+    "font_family": "Open Sans"
+}
     };
     
     function updateColor(variable, value) {
