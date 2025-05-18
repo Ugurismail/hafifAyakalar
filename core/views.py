@@ -2013,10 +2013,13 @@ def vote_poll(request, poll_id, option_id):
     poll = get_object_or_404(Poll, id=poll_id)
     option = get_object_or_404(PollOption, id=option_id, poll=poll)
 
-    # Kullanıcı daha önce bu ankette oy vermiş mi?
-    # Aynı ankete birden fazla oy vermesin.
     if PollVote.objects.filter(user=request.user, option__poll=poll).exists():
         messages.error(request, 'Bu ankete daha önce oy verdiniz.')
+        return redirect('polls_home')
+
+    # -------- Tarih kontrolü --------
+    if poll.end_date and timezone.now() > poll.end_date:
+        messages.error(request, 'Bu anketin süresi dolmuş.')
         return redirect('polls_home')
 
     if poll.is_active():
@@ -2025,6 +2028,7 @@ def vote_poll(request, poll_id, option_id):
     else:
         messages.error(request, 'Bu anket süresi dolmuş.')
     return redirect('polls_home')
+
 
 @login_required
 def poll_question_redirect(request, poll_id):
@@ -2044,13 +2048,31 @@ def poll_question_redirect(request, poll_id):
         return redirect('question_detail', question_id=q.id)
     
 @login_required
-@csrf_exempt  # (Eğer CSRF token’da sorun olursa, frontend'de tokeni gönderdiğine emin ol!)
+@csrf_exempt
 def vote_poll_ajax(request, poll_id):
     poll = get_object_or_404(Poll, id=poll_id)
+
+    # ---- Tarih kontrolü EKLENECEK! ----
+    if poll.end_date and timezone.now() > poll.end_date:
+        # Süresi geçmiş: Sonucu döndür + hata mesajı
+        options = poll.options.all()
+        total_votes = sum(opt.votes.count() for opt in options)
+        user_vote = PollVote.objects.filter(option__poll=poll, user=request.user).first()
+        context = {
+            'poll': poll,
+            'options': options,
+            'total_votes': total_votes,
+            'user_vote': user_vote,
+            'poll_expired': True,  # yeni context anahtarı!
+        }
+        html = render_to_string('core/poll_popover_content.html', context, request)
+        return JsonResponse({'html': html, 'error': "Bu anketin süresi doldu."}, status=400)
+
+    # --- Normal oy verme ---
     if request.method == 'POST':
         option_id = request.POST.get('option_id')
         if PollVote.objects.filter(user=request.user, option__poll=poll).exists():
-            # Zaten oy vermiş, sonuçları döndür
+            # Zaten oy vermiş
             pass
         else:
             option = get_object_or_404(PollOption, id=option_id, poll=poll)
@@ -2064,6 +2086,7 @@ def vote_poll_ajax(request, poll_id):
         'options': options,
         'total_votes': total_votes,
         'user_vote': user_vote,
+        'poll_expired': False,  # yeni context anahtarı!
     }
     html = render_to_string('core/poll_popover_content.html', context, request)
     return JsonResponse({'html': html})
@@ -2134,8 +2157,8 @@ def poll_popover_content(request, poll_id):
         'poll': poll,
         'options_data': options_data,
         'user_vote': user_vote,
+        'poll_expired': poll.end_date and timezone.now() > poll.end_date,
         'total_votes': total_votes,
-        'request': request,
     }
     html = render_to_string('core/poll_popover_content.html', context)
     return JsonResponse({'html': html})
