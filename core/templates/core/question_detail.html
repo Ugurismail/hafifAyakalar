@@ -149,15 +149,15 @@
                   <div class="card-body">
                     {% if answer.answer_text|length > 500 %}
                       <div class="answer-text" id="answer-summary-{{ answer.id }}">
-                        {{ answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link|nl2br }} ...
+                        {{ answer.answer_text|slice:":500"|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link }} ...
                       </div>
                       <div class="answer-text" id="answer-full-{{ answer.id }}" style="display: none;">
-                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link|nl2br }}
+                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link }}
                       </div>
                       <a href="#" class="read-more" data-answer-id="{{ answer.id }}">Tümünü Göster</a>
                     {% else %}
                       <div class="answer-text">
-                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link|nl2br }}
+                        {{ answer.answer_text|markdownify:"default"|bkz_link|tanim_link|reference_link|ref_link|mention_link }}
                       </div>
                     {% endif %}
           
@@ -421,24 +421,24 @@
 
   <!-- Yanıt Silme Modal -->
   <div class="modal fade" id="deleteAnswerModal" tabindex="-1" aria-labelledby="deleteAnswerModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-          <div class="modal-content">
-              <form method="post" id="delete-answer-form">
-                  {% csrf_token %}
-                  <div class="modal-header">
-                      <h5 class="modal-title" id="deleteAnswerModalLabel">Yanıtı Sil</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                  </div>
-                  <div class="modal-body">
-                      <p>Bu yanıtı silmek istediğinizden emin misiniz?</p>
-                  </div>
-                  <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                      <button type="submit" class="btn btn-danger">Evet, Sil</button>
-                  </div>
-              </form>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="post" id="delete-answer-form">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteAnswerModalLabel">Yanıtı Sil</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
           </div>
+          <div class="modal-body">
+            <p>Bu yanıtı silmek istediğinizden emin misiniz?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+            <button type="submit" class="btn btn-danger">Evet, Sil</button>
+          </div>
+        </form>
       </div>
+    </div>
   </div>
   <!-- TANIM MODAL -->
   <div class="modal fade" id="definitionModal" tabindex="-1" aria-labelledby="definitionModalLabel" aria-hidden="true">
@@ -655,15 +655,14 @@
           $('#shareFacebook').attr('href', facebookUrl);
       });
 
-      // Yanıt Silme İşlevi
-      var deleteAnswerBtns = document.querySelectorAll('.delete-answer-btn');
-      var deleteAnswerForm = document.getElementById('delete-answer-form');
-      deleteAnswerBtns.forEach(function(btn) {
-          btn.addEventListener('click', function(event) {
-              var answerId = this.getAttribute('data-answer-id');
-              deleteAnswerForm.action = "{% url 'delete_answer' 0 %}".replace('/0/', '/' + answerId + '/');
-          });
-      });
+          // Yanıt Silme İşlevi
+          var deleteAnswerModal = document.getElementById('deleteAnswerModal');
+    deleteAnswerModal.addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget;
+      var deleteUrl = button.getAttribute('data-delete-url');
+      var form = deleteAnswerModal.querySelector('#delete-answer-form');
+      form.action = deleteUrl;
+    });
   });
   </script>
 

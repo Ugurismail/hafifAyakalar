@@ -2,15 +2,47 @@
 {% load static %}
 {% load custom_tags %}
 
+
 {% block extra_css %}
 <style>
-  /* Süresi geçmiş anketlerin stilini sitenizle uyumlu hale getiriyoruz */
-  .expired-poll {
-      background-color: #f8f9fa;  /* Açık gri arka plan */
-      color: #212529;             /* Metin rengi: koyu gri */
-  }
+/* Süresi geçmiş anket kartları */
+.expired-poll-card {
+    border: 2px solid #111 !important;
+    border-radius: 9px;
+    background: #fff;
+    margin-bottom: 22px;
+    padding: 18px 18px 10px 18px;
+    box-shadow: none !important;
+}
+/* Kartın içindeki seçenekler için alt alta tek çizgi */
+.expired-poll-card .list-group-item {
+    border-bottom: 1.5px solid #111 !important;
+    border-radius: 0 !important;
+    background: transparent;
+    padding: 5px 2px 5px 0;
+}
+.expired-poll-card .list-group-item:last-child {
+    border-bottom: none !important;
+}
+/* Responsive dört sütun */
+@media (min-width: 992px) {
+  .expired-poll-col { width: 24%; float: left; margin-right:1%; }
+  .expired-poll-col:nth-child(4n) { margin-right:0; }
+}
+@media (max-width: 991px) {
+  .expired-poll-col { width: 49%; float: left; margin-right:2%; }
+  .expired-poll-col:nth-child(2n) { margin-right:0; }
+}
+@media (max-width: 600px) {
+  .expired-poll-col { width: 100%; float: none; margin-right:0; }
+}
 </style>
 {% endblock extra_css %}
+
+
+
+
+
 
 {% block content %}
 <div class="container mt-5">
@@ -114,28 +146,43 @@
         {% endfor %}
       </div>
     </div>
-
-    <!-- Süresi Geçmiş Anketler Sekmesi -->
+    <!-- Tarihi geçmiş Anketler Sekmesi -->
     <div class="tab-pane fade" id="expired-polls" role="tabpanel" aria-labelledby="expired-polls-tab">
       {% if expired_polls_data %}
-        <ul class="list-group">
+        <div class="row">
           {% for epoll in expired_polls_data %}
-          <li class="list-group-item expired-poll ">
-            <strong>{{ epoll.poll.question_text }} </strong><br>
-            {% if epoll.options_data %}
-              {% for opt_data in epoll.options_data %}
-                {{ opt_data.text }} %{{ opt_data.percentage }}{% if not forloop.last %} - {% endif %}
-              {% endfor %}
-            {% else %}
-              Hiç oy yok
-            {% endif %}
-          </li>
+            <div class="col-md-3 col-sm-6 mb-4">
+              <div class="card expired-poll-card h-100">
+                <div class="card-body py-3">
+                  <h5 class="card-title mb-2" style="font-size:1.1rem;">{{ epoll.poll.question_text }}</h5>
+                  <div class="mb-2 text-muted" style="font-size:0.97rem;">{{ epoll.poll.end_date|date:"Y-m-d H:i" }}</div>
+                  {% if epoll.options_data %}
+                    <ul class="list-group list-group-flush">
+                      {% for opt_data in epoll.options_data %}
+                        <li class="list-group-item px-1 py-1 d-flex justify-content-between align-items-center expired-poll-option">
+                          <span class="expired-poll-option-text">{{ opt_data.text }}</span>
+                          <span class="expired-poll-option-percent text-secondary">%{{ opt_data.percentage }}</span>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <div class="text-secondary" style="font-size:0.97rem;">Hiç oy yok</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
           {% endfor %}
-        </ul>
+        </div>
       {% else %}
         <p>Henüz süresi geçmiş anket yok.</p>
       {% endif %}
     </div>
+    
+    
+
+
+
+
   </div>
 </div>
 

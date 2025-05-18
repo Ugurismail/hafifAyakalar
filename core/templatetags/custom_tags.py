@@ -28,11 +28,6 @@ def bkz_link(text):
 
     return mark_safe(re.sub(pattern, replace, text))
 
-@register.filter
-def nl2br(value):
-    """Her satır sonunu <br> yapar."""
-    return mark_safe(value.replace('\n', '<br>'))
-
 
 @register.filter
 def ref_link(text):

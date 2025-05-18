@@ -503,7 +503,7 @@
                             <a href="{% url 'edit_reference' ref.id %}?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle">
                               <i class="bi bi-pencil-square"></i>
                             </a>
-                            <a href="{% url 'delete_reference' ref.id %}?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm('Bu kaynağı silmek istediğinize emin misiniz?');">
+                            <a href="{% url 'delete_reference' ref.id %}?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil">
                               <i class="bi bi-trash"></i>
                             </a>
                           </td>
@@ -712,7 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<td>'+(ref.usage_count || 0)+'</td>'+
                     '<td>'+
                       '<a href="/edit_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-primary" title="Düzenle"><i class="bi bi-pencil-square"></i></a> '+
-                      '<a href="/delete_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil" onclick="return confirm(\'Bu kaynağı silmek istediğinize emin misiniz?\');"><i class="bi bi-trash"></i></a>'+
+                      '<a href="/delete_reference/'+ ref.id + '/?tab=kaynaklarim" class="btn btn-sm btn-secondary" title="Sil"><i class="bi bi-trash"></i></a>'+
                     '</td>'+
                   '</tr>';
         container.append(row);

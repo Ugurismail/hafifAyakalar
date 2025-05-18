@@ -1511,36 +1511,6 @@ def delete_question_and_subquestions(question):
     question.delete()
 
 @login_required
-def delete_question(request, question_id):
-    question = get_object_or_404(Question, id=question_id)
-
-    if request.method == 'POST':
-        if request.user == question.user:
-            with transaction.atomic():
-                # Delete all answers associated with the question by the user
-                Answer.objects.filter(question=question, user=request.user).delete()
-                # Remove the user from the question's users
-                question.users.remove(request.user)
-                if question.users.count() == 0:
-                    # If no users are associated, delete the question and its subquestions
-                    delete_question_and_subquestions(question)
-                    messages.success(request, 'Soru ve alt soruları başarıyla silindi.')
-                else:
-                    messages.success(request, 'Soru sizin için silindi.')
-            return redirect('user_homepage')
-        else:
-            messages.error(request, 'Bu soruyu silme yetkiniz yok.')
-            return redirect('question_detail', question_id=question.id)
-    else:
-        return render(request, 'core/confirm_delete_question.html', {'question': question})
-    
-def delete_question_and_subquestions(question):
-    subquestions = question.subquestions.all()
-    for sub in subquestions:
-        delete_question_and_subquestions(sub)
-    question.delete()
-
-@login_required
 def single_answer(request, question_id, answer_id):
     question = get_object_or_404(Question, id=question_id)
     focused_answer = get_object_or_404(Answer, id=answer_id, question=question)
